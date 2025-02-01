@@ -13,6 +13,7 @@ import {
   IsArray,
   IsPositive,
   IsDateString,
+  IsPhoneNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -115,23 +116,24 @@ export class CreateUserDto {
     example: '254712345678',
   })
   @IsNotEmpty()
-  @IsString()
   phoneNumber: string;
 
   @ApiProperty({
     description: 'National ID of the employee',
     example: '23456789',
   })
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   nationalId: string;
 
-  @ApiProperty({ description: '4-digit authentication PIN', example: '1234' })
-  @IsOptional()
-  @MinLength(4)
-  @MaxLength(4)
+  @ApiProperty({
+    description: 'Account password',
+    example: 'securePassword123',
+  })
   @IsString()
-  pin: string;
+  @MinLength(8)
+  @IsNotEmpty()
+  password: string;
 
   @ApiProperty({
     description: 'Roles assigned in the app',

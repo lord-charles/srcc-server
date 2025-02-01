@@ -49,42 +49,32 @@ export class UserService {
       );
     }
 
-    // Generate a 4-digit PIN
-    const generatedPin = this.generatePin();
-    const hashedPin = await bcrypt.hash(generatedPin, 10);
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-    // Create a new user object without the roles
-    const { roles, pin, ...userData } = createUserDto;
-
-    // Create the new user with explicit roles assignment
-    const newUser = new this.userModel({
-      ...userData,
-      pin: hashedPin,
-      roles: Array.isArray(roles) && roles.length > 0 ? roles : ['employee'],
+    // Create new user with hashed password
+    const user = new this.userModel({
+      ...createUserDto,
+      password: hashedPassword,
     });
 
-    // Save the user
-    const savedUser = await newUser.save();
+    return user.save();
+  }
 
-    // Send PIN via SMS
-    const message = `Your Innova App login PIN is: ${generatedPin}. Please keep this PIN secure and do not share it with anyone.`;
-    await this.notificationService.sendSMS(savedUser.phoneNumber, message);
-
-    return savedUser;
+  async findByEmail(email: string): Promise<User> {
+    return this.userModel.findOne({ email });
   }
 
   async login(
     loginUserDto: LoginUserDto,
   ): Promise<{ token: string; user: User }> {
-    const user = await this.userModel.findOne({
-      nationalId: loginUserDto.nationalId,
-    });
+    const user = await this.findByEmail(loginUserDto.email);
 
-    if (!user || !(await bcrypt.compare(loginUserDto.pin, user.pin))) {
+    if (!user || !(await bcrypt.compare(loginUserDto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = this.jwtService.sign({ sub: user.id, email: user.email });
+    const token = this.jwtService.sign({ sub: user.employeeId.toString(), email: user.email });
     return { token, user };
   }
 
@@ -116,7 +106,7 @@ export class UserService {
     resetPasswordDto: ResetPasswordDto,
   ): Promise<{ message: string }> {
     // Implement token validation logic here
-    const hashedPin = await bcrypt.hash(resetPasswordDto.newPin, 10);
+    const hashedPin = await bcrypt.hash(resetPasswordDto.password, 10);
     await this.userModel.updateOne(
       { email: resetPasswordDto.token },
       { pin: hashedPin },
@@ -220,7 +210,7 @@ export class UserService {
 
     if (
       !user ||
-      !(await bcrypt.compare(updatePasswordDto.currentPin, user.pin))
+      !(await bcrypt.compare(updatePasswordDto.currentPassword, user.password))
     ) {
       if (user) {
         await this.systemLogsService.createLog(
@@ -234,8 +224,8 @@ export class UserService {
       throw new BadRequestException('Invalid current PIN');
     }
 
-    const hashedPin = await bcrypt.hash(updatePasswordDto.newPin, 10);
-    user.pin = hashedPin;
+    const hashedPin = await bcrypt.hash(updatePasswordDto.newPassword, 10);
+    user.password = hashedPin;
     await user.save();
 
     await this.systemLogsService.createLog(

@@ -2,30 +2,26 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsEmail,
-  MinLength,
-  MaxLength,
   IsNotEmpty,
   IsMongoId,
 } from 'class-validator';
 
 export class LoginUserDto {
   @ApiProperty({
-    description: 'Employee national ID number',
-    example: '23456789',
+    description: 'Employee email address',
+    example: 'jane.wanjiku@company.com',
   })
-  @IsString()
+  @IsEmail()
   @IsNotEmpty()
-  nationalId: string;
+  email: string;
 
   @ApiProperty({
-    description: '4-digit authentication PIN',
-    example: '1234',
+    description: 'Account password',
+    example: 'securePassword123',
   })
   @IsString()
-  @MinLength(4)
-  @MaxLength(4)
   @IsNotEmpty()
-  pin: string;
+  password: string;
 }
 
 export class EmailDto {
@@ -48,36 +44,30 @@ export class ResetPasswordDto {
   token: string;
 
   @ApiProperty({
-    description: 'New 4-digit authentication PIN',
-    example: '5678',
+    description: 'Account password',
+    example: 'securePassword123',
   })
   @IsString()
-  @MinLength(4)
-  @MaxLength(4)
   @IsNotEmpty()
-  newPin: string;
+  password: string;
 }
 
 export class UpdatePasswordDto {
   @ApiProperty({
-    description: 'Current 4-digit authentication PIN',
-    example: '1234',
+    description: 'Account password',  
+    example: 'securePassword123',
   })
   @IsString()
-  @MinLength(4)
-  @MaxLength(4)
   @IsNotEmpty()
-  currentPin: string;
+  currentPassword: string;
 
   @ApiProperty({
-    description: 'New 4-digit authentication PIN',
-    example: '5678',
+    description: 'New account password',
+    example: 'securePassword456',
   })
   @IsString()
-  @MinLength(4)
-  @MaxLength(4)
   @IsNotEmpty()
-  newPin: string;
+  newPassword: string;
 
   @ApiProperty({
     description: 'Employee ID',

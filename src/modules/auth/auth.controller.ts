@@ -75,7 +75,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Authenticate employee',
-    description: 'Login with National ID and PIN to receive access token',
+    description: 'Login with email and password to receive access token',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -139,7 +139,9 @@ export class AuthController {
   async getProfile(
     @NestRequest() req: ExpressRequest & { user: User | UserDocument },
   ) {
-    // The user object is already validated and attached to the request by JwtStrategy
+    if (!('toObject' in req.user)) {
+      throw new Error('Invalid user document type');
+    }
     return this.authService.sanitizeUser(req.user);
   }
 }

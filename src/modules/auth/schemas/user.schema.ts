@@ -89,9 +89,12 @@ export class User {
   @Prop({ required: true, unique: true })
   nationalId: string;
 
-  @ApiProperty({ description: '4-digit authentication PIN', example: '1234' })
+  @ApiProperty({ 
+    description: 'User password', 
+    example: 'securePassword123' 
+  })
   @Prop({ required: true })
-  pin: string;
+  password: string;
 
   @ApiProperty({
     description: 'Status of the employee account',
@@ -146,7 +149,6 @@ export class User {
   @Prop({ required: true })
   department: string;
 
-
   @ApiProperty({ description: 'Monthly NHIF deduction in KES', example: 1700 })
   @Prop({ type: Number, required: false })
   nhifDeduction?: number;
@@ -158,7 +160,6 @@ export class User {
   @ApiProperty({ description: 'Emergency contact details' })
   @Prop({ required: false, type: EmergencyContact })
   emergencyContact?: EmergencyContact;
-
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

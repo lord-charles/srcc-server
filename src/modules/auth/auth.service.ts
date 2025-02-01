@@ -36,7 +36,7 @@ export class AuthService {
       const user = await this.userService.register(createUserDto);
 
       // Generate token
-      const token = await this.generateToken(user);
+      const token = await this.generateToken(user as UserDocument);
 
       // Log successful registration
       await this.systemLogsService.createLog(
@@ -49,7 +49,7 @@ export class AuthService {
 
       // Return user data (excluding sensitive information) and token
       return {
-        user: this.sanitizeUser(user),
+        user: this.sanitizeUser(user as UserDocument),
         token: token.token,
       };
     } catch (error) {
@@ -76,15 +76,13 @@ export class AuthService {
     req?: Request,
   ): Promise<AuthResponse> {
     try {
-      // Find user by national ID
-      const user = await this.userService.findByNationalId(
-        loginUserDto.nationalId,
-      );
+      // Find user by email
+      const user = await this.userService.findByEmail(loginUserDto.email);
 
       if (!user) {
         await this.systemLogsService.createLog(
           'Login Failed',
-          `Failed login attempt with National ID: ${loginUserDto.nationalId}`,
+          `Failed login attempt with email: ${loginUserDto.email}`,
           LogSeverity.WARNING,
           undefined,
           req,
@@ -96,62 +94,55 @@ export class AuthService {
       if (user.status !== 'active') {
         await this.systemLogsService.createLog(
           'Inactive Account Login',
-          `Login attempt on inactive account: ${user.firstName} ${user.lastName}`,
+          `Login attempt on inactive account: ${user.email}`,
           LogSeverity.WARNING,
-          user.employeeId.toString(),
+          user.employeeId?.toString(),
           req,
         );
         throw new UnauthorizedException('Account is not active');
       }
 
-      // Verify PIN
-      const isValidPin = await this.verifyPin(loginUserDto.pin, user.pin);
-      if (!isValidPin) {
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(
+        loginUserDto.password,
+        user.password,
+      );
+
+      if (!isPasswordValid) {
         await this.systemLogsService.createLog(
-          'Invalid PIN',
-          `Invalid PIN entered for user: ${user.firstName} ${user.lastName}`,
+          'Login Failed',
+          `Invalid password attempt for user: ${user.email}`,
           LogSeverity.WARNING,
-          user.employeeId.toString(),
+          user.employeeId?.toString(),
           req,
         );
         throw new UnauthorizedException('Invalid credentials');
       }
 
       // Generate token
-      const token = await this.generateToken(user);
+      const token = await this.generateToken(user as UserDocument);
 
       // Log successful login
       await this.systemLogsService.createLog(
-        'User Login',
-        `User ${user.firstName} ${user.lastName} logged in successfully`,
+        'Login Success',
+        `User logged in successfully: ${user.email}`,
         LogSeverity.INFO,
-        user.employeeId.toString(),
+        user.employeeId?.toString(),
         req,
       );
 
-      // Return user data and token
       return {
-        user: this.sanitizeUser(user),
+        user: this.sanitizeUser(user as UserDocument),
         token: token.token,
       };
     } catch (error) {
-      // If error wasn't already logged (from above), log it
-      if (!(error instanceof UnauthorizedException)) {
-        await this.systemLogsService.createLog(
-          'Login Error',
-          `Unexpected error during login: ${error.message}`,
-          LogSeverity.ERROR,
-          undefined,
-          req,
-        );
-      }
       throw error;
     }
   }
 
-  private async generateToken(user: User): Promise<TokenPayload> {
+  private async generateToken(user: UserDocument): Promise<TokenPayload> {
     const payload: JwtPayload = {
-      sub: (user as UserDocument)._id.toString(),
+      sub: user._id.toString(),
       email: user.email,
       roles: user.roles,
     };
@@ -164,28 +155,9 @@ export class AuthService {
     };
   }
 
-  /**
-   * Verify PIN
-   * @param plainPin Plain text PIN
-   * @param hashedPin Hashed PIN
-   * @returns boolean
-   */
-  private async verifyPin(
-    plainPin: string,
-    hashedPin: string,
-  ): Promise<boolean> {
-    return bcrypt.compare(plainPin, hashedPin);
-  }
-
-  /**
-   * Remove sensitive information from user object
-   * @param user User object
-   * @returns Sanitized user object
-   */
-  sanitizeUser(user: User | UserDocument): Partial<User> {
-    const userObj = 'toObject' in user ? user.toObject() : user;
-    const { pin, ...sanitizedUser } = userObj;
-    return sanitizedUser;
+  sanitizeUser(user: UserDocument): Partial<User> {
+    const { password, ...userWithoutPassword } = user.toObject();
+    return userWithoutPassword;
   }
 
   /**
@@ -198,6 +170,6 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    return this.sanitizeUser(user);
+    return this.sanitizeUser(user as UserDocument);
   }
 }
