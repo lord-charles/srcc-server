@@ -43,6 +43,11 @@ export class ProjectController {
     - Contract Execution Memo
     - Signed Budget
     
+    Project manager and team member details should include:
+    - Name
+    - Email
+    - Phone
+    
     All monetary values should be in the specified currency (KES for Kenyan Shillings).
     Project status will initially be set to 'draft'.`
   })
@@ -50,139 +55,99 @@ export class ProjectController {
   @ApiBody({
     schema: {
       type: 'object',
-      required: [
-        'name',
-        'description',
-        'contractId',
-        'totalBudget',
-        'totalProjectValue',
-        'currency',
-        'contractStartDate',
-        'contractEndDate',
-        'client',
-        'status',
-        'projectManagerId',
-        'procurementMethod',
-        'riskLevel',
-        'reportingFrequency'
-      ],
       properties: {
-        name: { 
-          type: 'string', 
-          description: 'Project name',
-          example: 'Mombasa Port Modernization Phase II'
-        },
-        description: { 
-          type: 'string', 
-          description: 'Project description',
-          example: 'Second phase of Mombasa Port modernization including automation of cargo handling systems and expansion of berth capacity'
-        },
-        contractId: { 
-          type: 'string', 
-          description: 'Contract ID (MongoDB ObjectId)',
-          pattern: '^[0-9a-fA-F]{24}$',
-          example: '507f1f77bcf86cd799439011'
-        },
-        totalBudget: { 
-          type: 'number', 
-          description: 'Total budget in KES',
-          minimum: 0,
-          example: 2500000000 // 2.5B KES
-        },
-        totalProjectValue: { 
-          type: 'number', 
-          description: 'Total project value in KES',
-          minimum: 0,
-          example: 2300000000 // 2.3B KES
-        },
-        currency: { 
-          type: 'string', 
-          description: 'Currency code',
-          example: 'KES',
-          default: 'KES'
-        },
-        contractStartDate: { 
-          type: 'string', 
-          format: 'date', 
-          description: 'Contract start date',
-          example: '2025-03-01'
-        },
-        contractEndDate: { 
-          type: 'string', 
-          format: 'date', 
-          description: 'Contract end date',
-          example: '2027-02-28'
-        },
-        client: { 
-          type: 'string', 
-          description: 'Client name',
-          example: 'Kenya Ports Authority'
-        },
+        name: { type: 'string', example: 'Health System Upgrade' },
+        description: { type: 'string', example: 'Comprehensive upgrade of the hospital management system' },
+        contractId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        totalBudget: { type: 'number', example: 5000000 },
+        totalProjectValue: { type: 'number', example: 5500000 },
+        currency: { type: 'string', enum: ['KES', 'USD', 'EUR', 'GBP'], example: 'KES' },
+        contractStartDate: { type: 'string', format: 'date', example: '2024-01-01' },
+        contractEndDate: { type: 'string', format: 'date', example: '2024-12-31' },
+        client: { type: 'string', example: 'Ministry of Health' },
         status: { 
           type: 'string', 
-          description: 'Project status',
           enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'],
-          default: 'draft',
           example: 'draft'
         },
-        projectManagerId: { 
-          type: 'string', 
-          description: 'Project manager user ID (MongoDB ObjectId)',
-          pattern: '^[0-9a-fA-F]{24}$',
-          example: '507f1f77bcf86cd799439011'
+        projectManager: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', example: 'John Doe' },
+            email: { type: 'string', format: 'email', example: 'john.doe@example.com' },
+            phone: { type: 'string', example: '+254712345678' }
+          }
         },
-        procurementMethod: { 
-          type: 'string', 
-          description: 'The procurement method used',
-          example: 'Open Tender',
-          enum: ['Open Tender', 'Restricted Tender', 'Direct Procurement', 'Request for Proposal', 'Request for Quotation']
+        teamMembers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', example: 'Jane Smith' },
+              email: { type: 'string', format: 'email', example: 'jane.smith@example.com' },
+              phone: { type: 'string', example: '+254712345679' },
+              role: { type: 'string', example: 'Developer' },
+              startDate: { type: 'string', format: 'date', example: '2024-01-01' },
+              endDate: { type: 'string', format: 'date', example: '2024-12-31' },
+              responsibilities: { 
+                type: 'array', 
+                items: { type: 'string' },
+                example: ['Frontend Development', 'UI/UX Design']
+              }
+            }
+          }
         },
-        riskLevel: { 
-          type: 'string', 
-          description: 'Risk level assessment for the project',
-          enum: ['Low', 'Medium', 'High'],
-          default: 'Medium',
-          example: 'Medium'
+        milestones: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', example: 'Phase 1 Completion' },
+              description: { type: 'string', example: 'Complete initial system setup and configuration' },
+              dueDate: { type: 'string', format: 'date', example: '2024-03-31' },
+              completed: { type: 'boolean', example: false },
+              completionDate: { type: 'string', format: 'date', example: null },
+              budget: { type: 'number', example: 1000000 },
+              actualCost: { type: 'number', example: null }
+            }
+          }
+        },
+        riskAssessment: {
+          type: 'object',
+          properties: {
+            factors: { 
+              type: 'array', 
+              items: { type: 'string' },
+              example: ['Technical complexity', 'Resource availability']
+            },
+            mitigationStrategies: { 
+              type: 'array', 
+              items: { type: 'string' },
+              example: ['Regular technical reviews', 'Early resource planning']
+            },
+            lastAssessmentDate: { type: 'string', format: 'date', example: '2024-01-01' },
+            nextAssessmentDate: { type: 'string', format: 'date', example: '2024-02-01' }
+          }
         },
         reportingFrequency: { 
-          type: 'string', 
-          description: 'Frequency of progress reports',
+          type: 'string',
           enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'],
-          default: 'Monthly',
           example: 'Monthly'
         },
-        projectProposal: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary'
-          },
-          description: 'Project proposal document (PDF format)'
+        riskLevel: {
+          type: 'string',
+          enum: ['Low', 'Medium', 'High'],
+          example: 'Medium'
         },
-        signedContract: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary'
-          },
-          description: 'Signed contract document (PDF format)'
+        procurementMethod: {
+          type: 'string',
+          enum: ['Open Tender', 'Restricted Tender', 'Direct Procurement', 'Request for Quotation'],
+          example: 'Open Tender'
         },
-        contractExecutionMemo: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary'
-          },
-          description: 'Contract execution memo (PDF format)'
-        },
-        signedBudget: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary'
-          },
-          description: 'Signed budget document (PDF format)'
-        }
+        projectProposal: { type: 'string', format: 'binary' },
+        signedContract: { type: 'string', format: 'binary' },
+        executionMemo: { type: 'string', format: 'binary' },
+        signedBudget: { type: 'string', format: 'binary' }
       }
     }
   })
@@ -206,7 +171,7 @@ export class ProjectController {
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'projectProposal', maxCount: 1 },
     { name: 'signedContract', maxCount: 1 },
-    { name: 'contractExecutionMemo', maxCount: 1 },
+    { name: 'executionMemo', maxCount: 1 },
     { name: 'signedBudget', maxCount: 1 }
   ]))
   async create(
@@ -214,7 +179,7 @@ export class ProjectController {
     @UploadedFiles() files: {
       projectProposal?: Express.Multer.File[],
       signedContract?: Express.Multer.File[],
-      contractExecutionMemo?: Express.Multer.File[],
+      executionMemo?: Express.Multer.File[],
       signedBudget?: Express.Multer.File[],
     },
   ) {
@@ -224,36 +189,75 @@ export class ProjectController {
     if (!files.signedContract?.[0]) {
       throw new BadRequestException('Signed contract document is required');
     }
-    if (!files.contractExecutionMemo?.[0]) {
+    if (!files.executionMemo?.[0]) {
       throw new BadRequestException('Contract execution memo is required');
     }
     if (!files.signedBudget?.[0]) {
       throw new BadRequestException('Signed budget document is required');
     }
 
-    // Upload files to Cloudinary
     const [
       projectProposalResult,
       signedContractResult,
-      contractExecutionMemoResult,
+      executionMemoResult,
       signedBudgetResult
     ] = await Promise.all([
       this.cloudinaryService.uploadFile(files.projectProposal[0], 'project-proposals'),
       this.cloudinaryService.uploadFile(files.signedContract[0], 'signed-contracts'),
-      this.cloudinaryService.uploadFile(files.contractExecutionMemo[0], 'execution-memos'),
+      this.cloudinaryService.uploadFile(files.executionMemo[0], 'execution-memos'),
       this.cloudinaryService.uploadFile(files.signedBudget[0], 'signed-budgets')
     ]);
-    // Add document URLs to the DTO
-    const projectData = {
+
+    // Parse dates and nested objects
+    const parsedData = {
       ...createProjectDto,
+      projectManager: typeof createProjectDto.projectManager === 'string' 
+        ? JSON.parse(createProjectDto.projectManager)
+        : createProjectDto.projectManager,
+      teamMembers: typeof createProjectDto.teamMembers === 'string'
+        ? JSON.parse(createProjectDto.teamMembers)
+        : createProjectDto.teamMembers,
+      milestones: typeof createProjectDto.milestones === 'string'
+        ? JSON.parse(createProjectDto.milestones)
+        : createProjectDto.milestones,
+      riskAssessment: typeof createProjectDto.riskAssessment === 'string'
+        ? JSON.parse(createProjectDto.riskAssessment)
+        : createProjectDto.riskAssessment,
+      contractStartDate: new Date(createProjectDto.contractStartDate),
+      contractEndDate: new Date(createProjectDto.contractEndDate),
       projectProposalUrl: projectProposalResult.secure_url,
       signedContractUrl: signedContractResult.secure_url,
-      contractExecutionMemoUrl: contractExecutionMemoResult.secure_url,
+      executionMemoUrl: executionMemoResult.secure_url,
       signedBudgetUrl: signedBudgetResult.secure_url,
       status: createProjectDto.status || 'draft'
     };
 
-    return this.projectService.create(projectData);
+    // Parse dates in nested objects
+    if (Array.isArray(parsedData.teamMembers)) {
+      parsedData.teamMembers = parsedData.teamMembers.map(member => ({
+        ...member,
+        startDate: new Date(member.startDate),
+        endDate: member.endDate ? new Date(member.endDate) : undefined
+      }));
+    }
+
+    if (Array.isArray(parsedData.milestones)) {
+      parsedData.milestones = parsedData.milestones.map(milestone => ({
+        ...milestone,
+        dueDate: new Date(milestone.dueDate),
+        completionDate: milestone.completionDate ? new Date(milestone.completionDate) : undefined
+      }));
+    }
+
+    if (parsedData.riskAssessment) {
+      parsedData.riskAssessment = {
+        ...parsedData.riskAssessment,
+        lastAssessmentDate: new Date(parsedData.riskAssessment.lastAssessmentDate),
+        nextAssessmentDate: new Date(parsedData.riskAssessment.nextAssessmentDate)
+      };
+    }
+
+    return this.projectService.create(parsedData);
   }
 
   @Get()

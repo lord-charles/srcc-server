@@ -1,6 +1,88 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, IsDate, IsEnum, IsArray, IsOptional, IsMongoId, IsUrl } from 'class-validator';
+import { IsString, IsDate, IsNumber, IsBoolean, IsOptional, IsArray, ValidateNested, IsEmail, IsMongoId, IsUrl, IsEnum, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class ProjectManagerDto {
+  @ApiProperty({ description: 'Project manager name' })
+  @IsString()
+  name: string;
+
+  @ApiProperty({ description: 'Project manager email' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ description: 'Project manager phone' })
+  @IsString()
+  phone: string;
+}
+
+export class TeamMemberDto {
+  @ApiProperty({ description: 'Team member name' })
+  @IsString()
+  name: string;
+
+  @ApiProperty({ description: 'Team member email' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ description: 'Team member phone' })
+  @IsString()
+  phone: string;
+
+  @ApiProperty({ description: 'Team member role in the project' })
+  @IsString()
+  role: string;
+
+  @ApiProperty({ description: 'Start date of team member in project' })
+  @IsDate()
+  @Type(() => Date)
+  startDate: Date;
+
+  @ApiProperty({ description: 'End date of team member in project' })
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  endDate?: Date;
+
+  @ApiProperty({ description: 'Team member responsibilities' })
+  @IsArray()
+  @IsString({ each: true })
+  responsibilities: string[];
+}
+
+export class MilestoneDto {
+  @ApiProperty({ description: 'Milestone title' })
+  @IsString()
+  title: string;
+
+  @ApiProperty({ description: 'Milestone description' })
+  @IsString()
+  description: string;
+
+  @ApiProperty({ description: 'Due date of milestone' })
+  @IsDate()
+  @Type(() => Date)
+  dueDate: Date;
+
+  @ApiProperty({ description: 'Milestone completion status' })
+  @IsBoolean()
+  completed: boolean;
+
+  @ApiProperty({ description: 'Milestone completion date' })
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  completionDate?: Date;
+
+  @ApiProperty({ description: 'Milestone budget' })
+  @IsNumber()
+  budget: number;
+
+  @ApiProperty({ description: 'Milestone actual cost' })
+  @IsOptional()
+  @IsNumber()
+  actualCost?: number;
+}
 
 export class CreateProjectDto {
   @ApiProperty({ 
@@ -23,8 +105,9 @@ export class CreateProjectDto {
     example: '507f1f77bcf86cd799439011',
     description: 'MongoDB ObjectId of the associated contract'
   })
-  @IsNotEmpty()
-  @IsMongoId()
+  // @IsNotEmpty()
+  // @IsMongoId()
+  @IsOptional()
   contractId: string;
 
   @ApiProperty({ 
@@ -87,64 +170,64 @@ export class CreateProjectDto {
   status: string;
 
   @ApiProperty({ 
-    example: '507f1f77bcf86cd799439011',
-    description: 'MongoDB ObjectId of the assigned project manager'
+    description: 'Project manager details'
   })
-  @IsNotEmpty()
-  @IsMongoId()
-  projectManagerId: string;
+  @ValidateNested()
+  @Type(() => ProjectManagerDto)
+  projectManager: ProjectManagerDto;
 
-  @ApiProperty({
+  @ApiProperty({ 
+    description: 'Team members', type: [TeamMemberDto]
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TeamMemberDto)
+  teamMembers: TeamMemberDto[];
+
+  @ApiProperty({ 
+    description: 'Project milestones', type: [MilestoneDto]
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MilestoneDto)
+  milestones: MilestoneDto[];
+
+  @ApiProperty({ 
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/project-proposal.pdf',
     description: 'Cloudinary URL for the uploaded project proposal document'
   })
-  // @IsNotEmpty()
-  // @IsUrl()
-  projectProposalUrl: string;
+  @IsOptional()
+  @IsUrl()
+  projectProposalUrl?: string;
 
-  @ApiProperty({
+  @ApiProperty({ 
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-contract.pdf',
     description: 'Cloudinary URL for the uploaded signed contract document'
   })
-  // @IsNotEmpty()
-  // @IsUrl()
-  signedContractUrl: string;
+  @IsOptional()
+  @IsUrl()
+  signedContractUrl?: string;
 
-  @ApiProperty({
+  @ApiProperty({ 
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/execution-memo.pdf',
     description: 'Cloudinary URL for the uploaded contract execution memo'
   })
-  // @IsNotEmpty()
-  // @IsUrl()
-  contractExecutionMemoUrl: string;
+  @IsOptional()
+  @IsUrl()
+  contractExecutionMemoUrl?: string;
 
-  @ApiProperty({
+  @ApiProperty({ 
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-budget.pdf',
     description: 'Cloudinary URL for the uploaded signed budget document'
   })
-  // @IsNotEmpty()
-  // @IsUrl()
-  signedBudgetUrl: string;
+  @IsOptional()
+  @IsUrl()
+  signedBudgetUrl?: string;
 
   @ApiProperty({ example: 'Public Procurement' })
   @IsNotEmpty()
   @IsString()
   procurementMethod: string;
-
-  @ApiProperty({ type: [Object] })
-  @IsOptional()
-  @IsArray()
-  milestones?: any[];
-
-  @ApiProperty({ type: [Object] })
-  @IsOptional()
-  @IsArray()
-  teamMembers?: any[];
-
-  @ApiProperty({ type: [Object] })
-  @IsOptional()
-  @IsArray()
-  documents?: any[];
 
   @ApiProperty({ example: 'High' })
   @IsNotEmpty()

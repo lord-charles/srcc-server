@@ -15,7 +15,7 @@ export class Project {
   description: string;
 
   @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'Reference to the associated contract' })
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Contract', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Contract', required: false })
   contractId: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({ example: 5000000, description: 'Total budget allocated for the project' })
@@ -54,36 +54,27 @@ export class Project {
   })
   status: string;
 
-  @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'Project manager user ID' })
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  projectManagerId: MongooseSchema.Types.ObjectId;
-
-  @ApiProperty({ description: 'Milestones of the project', type: [Object] })
+  @ApiProperty({ description: 'Project manager details' })
   @Prop({
-    type: [{
-      title: { type: String, required: true },
-      description: { type: String, required: true },
-      dueDate: { type: Date, required: true },
-      completed: { type: Boolean, default: false },
-      completionDate: { type: Date },
-      budget: { type: Number, required: true },
-      actualCost: { type: Number }
-    }]
+    type: {
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String, required: true },
+    },
+    required: true
   })
-  milestones: {
-    title: string;
-    description: string;
-    dueDate: Date;
-    completed: boolean;
-    completionDate?: Date;
-    budget: number;
-    actualCost?: number;
-  }[];
+  projectManager: {
+    name: string;
+    email: string;
+    phone: string;
+  };
 
   @ApiProperty({ description: 'Team members assigned to the project', type: [Object] })
   @Prop({
     type: [{
-      userId: { type: MongooseSchema.Types.ObjectId, ref: 'User', required: true },
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String, required: true },
       role: { type: String, required: true },
       startDate: { type: Date, required: true },
       endDate: { type: Date },
@@ -91,7 +82,9 @@ export class Project {
     }]
   })
   teamMembers: {
-    userId: MongooseSchema.Types.ObjectId;
+    name: string;
+    email: string;
+    phone: string;
     role: string;
     startDate: Date;
     endDate?: Date;
@@ -102,19 +95,19 @@ export class Project {
   @Prop({ required: true, trim: true })
   procurementMethod: string;
 
-  @ApiProperty({ description: 'Project proposal document URL from Cloudinary' })
+  @ApiProperty({ example: 'https://res.cloudinary.com/example/project-proposal.pdf' })
   @Prop({ required: true })
   projectProposalUrl: string;
 
-  @ApiProperty({ description: 'Signed contract document URL from Cloudinary' })
+  @ApiProperty({ example: 'https://res.cloudinary.com/example/signed-contract.pdf' })
   @Prop({ required: true })
   signedContractUrl: string;
 
-  @ApiProperty({ description: 'Contract execution memo document URL from Cloudinary' })
+  @ApiProperty({ example: 'https://res.cloudinary.com/example/execution-memo.pdf' })
   @Prop({ required: true })
-  contractExecutionMemoUrl: string;
+  executionMemoUrl: string;
 
-  @ApiProperty({ description: 'Signed budget document URL from Cloudinary' })
+  @ApiProperty({ example: 'https://res.cloudinary.com/example/signed-budget.pdf' })
   @Prop({ required: true })
   signedBudgetUrl: string;
 
@@ -224,6 +217,28 @@ export class Project {
     current: number;
     unit: string;
     lastUpdated: Date;
+  }[];
+
+  @ApiProperty({ description: 'Milestones of the project', type: [Object] })
+  @Prop({
+    type: [{
+      title: { type: String, required: true },
+      description: { type: String, required: true },
+      dueDate: { type: Date, required: true },
+      completed: { type: Boolean, default: false },
+      completionDate: { type: Date },
+      budget: { type: Number, required: true },
+      actualCost: { type: Number }
+    }]
+  })
+  milestones: {
+    title: string;
+    description: string;
+    dueDate: Date;
+    completed: boolean;
+    completionDate?: Date;
+    budget: number;
+    actualCost?: number;
   }[];
 }
 
