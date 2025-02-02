@@ -5,6 +5,9 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
 import { SystemConfigModule } from './modules/system-config/system-config.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SystemLogsModule } from './modules/system-logs/system-logs.module';
+import { ProjectModule } from './modules/project/project.module';
+import { ContractorModule } from './modules/contractor/contractor.module';
+import { ContractModule } from './modules/contract/contract.module';
 
 @Module({
   imports: [
@@ -13,6 +16,9 @@ import { SystemLogsModule } from './modules/system-logs/system-logs.module';
     SystemConfigModule,
     NotificationsModule,
     SystemLogsModule,
+    ProjectModule,
+    ContractorModule,
+    ContractModule,
   ],
   controllers: [],
   providers: [],
