@@ -8,6 +8,7 @@ import { SystemLogsModule } from './modules/system-logs/system-logs.module';
 import { ProjectModule } from './modules/project/project.module';
 import { ContractorModule } from './modules/contractor/contractor.module';
 import { ContractModule } from './modules/contract/contract.module';
+import { BudgetModule } from './modules/budget/budget.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ContractModule } from './modules/contract/contract.module';
     ProjectModule,
     ContractorModule,
     ContractModule,
+    BudgetModule
   ],
   controllers: [],
   providers: [],
