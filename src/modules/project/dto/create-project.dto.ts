@@ -85,7 +85,7 @@ export class MilestoneDto {
 }
 
 export class CreateProjectDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'Health System Upgrade',
     description: 'The name of the project. Should be unique and descriptive.'
   })
@@ -93,7 +93,7 @@ export class CreateProjectDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'A comprehensive project to upgrade the health system infrastructure including new equipment and staff training.',
     description: 'Detailed description of the project scope, objectives, and expected outcomes.'
   })
@@ -101,16 +101,7 @@ export class CreateProjectDto {
   @IsString()
   description: string;
 
-  @ApiProperty({ 
-    example: '507f1f77bcf86cd799439011',
-    description: 'MongoDB ObjectId of the associated contract'
-  })
-  // @IsNotEmpty()
-  // @IsMongoId()
-  @IsOptional()
-  contractId: string;
-
-  @ApiProperty({ 
+  @ApiProperty({
     example: 5000000,
     description: 'Total budget allocated for the project in the specified currency'
   })
@@ -118,7 +109,7 @@ export class CreateProjectDto {
   @IsNumber()
   totalBudget: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 4800000,
     description: 'Total estimated value of the project deliverables'
   })
@@ -126,7 +117,7 @@ export class CreateProjectDto {
   @IsNumber()
   totalProjectValue: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'USD',
     description: 'Currency code for all monetary values in the project'
   })
@@ -134,7 +125,7 @@ export class CreateProjectDto {
   @IsString()
   currency: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '2024-01-01T00:00:00.000Z',
     description: 'Date when the contract/project officially starts'
   })
@@ -143,7 +134,7 @@ export class CreateProjectDto {
   @IsDate()
   contractStartDate: Date;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '2025-12-31T00:00:00.000Z',
     description: 'Date when the contract/project is scheduled to end'
   })
@@ -152,7 +143,7 @@ export class CreateProjectDto {
   @IsDate()
   contractEndDate: Date;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'Ministry of Health',
     description: 'Name of the client organization funding the project'
   })
@@ -160,7 +151,7 @@ export class CreateProjectDto {
   @IsString()
   client: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'draft',
     description: 'Current status of the project',
     enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled']
@@ -169,14 +160,14 @@ export class CreateProjectDto {
   @IsEnum(['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'])
   status: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Project manager details'
   })
   @ValidateNested()
   @Type(() => ProjectManagerDto)
   projectManager: ProjectManagerDto;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Team members', type: [TeamMemberDto]
   })
   @IsArray()
@@ -184,7 +175,7 @@ export class CreateProjectDto {
   @Type(() => TeamMemberDto)
   teamMembers: TeamMemberDto[];
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Project milestones', type: [MilestoneDto]
   })
   @IsArray()
@@ -192,7 +183,7 @@ export class CreateProjectDto {
   @Type(() => MilestoneDto)
   milestones: MilestoneDto[];
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/project-proposal.pdf',
     description: 'Cloudinary URL for the uploaded project proposal document'
   })
@@ -200,7 +191,7 @@ export class CreateProjectDto {
   @IsUrl()
   projectProposalUrl?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-contract.pdf',
     description: 'Cloudinary URL for the uploaded signed contract document'
   })
@@ -208,7 +199,7 @@ export class CreateProjectDto {
   @IsUrl()
   signedContractUrl?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/execution-memo.pdf',
     description: 'Cloudinary URL for the uploaded contract execution memo'
   })
@@ -216,7 +207,7 @@ export class CreateProjectDto {
   @IsUrl()
   contractExecutionMemoUrl?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-budget.pdf',
     description: 'Cloudinary URL for the uploaded signed budget document'
   })

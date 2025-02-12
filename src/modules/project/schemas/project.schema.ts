@@ -14,10 +14,6 @@ export class Project {
   @Prop({ required: true, trim: true })
   description: string;
 
-  @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'Reference to the associated contract' })
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Contract', required: false })
-  contractId: MongooseSchema.Types.ObjectId;
-
   @ApiProperty({ example: 5000000, description: 'Total budget allocated for the project' })
   @Prop({ required: true })
   totalBudget: number;
@@ -42,15 +38,15 @@ export class Project {
   @Prop({ required: true, trim: true })
   client: string;
 
-  @ApiProperty({ 
-    example: 'active', 
-    description: 'Project status', 
-    enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'] 
+  @ApiProperty({
+    example: 'active',
+    description: 'Project status',
+    enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled']
   })
-  @Prop({ 
-    required: true, 
-    enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'], 
-    default: 'draft' 
+  @Prop({
+    required: true,
+    enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'],
+    default: 'draft'
   })
   status: string;
 
@@ -129,10 +125,10 @@ export class Project {
     uploadedBy: MongooseSchema.Types.ObjectId;
   }[];
 
-  @ApiProperty({ 
-    example: 'High', 
-    description: 'Risk level assessment for the project', 
-    enum: ['Low', 'Medium', 'High'] 
+  @ApiProperty({
+    example: 'High',
+    description: 'Risk level assessment for the project',
+    enum: ['Low', 'Medium', 'High']
   })
   @Prop({ required: true, enum: ['Low', 'Medium', 'High'], default: 'Medium' })
   riskLevel: string;
