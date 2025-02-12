@@ -84,6 +84,40 @@ export class MilestoneDto {
   actualCost?: number;
 }
 
+export class RiskAssessmentDto {
+  @ApiProperty({ description: 'Risk factors' })
+  @IsArray()
+  @IsString({ each: true })
+  factors: string[];
+
+  @ApiProperty({ description: 'Risk mitigation strategies' })
+  @IsArray()
+  @IsString({ each: true })
+  mitigationStrategies: string[];
+
+  @ApiProperty({ description: 'Last risk assessment date' })
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  lastAssessmentDate?: Date;
+
+  @ApiProperty({ description: 'Next risk assessment date' })
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  nextAssessmentDate?: Date;
+}
+
+export class FinancialTrackingDto {
+  @ApiProperty({ description: 'Invoices' })
+  @IsArray()
+  invoices: any[];
+
+  @ApiProperty({ description: 'Expenses' })
+  @IsArray()
+  expenses: any[];
+}
+
 export class CreateProjectDto {
   @ApiProperty({
     example: 'Health System Upgrade',
@@ -152,7 +186,7 @@ export class CreateProjectDto {
   client: string;
 
   @ApiProperty({
-    example: 'draft',
+    example: 'active',
     description: 'Current status of the project',
     enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled']
   })
@@ -163,25 +197,28 @@ export class CreateProjectDto {
   @ApiProperty({
     description: 'Project manager details'
   })
+  @IsOptional()
   @ValidateNested()
   @Type(() => ProjectManagerDto)
-  projectManager: ProjectManagerDto;
+  projectManager?: ProjectManagerDto;
 
   @ApiProperty({
     description: 'Team members', type: [TeamMemberDto]
   })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TeamMemberDto)
-  teamMembers: TeamMemberDto[];
+  teamMembers?: TeamMemberDto[];
 
   @ApiProperty({
     description: 'Project milestones', type: [MilestoneDto]
   })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MilestoneDto)
-  milestones: MilestoneDto[];
+  milestones?: MilestoneDto[];
 
   @ApiProperty({
     example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/project-proposal.pdf',
@@ -221,28 +258,29 @@ export class CreateProjectDto {
   procurementMethod: string;
 
   @ApiProperty({ example: 'High' })
-  @IsNotEmpty()
+  @IsOptional()
   @IsEnum(['Low', 'Medium', 'High'])
-  riskLevel: string;
+  riskLevel?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Risk assessment details'
+  })
   @IsOptional()
-  riskAssessment?: {
-    factors: string[];
-    mitigationStrategies: string[];
-    lastAssessmentDate: Date;
-    nextAssessmentDate: Date;
-  };
+  @ValidateNested()
+  @Type(() => RiskAssessmentDto)
+  riskAssessment?: RiskAssessmentDto;
 
-  @ApiProperty({ example: 'Monthly' })
-  @IsNotEmpty()
+  @ApiProperty({ example: 'Monthly', enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'] })
+  @IsOptional()
   @IsEnum(['Weekly', 'Biweekly', 'Monthly', 'Quarterly'])
-  reportingFrequency: string;
+  reportingFrequency?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Actual completion date'
+  })
   @IsOptional()
-  @Type(() => Date)
   @IsDate()
+  @Type(() => Date)
   actualCompletionDate?: Date;
 
   @ApiProperty({ example: 0 })
@@ -250,14 +288,17 @@ export class CreateProjectDto {
   @IsNumber()
   amountSpent?: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Financial tracking details'
+  })
   @IsOptional()
-  financialTracking?: {
-    invoices: any[];
-    expenses: any[];
-  };
+  @ValidateNested()
+  @Type(() => FinancialTrackingDto)
+  financialTracking?: FinancialTrackingDto;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Key performance indicators'
+  })
   @IsOptional()
   @IsArray()
   kpis?: any[];

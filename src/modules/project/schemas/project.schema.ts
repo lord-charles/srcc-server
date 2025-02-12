@@ -53,13 +53,13 @@ export class Project {
   @ApiProperty({ description: 'Project manager details' })
   @Prop({
     type: {
-      name: { type: String, required: true },
-      email: { type: String, required: true },
-      phone: { type: String, required: true },
+      name: { type: String },
+      email: { type: String },
+      phone: { type: String },
     },
-    required: true
+    required: false
   })
-  projectManager: {
+  projectManager?: {
     name: string;
     email: string;
     phone: string;
@@ -68,16 +68,17 @@ export class Project {
   @ApiProperty({ description: 'Team members assigned to the project', type: [Object] })
   @Prop({
     type: [{
-      name: { type: String, required: true },
-      email: { type: String, required: true },
-      phone: { type: String, required: true },
-      role: { type: String, required: true },
-      startDate: { type: Date, required: true },
+      name: { type: String },
+      email: { type: String },
+      phone: { type: String },
+      role: { type: String },
+      startDate: { type: Date },
       endDate: { type: Date },
       responsibilities: [String]
-    }]
+    }],
+    required: false
   })
-  teamMembers: {
+  teamMembers?: {
     name: string;
     email: string;
     phone: string;
@@ -130,32 +131,33 @@ export class Project {
     description: 'Risk level assessment for the project',
     enum: ['Low', 'Medium', 'High']
   })
-  @Prop({ required: true, enum: ['Low', 'Medium', 'High'], default: 'Medium' })
-  riskLevel: string;
+  @Prop({ enum: ['Low', 'Medium', 'High'], default: 'Medium', required: false })
+  riskLevel?: string;
 
   @ApiProperty({ description: 'Risk assessment details' })
   @Prop({
     type: {
       factors: [String],
       mitigationStrategies: [String],
-      lastAssessmentDate: Date,
-      nextAssessmentDate: Date
-    }
+      lastAssessmentDate: { type: Date, required: false },
+      nextAssessmentDate: { type: Date, required: false }
+    },
+    required: false
   })
-  riskAssessment: {
+  riskAssessment?: {
     factors: string[];
     mitigationStrategies: string[];
-    lastAssessmentDate: Date;
-    nextAssessmentDate: Date;
+    lastAssessmentDate?: Date;
+    nextAssessmentDate?: Date;
   };
 
   @ApiProperty({ example: 'Quarterly', description: 'Frequency of progress reports' })
-  @Prop({ required: true, enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'], default: 'Monthly' })
-  reportingFrequency: string;
+  @Prop({ enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'], default: 'Monthly', required: false })
+  reportingFrequency?: string;
 
   @ApiProperty({ example: '2024-06-30', description: 'Actual completion date of the project' })
-  @Prop()
-  actualCompletionDate: Date;
+  @Prop({ required: false })
+  actualCompletionDate?: Date;
 
   @ApiProperty({ example: 500000, description: 'Total amount spent so far on the project' })
   @Prop({ required: true, default: 0 })
@@ -225,9 +227,10 @@ export class Project {
       completionDate: { type: Date },
       budget: { type: Number, required: true },
       actualCost: { type: Number }
-    }]
+    }],
+    required: false
   })
-  milestones: {
+  milestones?: {
     title: string;
     description: string;
     dueDate: Date;
