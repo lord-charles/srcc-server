@@ -137,18 +137,19 @@ export class Project {
   @ApiProperty({ description: 'Risk assessment details' })
   @Prop({
     type: {
-      factors: [String],
-      mitigationStrategies: [String],
-      lastAssessmentDate: { type: Date, required: false },
-      nextAssessmentDate: { type: Date, required: false }
+      factors: { type: [String], required: false },
+      mitigationStrategies: { type: [String], required: false },
+      lastAssessmentDate: { type: Date, required: false, default: null },
+      nextAssessmentDate: { type: Date, required: false, default: null }
     },
-    required: false
+    required: false,
+    _id: false
   })
   riskAssessment?: {
-    factors: string[];
-    mitigationStrategies: string[];
-    lastAssessmentDate?: Date;
-    nextAssessmentDate?: Date;
+    factors?: string[];
+    mitigationStrategies?: string[];
+    lastAssessmentDate?: Date | null;
+    nextAssessmentDate?: Date | null;
   };
 
   @ApiProperty({ example: 'Quarterly', description: 'Frequency of progress reports' })

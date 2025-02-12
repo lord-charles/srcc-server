@@ -85,37 +85,41 @@ export class MilestoneDto {
 }
 
 export class RiskAssessmentDto {
-  @ApiProperty({ description: 'Risk factors' })
+  @ApiProperty({ description: 'Risk factors', required: false })
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  factors: string[];
+  factors?: string[];
 
-  @ApiProperty({ description: 'Risk mitigation strategies' })
+  @ApiProperty({ description: 'Risk mitigation strategies', required: false })
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  mitigationStrategies: string[];
+  mitigationStrategies?: string[];
 
-  @ApiProperty({ description: 'Last risk assessment date' })
+  @ApiProperty({ description: 'Last risk assessment date', required: false })
   @IsOptional()
   @IsDate()
   @Type(() => Date)
-  lastAssessmentDate?: Date;
+  lastAssessmentDate?: Date | null;
 
-  @ApiProperty({ description: 'Next risk assessment date' })
+  @ApiProperty({ description: 'Next risk assessment date', required: false })
   @IsOptional()
   @IsDate()
   @Type(() => Date)
-  nextAssessmentDate?: Date;
+  nextAssessmentDate?: Date | null;
 }
 
 export class FinancialTrackingDto {
-  @ApiProperty({ description: 'Invoices' })
+  @ApiProperty({ description: 'Invoices', required: false })
+  @IsOptional()
   @IsArray()
-  invoices: any[];
+  invoices?: any[];
 
-  @ApiProperty({ description: 'Expenses' })
+  @ApiProperty({ description: 'Expenses', required: false })
+  @IsOptional()
   @IsArray()
-  expenses: any[];
+  expenses?: any[];
 }
 
 export class CreateProjectDto {
