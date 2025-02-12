@@ -139,18 +139,16 @@ export class Project {
     type: {
       factors: { type: [String], default: [] },
       mitigationStrategies: { type: [String], default: [] },
-      lastAssessmentDate: { type: Date, required: false, default: undefined },
-      nextAssessmentDate: { type: Date, required: false, default: undefined }
+      lastAssessmentDate: { type: String },
+      nextAssessmentDate: { type: String }
     },
-    required: false,
-    default: undefined,
     _id: false
   })
   riskAssessment?: {
     factors: string[];
     mitigationStrategies: string[];
-    lastAssessmentDate?: Date;
-    nextAssessmentDate?: Date;
+    lastAssessmentDate?: string;
+    nextAssessmentDate?: string;
   };
 
   @ApiProperty({ example: 'Quarterly', description: 'Frequency of progress reports' })

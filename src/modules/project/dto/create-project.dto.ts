@@ -99,13 +99,11 @@ export class RiskAssessmentDto {
 
   @ApiProperty({ description: 'Last risk assessment date', required: false })
   @IsOptional()
-  @IsDate()
   @Type(() => Date)
-  lastAssessmentDate?: Date;
+  lastAssessmentDate?: string;
 
-  @ApiProperty({ description: 'Next risk assessment date', required: false })
+  @ApiProperty({ description: 'Next risk assessment string', required: false })
   @IsOptional()
-  @IsDate()
   @Type(() => Date)
   nextAssessmentDate?: Date;
 }
