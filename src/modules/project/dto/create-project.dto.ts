@@ -1,54 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsDate, IsNumber, IsBoolean, IsOptional, IsArray, ValidateNested, IsEmail, IsMongoId, IsUrl, IsEnum, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
-
-export class ProjectManagerDto {
-  @ApiProperty({ description: 'Project manager name' })
-  @IsString()
-  name: string;
-
-  @ApiProperty({ description: 'Project manager email' })
-  @IsEmail()
-  email: string;
-
-  @ApiProperty({ description: 'Project manager phone' })
-  @IsString()
-  phone: string;
-}
-
-export class TeamMemberDto {
-  @ApiProperty({ description: 'Team member name' })
-  @IsString()
-  name: string;
-
-  @ApiProperty({ description: 'Team member email' })
-  @IsEmail()
-  email: string;
-
-  @ApiProperty({ description: 'Team member phone' })
-  @IsString()
-  phone: string;
-
-  @ApiProperty({ description: 'Team member role in the project' })
-  @IsString()
-  role: string;
-
-  @ApiProperty({ description: 'Start date of team member in project' })
-  @IsDate()
-  @Type(() => Date)
-  startDate: Date;
-
-  @ApiProperty({ description: 'End date of team member in project' })
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  endDate?: Date;
-
-  @ApiProperty({ description: 'Team member responsibilities' })
-  @IsArray()
-  @IsString({ each: true })
-  responsibilities: string[];
-}
+import { Schema as MongooseSchema } from 'mongoose';
+import { TeamMemberDto } from './team-member.dto';
 
 export class MilestoneDto {
   @ApiProperty({ description: 'Milestone title' })
@@ -197,12 +151,12 @@ export class CreateProjectDto {
   status: string;
 
   @ApiProperty({
-    description: 'Project manager details'
+    description: 'Project manager ID reference',
+    example: '507f1f77bcf86cd799439011'
   })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => ProjectManagerDto)
-  projectManager?: ProjectManagerDto;
+  @IsMongoId()
+  projectManagerId?: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({
     description: 'Team members', type: [TeamMemberDto]

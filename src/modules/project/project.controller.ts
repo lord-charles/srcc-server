@@ -11,17 +11,20 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { UpdateProjectManagerDto } from './dto/update-project-manager.dto';
+import { TeamMemberDto } from './dto/team-member.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @ApiTags('projects')
-@Controller('projects') 
+@Controller('projects')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 
@@ -29,10 +32,10 @@ export class ProjectController {
   constructor(
     private readonly projectService: ProjectService,
     private readonly cloudinaryService: CloudinaryService,
-  ) {}
+  ) { }
 
   @Post()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create a new project',
     description: `Creates a new project with the provided details. 
     Required documents will be uploaded directly as files.
@@ -58,39 +61,36 @@ export class ProjectController {
       properties: {
         name: { type: 'string', example: 'Health System Upgrade' },
         description: { type: 'string', example: 'Comprehensive upgrade of the hospital management system' },
-        contractId: { type: 'string', example: '507f1f77bcf86cd799439011' },
         totalBudget: { type: 'number', example: 5000000 },
         totalProjectValue: { type: 'number', example: 5500000 },
         currency: { type: 'string', enum: ['KES', 'USD', 'EUR', 'GBP'], example: 'KES' },
         contractStartDate: { type: 'string', format: 'date', example: '2024-01-01' },
         contractEndDate: { type: 'string', format: 'date', example: '2024-12-31' },
         client: { type: 'string', example: 'Ministry of Health' },
-        status: { 
-          type: 'string', 
+        status: {
+          type: 'string',
           enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'],
           example: 'draft'
         },
-        projectManager: {
-          type: 'object',
-          properties: {
-            name: { type: 'string', example: 'John Doe' },
-            email: { type: 'string', format: 'email', example: 'john.doe@example.com' },
-            phone: { type: 'string', example: '+254712345678' }
-          }
+        projectManagerId: {
+          type: 'string',
+          description: 'ObjectId reference to the User model',
+          example: '507f1f77bcf86cd799439011'
         },
         teamMembers: {
           type: 'array',
           items: {
             type: 'object',
             properties: {
-              name: { type: 'string', example: 'Jane Smith' },
-              email: { type: 'string', format: 'email', example: 'jane.smith@example.com' },
-              phone: { type: 'string', example: '+254712345679' },
-              role: { type: 'string', example: 'Developer' },
+              userId: {
+                type: 'string',
+                description: 'ObjectId reference to the User model',
+                example: '507f1f77bcf86cd799439011'
+              },
               startDate: { type: 'string', format: 'date', example: '2024-01-01' },
               endDate: { type: 'string', format: 'date', example: '2024-12-31' },
-              responsibilities: { 
-                type: 'array', 
+              responsibilities: {
+                type: 'array',
                 items: { type: 'string' },
                 example: ['Frontend Development', 'UI/UX Design']
               }
@@ -115,13 +115,13 @@ export class ProjectController {
         riskAssessment: {
           type: 'object',
           properties: {
-            factors: { 
-              type: 'array', 
+            factors: {
+              type: 'array',
               items: { type: 'string' },
               example: ['Technical complexity', 'Resource availability']
             },
-            mitigationStrategies: { 
-              type: 'array', 
+            mitigationStrategies: {
+              type: 'array',
               items: { type: 'string' },
               example: ['Regular technical reviews', 'Early resource planning']
             },
@@ -129,7 +129,7 @@ export class ProjectController {
             nextAssessmentDate: { type: 'string', format: 'date', example: '2024-02-01' }
           }
         },
-        reportingFrequency: { 
+        reportingFrequency: {
           type: 'string',
           enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'],
           example: 'Monthly'
@@ -151,22 +151,22 @@ export class ProjectController {
       }
     }
   })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Project created successfully.',
     type: CreateProjectDto
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Bad Request - Invalid input data or missing required fields.' 
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Invalid input data or missing required fields.'
   })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Unauthorized - Invalid or missing authentication token.' 
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing authentication token.'
   })
-  @ApiResponse({ 
-    status: 403, 
-    description: 'Forbidden - User does not have permission to create projects.' 
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - User does not have permission to create projects.'
   })
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'projectProposal', maxCount: 1 },
@@ -182,6 +182,7 @@ export class ProjectController {
       executionMemo?: Express.Multer.File[],
       signedBudget?: Express.Multer.File[],
     },
+    @Req() req: any,
   ) {
     if (!files.projectProposal?.[0]) {
       throw new BadRequestException('Project proposal document is required');
@@ -211,9 +212,7 @@ export class ProjectController {
     // Parse dates and nested objects
     const parsedData = {
       ...createProjectDto,
-      projectManager: typeof createProjectDto.projectManager === 'string' 
-        ? JSON.parse(createProjectDto.projectManager)
-        : createProjectDto.projectManager,
+      projectManagerId: createProjectDto.projectManagerId,
       teamMembers: typeof createProjectDto.teamMembers === 'string'
         ? JSON.parse(createProjectDto.teamMembers)
         : createProjectDto.teamMembers,
@@ -229,7 +228,9 @@ export class ProjectController {
       signedContractUrl: signedContractResult.secure_url,
       executionMemoUrl: executionMemoResult.secure_url,
       signedBudgetUrl: signedBudgetResult.secure_url,
-      status: createProjectDto.status || 'draft'
+      status: createProjectDto.status || 'draft',
+      createdBy: req.user.id,
+      updatedBy: req.user.id
     };
 
     // Parse dates in nested objects
@@ -276,11 +277,228 @@ export class ProjectController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a project' })
-  @ApiResponse({ status: 200, description: 'Project updated successfully.' })
-  @ApiResponse({ status: 404, description: 'Project not found.' })
-  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectService.update(id, updateProjectDto);
+  @ApiOperation({
+    summary: 'Update a project',
+    description: `Updates an existing project with the provided details. 
+    All fields are optional, including document uploads.
+    
+    Optional documents that can be updated:
+    - Project Proposal
+    - Signed Contract
+    - Contract Execution Memo
+    - Signed Budget
+    
+    Project manager and team member details should include:
+    - Name
+    - Email
+    - Phone
+    
+    All monetary values should be in the specified currency (KES for Kenyan Shillings).`
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Health System Upgrade' },
+        description: { type: 'string', example: 'Comprehensive upgrade of the hospital management system' },
+        totalBudget: { type: 'number', example: 5000000 },
+        totalProjectValue: { type: 'number', example: 5500000 },
+        currency: { type: 'string', enum: ['KES', 'USD', 'EUR', 'GBP'], example: 'KES' },
+        contractStartDate: { type: 'string', format: 'date', example: '2024-01-01' },
+        contractEndDate: { type: 'string', format: 'date', example: '2024-12-31' },
+        client: { type: 'string', example: 'Ministry of Health' },
+        status: {
+          type: 'string',
+          enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'],
+          example: 'active'
+        },
+        projectManagerId: {
+          type: 'string',
+          description: 'ObjectId reference to the User model',
+          example: '507f1f77bcf86cd799439011'
+        },
+        teamMembers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              userId: {
+                type: 'string',
+                description: 'ObjectId reference to the User model',
+                example: '507f1f77bcf86cd799439011'
+              },
+              startDate: { type: 'string', format: 'date', example: '2024-01-01' },
+              endDate: { type: 'string', format: 'date', example: '2024-12-31' },
+              responsibilities: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['Frontend Development', 'UI/UX Design']
+              }
+            }
+          }
+        },
+        milestones: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', example: 'Phase 1 Completion' },
+              description: { type: 'string', example: 'Complete initial system setup and configuration' },
+              dueDate: { type: 'string', format: 'date', example: '2024-03-31' },
+              completed: { type: 'boolean', example: false },
+              completionDate: { type: 'string', format: 'date', example: null },
+              budget: { type: 'number', example: 1000000 },
+              actualCost: { type: 'number', example: null }
+            }
+          }
+        },
+        riskAssessment: {
+          type: 'object',
+          properties: {
+            factors: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['Technical complexity', 'Resource availability']
+            },
+            mitigationStrategies: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['Regular technical reviews', 'Early resource planning']
+            },
+            lastAssessmentDate: { type: 'string', format: 'date', example: '2024-01-01' },
+            nextAssessmentDate: { type: 'string', format: 'date', example: '2024-02-01' }
+          }
+        },
+        reportingFrequency: {
+          type: 'string',
+          enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'],
+          example: 'Monthly'
+        },
+        riskLevel: {
+          type: 'string',
+          enum: ['Low', 'Medium', 'High'],
+          example: 'Medium'
+        },
+        procurementMethod: {
+          type: 'string',
+          enum: ['Open Tender', 'Restricted Tender', 'Direct Procurement', 'Request for Quotation'],
+          example: 'Open Tender'
+        },
+        projectProposal: { type: 'string', format: 'binary' },
+        signedContract: { type: 'string', format: 'binary' },
+        executionMemo: { type: 'string', format: 'binary' },
+        signedBudget: { type: 'string', format: 'binary' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Project updated successfully.',
+    type: UpdateProjectDto
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Invalid input data.'
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing authentication token.'
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - User does not have permission to update projects.'
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Project not found.'
+  })
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'projectProposal', maxCount: 1 },
+    { name: 'signedContract', maxCount: 1 },
+    { name: 'executionMemo', maxCount: 1 },
+    { name: 'signedBudget', maxCount: 1 }
+  ]))
+  async update(
+    @Param('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+    @UploadedFiles() files: {
+      projectProposal?: Express.Multer.File[],
+      signedContract?: Express.Multer.File[],
+      executionMemo?: Express.Multer.File[],
+      signedBudget?: Express.Multer.File[],
+    },
+    @Req() req: any,
+  ) {
+    // Parse dates and nested objects
+    const parsedData: any = {
+      ...updateProjectDto,
+      projectManagerId: updateProjectDto.projectManagerId,
+      teamMembers: typeof updateProjectDto.teamMembers === 'string'
+        ? JSON.parse(updateProjectDto.teamMembers)
+        : updateProjectDto.teamMembers,
+      milestones: typeof updateProjectDto.milestones === 'string'
+        ? JSON.parse(updateProjectDto.milestones)
+        : updateProjectDto.milestones,
+      riskAssessment: typeof updateProjectDto.riskAssessment === 'string'
+        ? JSON.parse(updateProjectDto.riskAssessment)
+        : updateProjectDto.riskAssessment,
+      updatedBy: req.user.id
+    };
+
+    // Handle optional file uploads
+    if (files?.projectProposal?.[0]) {
+      const result = await this.cloudinaryService.uploadFile(files.projectProposal[0], 'project-proposals');
+      parsedData.projectProposalUrl = result.secure_url;
+    }
+    if (files?.signedContract?.[0]) {
+      const result = await this.cloudinaryService.uploadFile(files.signedContract[0], 'signed-contracts');
+      parsedData.signedContractUrl = result.secure_url;
+    }
+    if (files?.executionMemo?.[0]) {
+      const result = await this.cloudinaryService.uploadFile(files.executionMemo[0], 'execution-memos');
+      parsedData.executionMemoUrl = result.secure_url;
+    }
+    if (files?.signedBudget?.[0]) {
+      const result = await this.cloudinaryService.uploadFile(files.signedBudget[0], 'signed-budgets');
+      parsedData.signedBudgetUrl = result.secure_url;
+    }
+
+    // Parse dates if provided
+    if (updateProjectDto.contractStartDate) {
+      parsedData.contractStartDate = new Date(updateProjectDto.contractStartDate);
+    }
+    if (updateProjectDto.contractEndDate) {
+      parsedData.contractEndDate = new Date(updateProjectDto.contractEndDate);
+    }
+
+    // Parse dates in nested objects
+    if (Array.isArray(parsedData.teamMembers)) {
+      parsedData.teamMembers = parsedData.teamMembers.map(member => ({
+        ...member,
+        startDate: member.startDate ? new Date(member.startDate) : undefined,
+        endDate: member.endDate ? new Date(member.endDate) : undefined
+      }));
+    }
+
+    if (Array.isArray(parsedData.milestones)) {
+      parsedData.milestones = parsedData.milestones.map(milestone => ({
+        ...milestone,
+        dueDate: milestone.dueDate ? new Date(milestone.dueDate) : undefined,
+        completionDate: milestone.completionDate ? new Date(milestone.completionDate) : undefined
+      }));
+    }
+
+    if (parsedData.riskAssessment) {
+      if (parsedData.riskAssessment.lastAssessmentDate) {
+        parsedData.riskAssessment.lastAssessmentDate = new Date(parsedData.riskAssessment.lastAssessmentDate);
+      }
+      if (parsedData.riskAssessment.nextAssessmentDate) {
+        parsedData.riskAssessment.nextAssessmentDate = new Date(parsedData.riskAssessment.nextAssessmentDate);
+      }
+    }
+
+    return this.projectService.update(id, parsedData);
   }
 
   @Delete(':id')
@@ -315,21 +533,40 @@ export class ProjectController {
   @ApiResponse({ status: 404, description: 'Project not found.' })
   addTeamMember(
     @Param('id') id: string,
-    @Body() teamMemberData: any
+    @Body() teamMemberDto: TeamMemberDto,
   ) {
-    return this.projectService.addTeamMember(id, teamMemberData);
+    return this.projectService.addTeamMember(id, teamMemberDto);
   }
 
-  @Patch(':id/milestones/:milestoneId')
-  @ApiOperation({ summary: 'Update project milestone' })
-  @ApiResponse({ status: 200, description: 'Milestone updated successfully.' })
-  @ApiResponse({ status: 404, description: 'Project or milestone not found.' })
-  updateMilestone(
+  @Patch(':id/team-members/:teamMemberId')
+  @ApiOperation({ summary: 'Update team member details' })
+  @ApiResponse({ status: 200, description: 'Team member updated successfully.' })
+  async updateTeamMember(
     @Param('id') id: string,
-    @Param('milestoneId') milestoneId: string,
-    @Body() milestoneData: any
+    @Param('teamMemberId') teamMemberId: string,
+    @Body() teamMemberDto: TeamMemberDto,
   ) {
-    return this.projectService.updateMilestone(id, milestoneId, milestoneData);
+    return this.projectService.updateTeamMember(id, teamMemberId, teamMemberDto);
+  }
+
+  @Delete(':id/team-members/:teamMemberId')
+  @ApiOperation({ summary: 'Remove team member from project' })
+  @ApiResponse({ status: 200, description: 'Team member removed successfully.' })
+  async removeTeamMember(
+    @Param('id') id: string,
+    @Param('teamMemberId') teamMemberId: string,
+  ) {
+    return this.projectService.removeTeamMember(id, teamMemberId);
+  }
+
+  @Patch(':id/project-manager')
+  @ApiOperation({ summary: 'Update project manager' })
+  @ApiResponse({ status: 200, description: 'Project manager updated successfully' })
+  async updateProjectManager(
+    @Param('id') id: string,
+    @Body() updateProjectManagerDto: UpdateProjectManagerDto,
+  ) {
+    return this.projectService.updateProjectManager(id, updateProjectManagerDto.projectManagerId);
   }
 
   @Post(':id/documents')
@@ -365,95 +602,15 @@ export class ProjectController {
     return this.projectService.updateKPIs(id, kpiData);
   }
 
-  // @Post('upload/proposal')
-  // @ApiOperation({ summary: 'Upload project proposal document' })
-  // @ApiConsumes('multipart/form-data')
-  // @ApiBody({
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       file: {
-  //         type: 'string',
-  //         format: 'binary'
-  //       },
-  //     },
-  //   },
-  // })
-  // @UseInterceptors(FileInterceptor('file'))
-  // async uploadProposal(@UploadedFile() file: Express.Multer.File) {
-  //   if (!file) {
-  //     throw new BadRequestException('No file uploaded');
-  //   }
-  //   const result = await this.cloudinaryService.uploadFile(file, 'project-proposals');
-  //   return { url: result.secure_url };
-  // }
-
-  // @Post('upload/contract')
-  // @ApiOperation({ summary: 'Upload signed contract document' })
-  // @ApiConsumes('multipart/form-data')
-  // @ApiBody({
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       file: {
-  //         type: 'string',
-  //         format: 'binary'
-  //       },
-  //     },
-  //   },
-  // })
-  // @UseInterceptors(FileInterceptor('file'))
-  // async uploadContract(@UploadedFile() file: Express.Multer.File) {
-  //   if (!file) {
-  //     throw new BadRequestException('No file uploaded');
-  //   }
-  //   const result = await this.cloudinaryService.uploadFile(file, 'signed-contracts');
-  //   return { url: result.secure_url };
-  // }
-
-  // @Post('upload/memo')
-  // @ApiOperation({ summary: 'Upload contract execution memo' })
-  // @ApiConsumes('multipart/form-data')
-  // @ApiBody({
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       file: {
-  //         type: 'string',
-  //         format: 'binary'
-  //       },
-  //     },
-  //   },
-  // })
-  // @UseInterceptors(FileInterceptor('file'))
-  // async uploadMemo(@UploadedFile() file: Express.Multer.File) {
-  //   if (!file) {
-  //     throw new BadRequestException('No file uploaded');
-  //   }
-  //   const result = await this.cloudinaryService.uploadFile(file, 'execution-memos');
-  //   return { url: result.secure_url };
-  // }
-
-  // @Post('upload/budget')
-  // @ApiOperation({ summary: 'Upload signed budget document' })
-  // @ApiConsumes('multipart/form-data')
-  // @ApiBody({
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       file: {
-  //         type: 'string',
-  //         format: 'binary'
-  //       },
-  //     },
-  //   },
-  // })
-  // @UseInterceptors(FileInterceptor('file'))
-  // async uploadBudget(@UploadedFile() file: Express.Multer.File) {
-  //   if (!file) {
-  //     throw new BadRequestException('No file uploaded');
-  //   }
-  //   const result = await this.cloudinaryService.uploadFile(file, 'signed-budgets');
-  //   return { url: result.secure_url };
-  // }
+  @Patch(':id/milestones/:milestoneId')
+  @ApiOperation({ summary: 'Update project milestone' })
+  @ApiResponse({ status: 200, description: 'Milestone updated successfully.' })
+  @ApiResponse({ status: 404, description: 'Project or milestone not found.' })
+  updateMilestone(
+    @Param('id') id: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body() milestoneData: any
+  ) {
+    return this.projectService.updateMilestone(id, milestoneId, milestoneData);
+  }
 }

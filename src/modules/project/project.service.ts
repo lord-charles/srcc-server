@@ -4,12 +4,15 @@ import { Model } from 'mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { TeamMemberDto } from './dto/team-member.dto';
+import { Schema as MongooseSchema } from 'mongoose';
+
 
 @Injectable()
 export class ProjectService {
   constructor(
     @InjectModel(Project.name) private projectModel: Model<ProjectDocument>
-  ) {}
+  ) { }
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
     const createdProject = new this.projectModel(createProjectDto);
@@ -19,20 +22,18 @@ export class ProjectService {
   async findAll(query: any = {}): Promise<Project[]> {
     return this.projectModel
       .find(query)
-      // .populate('contractId', 'name reference')
-      // .populate('projectManagerId', 'name email')
-      // .populate('teamMembers.userId', 'name email')
       .exec();
   }
 
   async findOne(id: string): Promise<Project> {
     const project = await this.projectModel
       .findById(id)
-      .populate('contractId', 'name reference')
-      .populate('projectManagerId', 'name email')
-      .populate('teamMembers.userId', 'name email')
+      .populate('projectManagerId', 'firstName lastName email')
+      .populate('teamMembers.userId', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email')
+      .populate('updatedBy', 'firstName lastName email')
       .exec();
-    
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
@@ -43,7 +44,7 @@ export class ProjectService {
     const updatedProject = await this.projectModel
       .findByIdAndUpdate(id, updateProjectDto, { new: true })
       .exec();
-    
+
     if (!updatedProject) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
@@ -60,8 +61,8 @@ export class ProjectService {
   async findByContract(contractId: string): Promise<Project[]> {
     return this.projectModel
       .find({ contractId })
-      .populate('projectManagerId', 'name email')
-      .populate('teamMembers.userId', 'name email')
+      .populate('projectManagerId', 'firstName lastName email')
+      .populate('teamMembers.userId', 'firstName lastName email')
       .exec();
   }
 
@@ -73,27 +74,14 @@ export class ProjectService {
         { new: true }
       )
       .exec();
-    
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
     return project;
   }
 
-  async addTeamMember(id: string, teamMemberData: any): Promise<Project> {
-    const project = await this.projectModel
-      .findByIdAndUpdate(
-        id,
-        { $push: { teamMembers: teamMemberData } },
-        { new: true }
-      )
-      .exec();
-    
-    if (!project) {
-      throw new NotFoundException(`Project with ID ${id} not found`);
-    }
-    return project;
-  }
+
 
   async updateMilestone(
     projectId: string,
@@ -102,17 +90,17 @@ export class ProjectService {
   ): Promise<Project> {
     const project = await this.projectModel
       .findOneAndUpdate(
-        { 
+        {
           _id: projectId,
-          'milestones._id': milestoneId 
+          'milestones._id': milestoneId
         },
-        { 
+        {
           $set: { 'milestones.$': milestoneData }
         },
         { new: true }
       )
       .exec();
-    
+
     if (!project) {
       throw new NotFoundException(`Project or milestone not found`);
     }
@@ -127,7 +115,7 @@ export class ProjectService {
         { new: true }
       )
       .exec();
-    
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
@@ -138,14 +126,14 @@ export class ProjectService {
     const project = await this.projectModel
       .findByIdAndUpdate(
         id,
-        { 
+        {
           $set: { financialTracking: financialData },
           $inc: { amountSpent: financialData.amount || 0 }
         },
         { new: true }
       )
       .exec();
-    
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
@@ -160,10 +148,48 @@ export class ProjectService {
         { new: true }
       )
       .exec();
-    
+
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
     return project;
+  }
+
+  async updateProjectManager(id: string, projectManagerId: MongooseSchema.Types.ObjectId | null) {
+    return this.projectModel.findByIdAndUpdate(
+      id,
+      { projectManagerId },
+      { new: true }
+    ).exec();
+  }
+
+  async addTeamMember(id: string, teamMember: TeamMemberDto) {
+    return this.projectModel.findByIdAndUpdate(
+      id,
+      { $push: { teamMembers: teamMember } },
+      { new: true }
+    ).exec();
+  }
+
+  async updateTeamMember(id: string, teamMemberId: string, teamMember: TeamMemberDto) {
+    return this.projectModel.findOneAndUpdate(
+      { _id: id, 'teamMembers.userId': teamMemberId },
+      {
+        $set: {
+          'teamMembers.$.startDate': teamMember.startDate,
+          'teamMembers.$.endDate': teamMember.endDate,
+          'teamMembers.$.responsibilities': teamMember.responsibilities
+        }
+      },
+      { new: true }
+    ).exec();
+  }
+
+  async removeTeamMember(id: string, teamMemberId: string) {
+    return this.projectModel.findByIdAndUpdate(
+      id,
+      { $pull: { teamMembers: { userId: teamMemberId } } },
+      { new: true }
+    ).exec();
   }
 }

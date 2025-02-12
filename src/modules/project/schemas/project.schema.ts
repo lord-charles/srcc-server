@@ -50,38 +50,36 @@ export class Project {
   })
   status: string;
 
-  @ApiProperty({ description: 'Project manager details' })
+  @ApiProperty({ description: 'User who created the project' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  createdBy: MongooseSchema.Types.ObjectId;
+
+  @ApiProperty({ description: 'User who last updated the project' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  updatedBy: MongooseSchema.Types.ObjectId;
+
+
+  @ApiProperty({ description: 'Project manager reference' })
   @Prop({
-    type: {
-      name: { type: String },
-      email: { type: String },
-      phone: { type: String },
-    },
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
     required: false
   })
-  projectManager?: {
-    name: string;
-    email: string;
-    phone: string;
-  };
+  projectManagerId?: MongooseSchema.Types.ObjectId;
 
-  @ApiProperty({ description: 'Team members assigned to the project', type: [Object] })
+  @ApiProperty({ description: 'Team members assigned to the project' })
   @Prop({
     type: [{
-      name: { type: String },
-      email: { type: String },
-      phone: { type: String },
-      role: { type: String },
+      userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
       startDate: { type: Date },
       endDate: { type: Date },
       responsibilities: [String]
     }],
-    required: false
+    required: false,
+    default: []
   })
   teamMembers?: {
-    name: string;
-    email: string;
-    phone: string;
+    userId: MongooseSchema.Types.ObjectId;
     role: string;
     startDate: Date;
     endDate?: Date;
