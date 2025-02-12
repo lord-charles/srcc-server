@@ -29,7 +29,7 @@ export class ProjectService {
     const project = await this.projectModel
       .findById(id)
       .populate('projectManagerId', 'firstName lastName email')
-      .populate('teamMembers.userId', 'firstName lastName email')
+      .populate('teamMembers.userId', 'firstName lastName email _id')
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email')
       .exec();
@@ -62,7 +62,7 @@ export class ProjectService {
     return this.projectModel
       .find({ contractId })
       .populate('projectManagerId', 'firstName lastName email')
-      .populate('teamMembers.userId', 'firstName lastName email')
+      .populate('teamMembers.userId', 'firstName lastName email _id')
       .exec();
   }
 
