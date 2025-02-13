@@ -183,9 +183,7 @@ export class ConsultantController {
     { name: 'academicCertificateFiles', maxCount: 5 }
   ], {
     fileFilter: (req, file, callback) => {
-      if (!file.originalname.match(/\.(pdf|docx | doc)$/i)) {
-        return callback(new BadRequestException('Only PDF and DOCX files are allowed'), false);
-      }
+
       callback(null, true);
     },
     limits: {
