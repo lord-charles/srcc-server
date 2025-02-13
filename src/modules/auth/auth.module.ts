@@ -17,6 +17,9 @@ import {
   SystemLog,
   SystemLogSchema,
 } from '../system-logs/schemas/system-log.schema';
+import { ConsultantController } from './consultant.controller';
+import { ConsultantService } from './consultant.service';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -25,6 +28,7 @@ import {
     MongooseModule.forFeature([
       { name: SystemLog.name, schema: SystemLogSchema },
     ]),
+    CloudinaryModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -36,10 +40,11 @@ import {
       }),
     }),
   ],
-  controllers: [AuthController, UserController],
+  controllers: [AuthController, UserController, ConsultantController],
   providers: [
     AuthService,
     UserService,
+    ConsultantService,
     NotificationService,
     SystemLogsService,
     JwtStrategy,
@@ -54,4 +59,4 @@ import {
   ],
   exports: [AuthService, UserService, JwtModule],
 })
-export class AuthModule {}
+export class AuthModule { }

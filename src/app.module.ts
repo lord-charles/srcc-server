@@ -1,4 +1,5 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { DatabaseModule } from './database/database.module';
 import { LoggerMiddleware } from './middleware/logger.middleware';
@@ -12,6 +13,9 @@ import { BudgetModule } from './modules/budget/budget.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     AuthModule,
     DatabaseModule,
     SystemConfigModule,
@@ -20,7 +24,7 @@ import { BudgetModule } from './modules/budget/budget.module';
     ProjectModule,
     ContractorModule,
     ContractModule,
-    BudgetModule
+    BudgetModule,
   ],
   controllers: [],
   providers: [],
