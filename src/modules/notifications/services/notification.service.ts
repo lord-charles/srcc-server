@@ -102,7 +102,7 @@ export class NotificationService {
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 20px;">
               <h1 style="color: #2c3e50; margin: 0;">SRCC</h1>
-              <p style="color: #7f8c8d; margin: 5px 0;">Sustainable Resource Competency Center</p>
+              <p style="color: #7f8c8d; margin: 5px 0;">Strathmore Research and Consultancy Centre</p>
             </div>
             <div style="background-color: #ffffff; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               ${message.replace(/\n/g, '<br>')}
@@ -151,7 +151,7 @@ export class NotificationService {
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 20px;">
               <h1 style="color: #2c3e50; margin: 0;">SRCC</h1>
-              <p style="color: #7f8c8d; margin: 5px 0;">Sustainable Resource Competency Center</p>
+              <p style="color: #7f8c8d; margin: 5px 0;">Strathmore Research and Consultancy Centre</p>
             </div>
             <div style="background-color: #ffffff; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               ${message.replace(/\n/g, '<br>')}

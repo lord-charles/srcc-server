@@ -35,11 +35,11 @@ export class ConsultantController {
     description: `Register a new consultant with all required details and documents.
     
     Required documents:
-    - CV/Resume (PDF format)
-    - Academic Certificates (PDF format, max 5)
+    - CV/Resume (PDF or DOCX format)
+    - Academic Certificates (PDF or DOCX format, max 5)
     
     Note: 
-    - All documents must be in PDF format
+    - All documents must be in PDF or DOCX format
     - The consultant's status will be set to 'pending' until approved by an admin`
   })
   @ApiConsumes('multipart/form-data')
@@ -67,8 +67,8 @@ export class ConsultantController {
             properties: {
               name: { type: 'string', example: 'Project Management' },
               yearsOfExperience: { type: 'number', example: 5 },
-              proficiencyLevel: { 
-                type: 'string', 
+              proficiencyLevel: {
+                type: 'string',
                 enum: ['Beginner', 'Intermediate', 'Expert'],
                 example: 'Expert'
               }
@@ -181,7 +181,17 @@ export class ConsultantController {
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'cv', maxCount: 1 },
     { name: 'academicCertificateFiles', maxCount: 5 }
-  ]))
+  ], {
+    fileFilter: (req, file, callback) => {
+      if (!file.originalname.match(/\.(pdf|docx)$/i)) {
+        return callback(new BadRequestException('Only PDF and DOCX files are allowed'), false);
+      }
+      callback(null, true);
+    },
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+  }))
   async register(
     @Body() registerConsultantDto: RegisterConsultantDto,
     @UploadedFiles() files: {
@@ -189,52 +199,115 @@ export class ConsultantController {
       academicCertificateFiles?: Express.Multer.File[],
     },
   ) {
-    // Validate required files
-    if (!files.cv?.[0]) {
-      throw new BadRequestException('CV/Resume is required');
+    try {
+      // Validate required files
+      if (!files.cv?.[0]) {
+        throw new BadRequestException('CV/Resume is required');
+      }
+      if (!files.academicCertificateFiles?.length) {
+        throw new BadRequestException('At least one academic certificate is required');
+      }
+      if (files.academicCertificateFiles.length > 5) {
+        throw new BadRequestException('Maximum 5 academic certificates are allowed');
+      }
+
+      // Validate file sizes
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (files.cv[0].size > maxSize) {
+        throw new BadRequestException('CV file size should not exceed 5MB');
+      }
+      for (const file of files.academicCertificateFiles) {
+        if (file.size > maxSize) {
+          throw new BadRequestException('Academic certificate file size should not exceed 5MB');
+        }
+      }
+
+      // Upload CV
+      const cvResult = await this.cloudinaryService.uploadFile(files.cv[0], 'consultant-cvs');
+
+      // Upload and process academic certificates
+      const academicCertificates = await Promise.all(
+        files.academicCertificateFiles.map(async (file, index) => {
+          const result = await this.cloudinaryService.uploadFile(file, 'consultant-academic-certs');
+          const certDetails = registerConsultantDto.academicCertificates[index];
+          return {
+            name: certDetails.name,
+            institution: certDetails.institution,
+            yearOfCompletion: certDetails.yearOfCompletion,
+            documentUrl: result.secure_url
+          };
+        })
+      );
+
+      // Validate date format and parse dates
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(registerConsultantDto.dateOfBirth)) {
+        throw new BadRequestException('Invalid date format for date of birth. Use YYYY-MM-DD format');
+      }
+
+      // Parse data with error handling
+      const parsedData = {
+        ...registerConsultantDto,
+        dateOfBirth: new Date(registerConsultantDto.dateOfBirth),
+        // Parse skills array - handle both string array and direct array
+        skills: Array.isArray(registerConsultantDto.skills)
+          ? registerConsultantDto.skills.map(skill =>
+            typeof skill === 'string' ? JSON.parse(skill)[0] : skill
+          )
+          : JSON.parse(registerConsultantDto.skills),
+        // Parse education array - handle both string array and direct array
+        education: Array.isArray(registerConsultantDto.education)
+          ? registerConsultantDto.education.map(edu =>
+            typeof edu === 'string' ? JSON.parse(edu)[0] : edu
+          )
+          : JSON.parse(registerConsultantDto.education),
+        // Parse certifications and their dates - handle both string array and direct array
+        certifications: typeof registerConsultantDto.certifications === 'string'
+          ? JSON.parse(registerConsultantDto.certifications).map(cert => ({
+              ...cert,
+              dateIssued: cert.dateIssued ? new Date(cert.dateIssued) : undefined,
+              expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
+            }))
+          : registerConsultantDto.certifications?.map(cert => ({
+              ...cert,
+              dateIssued: cert.dateIssued ? new Date(cert.dateIssued) : undefined,
+              expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
+            })),
+        // Parse emergency contact
+        emergencyContact: typeof registerConsultantDto.emergencyContact === 'string'
+          ? JSON.parse(registerConsultantDto.emergencyContact)
+          : registerConsultantDto.emergencyContact,
+        // Parse bank details
+        bankDetails: typeof registerConsultantDto.bankDetails === 'string'
+          ? JSON.parse(registerConsultantDto.bankDetails)
+          : registerConsultantDto.bankDetails,
+        // Parse mpesa details
+        mpesaDetails: typeof registerConsultantDto.mpesaDetails === 'string'
+          ? JSON.parse(registerConsultantDto.mpesaDetails)
+          : registerConsultantDto.mpesaDetails,
+        preferredWorkTypes: registerConsultantDto.preferredWorkTypes,
+        cvUrl: cvResult.secure_url,
+        academicCertificates,
+        status: 'pending',
+        roles: ['consultant']
+      };
+
+      // Validate parsed data structure
+      if (!Array.isArray(parsedData.skills) || !parsedData.skills.length) {
+        throw new BadRequestException('Skills must be a non-empty array');
+      }
+      if (!Array.isArray(parsedData.education) || !parsedData.education.length) {
+        throw new BadRequestException('Education must be a non-empty array');
+      }
+
+      // Register consultant
+      return this.consultantService.register(parsedData);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to process registration: ${error.message}`);
     }
-    if (!files.academicCertificateFiles?.length) {
-      throw new BadRequestException('At least one academic certificate is required');
-    }
-
-    // Upload CV
-    const cvResult = await this.cloudinaryService.uploadFile(files.cv[0], 'consultant-cvs');
-
-    // Upload and process academic certificates
-    const academicCertificates = await Promise.all(
-      files.academicCertificateFiles.map(async (file, index) => {
-        const result = await this.cloudinaryService.uploadFile(file, 'consultant-academic-certs');
-        const certDetails = registerConsultantDto.academicCertificates[index];
-        return {
-          name: certDetails.name,
-          institution: certDetails.institution,
-          yearOfCompletion: certDetails.yearOfCompletion,
-          documentUrl: result.secure_url
-        };
-      })
-    );
-
-    // Parse dates
-    const parsedData = {
-      ...registerConsultantDto,
-      dateOfBirth: new Date(registerConsultantDto.dateOfBirth),
-      certifications: registerConsultantDto.certifications 
-        ? (typeof registerConsultantDto.certifications === 'string' 
-          ? JSON.parse(registerConsultantDto.certifications) 
-          : registerConsultantDto.certifications).map(cert => ({
-            ...cert,
-            dateIssued: new Date(cert.dateIssued),
-            expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
-          }))
-        : [],
-      cvUrl: cvResult.secure_url,
-      academicCertificates,
-      status: 'pending',
-      roles: ['consultant']
-    };
-
-    // Register consultant
-    return this.consultantService.register(parsedData);
   }
 
   @Get('pending')
