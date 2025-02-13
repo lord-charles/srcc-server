@@ -183,7 +183,7 @@ export class ConsultantController {
     { name: 'academicCertificateFiles', maxCount: 5 }
   ], {
     fileFilter: (req, file, callback) => {
-      if (!file.originalname.match(/\.(pdf|docx)$/i)) {
+      if (!file.originalname.match(/\.(pdf|docx | doc)$/i)) {
         return callback(new BadRequestException('Only PDF and DOCX files are allowed'), false);
       }
       callback(null, true);
@@ -239,11 +239,7 @@ export class ConsultantController {
         })
       );
 
-      // Validate date format and parse dates
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(registerConsultantDto.dateOfBirth)) {
-        throw new BadRequestException('Invalid date format for date of birth. Use YYYY-MM-DD format');
-      }
+
 
       // Parse data with error handling
       const parsedData = {
@@ -264,15 +260,15 @@ export class ConsultantController {
         // Parse certifications and their dates - handle both string array and direct array
         certifications: typeof registerConsultantDto.certifications === 'string'
           ? JSON.parse(registerConsultantDto.certifications).map(cert => ({
-              ...cert,
-              dateIssued: cert.dateIssued ? new Date(cert.dateIssued) : undefined,
-              expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
-            }))
+            ...cert,
+            dateIssued: cert.dateIssued ? new Date(cert.dateIssued) : undefined,
+            expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
+          }))
           : registerConsultantDto.certifications?.map(cert => ({
-              ...cert,
-              dateIssued: cert.dateIssued ? new Date(cert.dateIssued) : undefined,
-              expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
-            })),
+            ...cert,
+            dateIssued: cert.dateIssued ? new Date(cert.dateIssued) : undefined,
+            expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
+          })),
         // Parse emergency contact
         emergencyContact: typeof registerConsultantDto.emergencyContact === 'string'
           ? JSON.parse(registerConsultantDto.emergencyContact)
