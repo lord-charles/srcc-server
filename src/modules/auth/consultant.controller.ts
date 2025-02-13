@@ -144,11 +144,6 @@ export class ConsultantController {
             phoneNumber: { type: 'string', example: '+254712345678' }
           }
         },
-        preferredPaymentMethod: {
-          type: 'string',
-          enum: ['bank', 'mpesa'],
-          example: 'bank'
-        },
         nssfNumber: { type: 'string', example: '1234567890' },
         nhifNumber: { type: 'string', example: '1234567890' },
         nssfDeduction: { type: 'number', example: 1000 },
