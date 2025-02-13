@@ -333,13 +333,6 @@ export class User {
   @Prop({ type: MpesaDetails })
   mpesaDetails?: MpesaDetails;
 
-  @ApiProperty({
-    description: 'Preferred payment method',
-    example: 'bank',
-    enum: ['bank', 'mpesa'],
-  })
-  @Prop({ required: true })
-  preferredPaymentMethod: 'bank' | 'mpesa';
 }
 
 @Schema({ _id: false, timestamps: true })

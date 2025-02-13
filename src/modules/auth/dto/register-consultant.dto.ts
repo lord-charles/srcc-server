@@ -12,8 +12,8 @@ class SkillDto {
   @Min(0)
   yearsOfExperience: number;
 
-  @ApiProperty({ 
-    description: 'Proficiency level', 
+  @ApiProperty({
+    description: 'Proficiency level',
     example: 'Expert',
     enum: ['Beginner', 'Intermediate', 'Expert']
   })
@@ -219,7 +219,7 @@ export class RegisterConsultantDto {
   @Min(0)
   hourlyRate: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Preferred work types',
     example: ['remote', 'hybrid'],
     enum: ['remote', 'onsite', 'hybrid'],
@@ -249,12 +249,4 @@ export class RegisterConsultantDto {
   @ValidateNested()
   @Type(() => MpesaDetailsDto)
   mpesaDetails?: MpesaDetailsDto;
-
-  @ApiProperty({ 
-    description: 'Preferred payment method',
-    example: 'bank',
-    enum: ['bank', 'mpesa']
-  })
-  @IsEnum(['bank', 'mpesa'])
-  preferredPaymentMethod: 'bank' | 'mpesa';
 }
