@@ -149,6 +149,10 @@ export class ConsultantController {
           enum: ['bank', 'mpesa'],
           example: 'bank'
         },
+        nssfNumber: { type: 'string', example: '1234567890' },
+        nhifNumber: { type: 'string', example: '1234567890' },
+        nssfDeduction: { type: 'number', example: 1000 },
+        nhifDeduction: { type: 'number', example: 500 },
         cv: { type: 'string', format: 'binary' },
         academicCertificateFiles: {
           type: 'array',
@@ -161,6 +165,7 @@ export class ConsultantController {
         'county', 'skills', 'education', 'academicCertificates',
         'yearsOfExperience', 'hourlyRate', 'preferredWorkTypes',
         'department', 'emergencyContact', 'preferredPaymentMethod',
+        'nssfNumber', 'nhifNumber', 'nssfDeduction', 'nhifDeduction',
         'cv', 'academicCertificateFiles'
       ]
     }
@@ -213,11 +218,15 @@ export class ConsultantController {
     const parsedData = {
       ...registerConsultantDto,
       dateOfBirth: new Date(registerConsultantDto.dateOfBirth),
-      certifications: registerConsultantDto.certifications?.map(cert => ({
-        ...cert,
-        dateIssued: new Date(cert.dateIssued),
-        expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
-      })),
+      certifications: registerConsultantDto.certifications 
+        ? (typeof registerConsultantDto.certifications === 'string' 
+          ? JSON.parse(registerConsultantDto.certifications) 
+          : registerConsultantDto.certifications).map(cert => ({
+            ...cert,
+            dateIssued: new Date(cert.dateIssued),
+            expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : undefined
+          }))
+        : [],
       cvUrl: cvResult.secure_url,
       academicCertificates,
       status: 'pending',

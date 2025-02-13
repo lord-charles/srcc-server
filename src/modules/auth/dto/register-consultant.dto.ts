@@ -168,6 +168,22 @@ export class RegisterConsultantDto {
   @IsString()
   county: string;
 
+  @ApiProperty({ description: 'NSSF number', example: 'NSSF123456' })
+  @IsString()
+  nssfNumber: string;
+
+  @ApiProperty({ description: 'NHIF number', example: 'NHIF123456' })
+  @IsString()
+  nhifNumber: string;
+
+  @ApiProperty({ description: 'NSSF deduction amount', example: 200 })
+  @IsNumber()
+  nssfDeduction: number;
+
+  @ApiProperty({ description: 'NHIF deduction amount', example: 500 })
+  @IsNumber()
+  nhifDeduction: number;
+
   @ApiProperty({ description: 'Skills array', type: [SkillDto] })
   @IsArray()
   @ValidateNested({ each: true })
