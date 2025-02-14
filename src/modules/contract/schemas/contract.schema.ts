@@ -42,24 +42,24 @@ export class Contract {
   @Prop({ required: true })
   endDate: Date;
 
-  @ApiProperty({ 
-    example: 'active', 
+  @ApiProperty({
+    example: 'active',
     description: 'Contract status',
     enum: ['draft', 'pending_approval', 'active', 'completed', 'terminated', 'suspended']
   })
-  @Prop({ 
+  @Prop({
     required: true,
     enum: ['draft', 'pending_approval', 'active', 'completed', 'terminated', 'suspended'],
     default: 'draft'
   })
   status: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'Open Tender',
     description: 'Procurement method used',
     enum: ['Open Tender', 'Restricted Tender', 'Direct Procurement', 'Request for Proposal', 'Request for Quotation']
   })
-  @Prop({ 
+  @Prop({
     required: true,
     enum: ['Open Tender', 'Restricted Tender', 'Direct Procurement', 'Request for Proposal', 'Request for Quotation']
   })
@@ -167,15 +167,15 @@ export class Counter {
 export const CounterSchema = SchemaFactory.createForClass(Counter);
 
 ContractSchema.pre<ContractDocument>('save', async function (next) {
-  if (!this.projectId) {
+  if (!this.contractNumber) {
     const counter = await this.db
       .model('Counter', CounterSchema)
       .findOneAndUpdate(
-        { name: 'projectId' },
+        { name: 'contractNumber' },
         { $inc: { sequenceValue: 1 } },
         { new: true, upsert: true },
       );
-    this.projectId = `PROJECT-${counter.sequenceValue
+    this.contractNumber = `Contract-${counter.sequenceValue
       .toString()
       .padStart(3, '0')}`;
   }
