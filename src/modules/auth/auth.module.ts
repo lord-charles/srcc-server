@@ -20,12 +20,15 @@ import {
 import { ConsultantController } from './consultant.controller';
 import { ConsultantService } from './consultant.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { Organization, OrganizationSchema } from './schemas/organization.schema';
+import { SystemLogsModule } from '../system-logs/system-logs.module';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Organization.name, schema: OrganizationSchema },
       { name: SystemLog.name, schema: SystemLogSchema },
     ]),
     CloudinaryModule,
@@ -39,6 +42,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
         },
       }),
     }),
+    SystemLogsModule,
   ],
   controllers: [AuthController, UserController, ConsultantController],
   providers: [

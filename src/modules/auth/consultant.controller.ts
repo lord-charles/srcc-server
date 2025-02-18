@@ -19,6 +19,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { Public } from './decorators/public.decorator';
+import { RegisterOrganizationDto } from './dto/register-organization.dto';
 
 @ApiTags('consultants')
 @Controller('consultants')
@@ -299,6 +300,215 @@ export class ConsultantController {
     }
   }
 
+  @Public()
+  @Post('organization/register')
+  @ApiOperation({
+    summary: 'Register a new organization consultant',
+    description: `Register a new organization as a consultant with all required details and documents.
+    
+    Required documents:
+    - Certificate of Registration (PDF format)
+    - KRA Certificate (PDF format)
+    - Tax Compliance Certificate (PDF format)
+    - CR12 Document (PDF format)
+    
+    Note: 
+    - All documents must be in PDF format
+    - The organization's status will be set to 'pending' until approved by an admin`
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        companyName: { type: 'string', example: 'Tech Solutions Ltd' },
+        registrationNumber: { type: 'string', example: 'PVT-123456' },
+        kraPin: { type: 'string', example: 'P051234567X' },
+        businessEmail: { type: 'string', example: 'info1@techsolutions.co.ke' },
+        businessPhone: { type: 'string', example: '254720123456' },
+        alternativePhoneNumber: { type: 'string', example: '254720123456' },
+        businessAddress: { type: 'string', example: 'Westlands Business Park, Block A' },
+        postalAddress: { type: 'string', example: 'P.O. Box 12345-00100' },
+        county: { type: 'string', example: 'Nairobi' },
+        yearsOfOperation: { type: 'number', example: 5 },
+        hourlyRate: { type: 'number', example: 5000 },
+        taxComplianceExpiryDate: { type: 'string', format: 'date', example: '2025-12-31' },
+        servicesOffered: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['Software Development', 'IT Consulting', 'Cloud Solutions']
+        },
+        industries: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['Technology', 'Finance', 'Healthcare']
+        },
+        contactPerson: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', example: 'John Doe' },
+            position: { type: 'string', example: 'Managing Director' },
+            email: { type: 'string', example: 'john.doe@techsolutions.co.ke' },
+            phoneNumber: { type: 'string', example: '+254712345678' },
+            alternativePhoneNumber: { type: 'string', example: '+254723456789' }
+          }
+        },
+        bankDetails: {
+          type: 'object',
+          properties: {
+            bankName: { type: 'string', example: 'Equity Bank' },
+            accountName: { type: 'string', example: 'Tech Solutions Ltd' },
+            accountNumber: { type: 'string', example: '1234567890' },
+            branchCode: { type: 'string', example: '123' },
+            swiftCode: { type: 'string', example: 'EQBLKENA' }
+          }
+        },
+        registrationCertificate: { type: 'string', format: 'binary' },
+        kraCertificate: { type: 'string', format: 'binary' },
+        taxComplianceCertificate: { type: 'string', format: 'binary' },
+        cr12Document: { type: 'string', format: 'binary' }
+      },
+      required: [
+        'companyName', 'registrationNumber', 'kraPin', 'businessEmail',
+        'businessPhone', 'businessAddress', 'county', 'yearsOfOperation',
+        'hourlyRate', 'servicesOffered', 'industries', 'contactPerson',
+        'bankDetails', 'registrationCertificate', 'kraCertificate',
+        'taxComplianceCertificate', 'cr12Document', 'taxComplianceExpiryDate'
+      ]
+    }
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Organization registered successfully.'
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Invalid input data or missing required fields/documents.'
+  })
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'registrationCertificate', maxCount: 1 },
+    { name: 'kraCertificate', maxCount: 1 },
+    { name: 'taxComplianceCertificate', maxCount: 1 },
+    { name: 'cr12Document', maxCount: 1 }
+  ], {
+    fileFilter: (req, file, callback) => {
+      if (file.mimetype !== 'application/pdf') {
+        return callback(new BadRequestException('Only PDF files are allowed'), false);
+      }
+      callback(null, true);
+    },
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+  }))
+  async registerOrganization(
+    @Body() registerOrgDto: RegisterOrganizationDto,
+    @UploadedFiles() files: {
+      registrationCertificate?: Express.Multer.File[],
+      kraCertificate?: Express.Multer.File[],
+      taxComplianceCertificate?: Express.Multer.File[],
+      cr12Document?: Express.Multer.File[],
+    },
+  ) {
+    try {
+      // Validate required files
+      if (!files.registrationCertificate?.[0]) {
+        throw new BadRequestException('Registration Certificate is required');
+      }
+      if (!files.kraCertificate?.[0]) {
+        throw new BadRequestException('KRA Certificate is required');
+      }
+      if (!files.taxComplianceCertificate?.[0]) {
+        throw new BadRequestException('Tax Compliance Certificate is required');
+      }
+      if (!files.cr12Document?.[0]) {
+        throw new BadRequestException('CR12 Document is required');
+      }
+
+      // Validate file sizes
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      for (const fileArray of Object.values(files)) {
+        if (fileArray[0].size > maxSize) {
+          throw new BadRequestException(`${fileArray[0].fieldname} file size should not exceed 5MB`);
+        }
+      }
+
+      // Upload documents to Cloudinary
+      const uploadedFiles = {
+        registrationCertificateUrl: (await this.cloudinaryService.uploadFile(
+          files.registrationCertificate[0],
+          'org-registration-certs'
+        )).secure_url,
+        kraCertificateUrl: (await this.cloudinaryService.uploadFile(
+          files.kraCertificate[0],
+          'org-kra-certs'
+        )).secure_url,
+        taxComplianceCertificateUrl: (await this.cloudinaryService.uploadFile(
+          files.taxComplianceCertificate[0],
+          'org-tax-compliance'
+        )).secure_url,
+        cr12Url: (await this.cloudinaryService.uploadFile(
+          files.cr12Document[0],
+          'org-cr12'
+        )).secure_url,
+      };
+
+      // Parse data with error handling
+      const parsedData = {
+        ...registerOrgDto,
+        // Ensure date is in correct format
+        taxComplianceExpiryDate: registerOrgDto.taxComplianceExpiryDate,
+        // Parse arrays - handle both array and form-data array format
+        servicesOffered: Array.isArray(registerOrgDto.servicesOffered)
+          ? registerOrgDto.servicesOffered
+          : typeof registerOrgDto.servicesOffered === 'string'
+            ? [registerOrgDto.servicesOffered] // Single string value
+            : Object.keys(registerOrgDto)
+                .filter(key => key.startsWith('servicesOffered['))
+                .map(key => registerOrgDto[key]),
+        industries: Array.isArray(registerOrgDto.industries)
+          ? registerOrgDto.industries
+          : typeof registerOrgDto.industries === 'string'
+            ? [registerOrgDto.industries] // Single string value
+            : Object.keys(registerOrgDto)
+                .filter(key => key.startsWith('industries['))
+                .map(key => registerOrgDto[key]),
+        // Parse objects
+        contactPerson: typeof registerOrgDto.contactPerson === 'string'
+          ? JSON.parse(registerOrgDto.contactPerson)
+          : registerOrgDto.contactPerson,
+        bankDetails: typeof registerOrgDto.bankDetails === 'string'
+          ? JSON.parse(registerOrgDto.bankDetails)
+          : registerOrgDto.bankDetails,
+        // Add file URLs and status
+        ...uploadedFiles,
+        status: 'pending'
+      };
+
+      // Validate parsed data structure
+      if (!Array.isArray(parsedData.servicesOffered) || !parsedData.servicesOffered.length) {
+        throw new BadRequestException('Services offered must be a non-empty array');
+      }
+      if (!Array.isArray(parsedData.industries) || !parsedData.industries.length) {
+        throw new BadRequestException('Industries must be a non-empty array');
+      }
+      if (!parsedData.contactPerson?.name || !parsedData.contactPerson?.email || !parsedData.contactPerson?.phoneNumber) {
+        throw new BadRequestException('Contact person must include name, email, and phone number');
+      }
+      if (!parsedData.bankDetails?.bankName || !parsedData.bankDetails?.accountNumber) {
+        throw new BadRequestException('Bank details must include bank name and account number');
+      }
+
+      // Register organization
+      return this.consultantService.registerOrganization(parsedData);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to process registration: ${error.message}`);
+    }
+  }
+
   @Get('pending')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'hr')
@@ -308,6 +518,22 @@ export class ConsultantController {
     return this.consultantService.getPendingConsultants();
   }
 
+  @Get('organizations')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'hr')
+  @ApiBearerAuth()
+  async getOrganizations() {
+    return this.consultantService.getOrganizations();
+  }
+
+  @Get('organization/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'hr')
+  @ApiBearerAuth()
+  async getOrganization(@Param('id') id: string) {
+    return this.consultantService.getOrganization(id);
+  }
+
   @Patch(':id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'hr')
@@ -315,6 +541,14 @@ export class ConsultantController {
   @ApiOperation({ summary: 'Approve a consultant application' })
   async approveConsultant(@Param('id') id: string) {
     return this.consultantService.approveConsultant(id);
+  }
+
+  @Patch('organization/:id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'hr')
+  @ApiBearerAuth()
+  async approveOrganization(@Param('id') id: string) {
+    return this.consultantService.approveOrganization(id);
   }
 
   @Patch(':id/reject')
@@ -327,5 +561,16 @@ export class ConsultantController {
     @Body('reason') reason: string
   ) {
     return this.consultantService.rejectConsultant(id, reason);
+  }
+
+  @Patch('organization/:id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'hr')
+  @ApiBearerAuth()
+  async rejectOrganization(
+    @Param('id') id: string,
+    @Body('reason') reason: string,
+  ) {
+    return this.consultantService.rejectOrganization(id, reason);
   }
 }
