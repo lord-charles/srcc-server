@@ -210,7 +210,7 @@ export class User {
 
   @ApiProperty({ description: 'Employee date of birth', example: '1990-01-15' })
   @Prop({ required: true })
-  dateOfBirth: Date;
+  dateOfBirth: string;
 
   @ApiProperty({ description: 'Physical address', example: 'Westlands, Nairobi' })
   @Prop({ required: true })
