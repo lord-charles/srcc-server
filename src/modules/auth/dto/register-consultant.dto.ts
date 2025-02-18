@@ -75,13 +75,19 @@ class CertificationDto {
 
 class EmergencyContactDto {
   @ApiProperty({ description: 'Name of the contact', example: 'John Doe' })
+
+  @IsOptional()
   @IsString()
   name: string;
 
+  
+  @IsOptional()
   @ApiProperty({ description: 'Relationship to the consultant', example: 'Spouse' })
   @IsString()
   relationship: string;
 
+  
+  @IsOptional()
   @ApiProperty({ description: 'Primary phone number', example: '+254712345678' })
   @IsString()
   phoneNumber: string;
@@ -177,12 +183,14 @@ export class RegisterConsultantDto {
   nhifNumber: string;
 
   @ApiProperty({ description: 'NSSF deduction amount', example: 200 })
+  @IsOptional()
   @IsNumber()
-  nssfDeduction: number;
+  nssfDeduction?: number;
 
   @ApiProperty({ description: 'NHIF deduction amount', example: 500 })
+  @IsOptional()
   @IsNumber()
-  nhifDeduction: number;
+  nhifDeduction?: number;
 
   @ApiProperty({ description: 'Skills array', type: [SkillDto] })
   @IsArray()
@@ -215,9 +223,9 @@ export class RegisterConsultantDto {
   yearsOfExperience: number;
 
   @ApiProperty({ description: 'Consultant hourly rate in KES', example: 5000 })
+  @IsOptional()
   @IsNumber()
-  @Min(0)
-  hourlyRate: number;
+  hourlyRate?: number;
 
   @ApiProperty({
     description: 'Preferred work types',
@@ -225,6 +233,7 @@ export class RegisterConsultantDto {
     enum: ['remote', 'onsite', 'hybrid'],
     isArray: true
   })
+  @IsOptional()
   @IsArray()
   @IsEnum(['remote', 'onsite', 'hybrid'], { each: true })
   preferredWorkTypes: string[];
