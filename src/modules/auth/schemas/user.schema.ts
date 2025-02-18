@@ -269,7 +269,7 @@ export class User {
     description: 'Consultant hourly rate in KES',
     example: 5000
   })
-  @Prop({ required: true })
+  @Prop()
   hourlyRate: number;
 
   @ApiProperty({
@@ -285,7 +285,7 @@ export class User {
     example: ['remote', 'hybrid'],
     enum: ['remote', 'onsite', 'hybrid']
   })
-  @Prop({ type: [String], required: true })
+  @Prop({ type: [String] })
   preferredWorkTypes: string[];
 
   @ApiProperty({
@@ -314,19 +314,19 @@ export class User {
   department: string;
 
   @ApiProperty({ description: 'Monthly NHIF deduction in KES', example: 1700 })
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number })
   nhifDeduction: number;
 
   @ApiProperty({ description: 'Monthly NSSF deduction in KES', example: 200 })
-  @Prop({ type: Number, required: true })
+  @Prop({ type: Number })
   nssfDeduction: number;
 
   @ApiProperty({ description: 'Emergency contact details' })
-  @Prop({ required: true, type: EmergencyContact })
+  @Prop({ type: EmergencyContact })
   emergencyContact: EmergencyContact;
 
   @ApiProperty({ description: 'Bank payment details' })
-  @Prop({ type: BankDetails, required: true })
+  @Prop({ type: BankDetails })
   bankDetails: BankDetails;
 
   @ApiProperty({ description: 'Mpesa payment details' })
