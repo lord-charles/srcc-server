@@ -441,9 +441,9 @@ SRCC Team
     }
 
     // Validate phone number format
-    const phoneRegex = /^\+254\d{9}$/;
+    const phoneRegex = /^254\d{9}$/;
     if (!phoneRegex.test(orgData.businessPhone)) {
-      throw new BadRequestException('Invalid phone number format. Must be in format: +254XXXXXXXXX');
+      throw new BadRequestException('Invalid phone number format. Must be in format: 254XXXXXXXXX');
     }
 
     // Validate email format
