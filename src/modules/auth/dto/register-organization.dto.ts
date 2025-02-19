@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsEmail,
-  IsPhoneNumber,
   IsNumber,
   IsArray,
   ValidateNested,
@@ -26,7 +25,7 @@ class ContactPersonDto {
   email: string;
 
   @ApiProperty({ description: 'Contact phone number' })
-  @IsPhoneNumber()
+  @IsString()
   phoneNumber: string;
 }
 
@@ -71,7 +70,7 @@ export class RegisterOrganizationDto {
   county: string;
 
   @ApiProperty({ description: 'Business phone number' })
-  @IsPhoneNumber()
+  @IsString()
   businessPhone: string;
 
   @ApiProperty({ description: 'Business email' })
