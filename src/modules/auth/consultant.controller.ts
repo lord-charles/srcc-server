@@ -349,8 +349,8 @@ export class ConsultantController {
             name: { type: 'string', example: 'John Doe' },
             position: { type: 'string', example: 'Managing Director' },
             email: { type: 'string', example: 'john.doe@techsolutions.co.ke' },
-            phoneNumber: { type: 'string', example: '+254712345678' },
-            alternativePhoneNumber: { type: 'string', example: '+254723456789' }
+            phoneNumber: { type: 'string', example: '254712345678' },
+            alternativePhoneNumber: { type: 'string', example: '254723456789' }
           }
         },
         bankDetails: {

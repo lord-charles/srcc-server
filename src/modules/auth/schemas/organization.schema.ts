@@ -18,7 +18,7 @@ class ContactPerson {
   @Prop({ required: true })
   email: string;
 
-  @ApiProperty({ description: 'Contact phone number', example: '+254712345678' })
+  @ApiProperty({ description: 'Contact phone number', example: '0712345678' })
   @Prop({ required: true })
   phoneNumber: string;
 }
@@ -64,7 +64,7 @@ export class Organization {
   @Prop({ required: true })
   county: string;
 
-  @ApiProperty({ description: 'Business phone number', example: '+254712345678' })
+  @ApiProperty({ description: 'Business phone number', example: '0712345678' })
   @Prop({ required: true })
   businessPhone: string;
 
