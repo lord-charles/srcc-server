@@ -295,7 +295,6 @@ export class User {
   @Prop({
     type: [String],
     default: ['consultant'],
-    enum: ['consultant', 'admin', 'superadmin', 'hr', 'finance'],
   })
   roles: string[];
 

@@ -14,13 +14,9 @@ export class Project {
   @Prop({ required: true, trim: true })
   description: string;
 
-  @ApiProperty({ example: 5000000, description: 'Total budget allocated for the project' })
-  @Prop({ required: true })
-  totalBudget: number;
-
-  @ApiProperty({ example: 4800000, description: 'Total estimated value of the project' })
-  @Prop({ required: true })
-  totalProjectValue: number;
+  @ApiProperty({ description: 'Reference to the project budget' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Budget' })
+  budgetId?: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({ example: 'USD', description: 'Currency for the budget' })
   @Prop({ required: true, trim: true })
@@ -57,7 +53,6 @@ export class Project {
   @ApiProperty({ description: 'User who last updated the project' })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   updatedBy: MongooseSchema.Types.ObjectId;
-
 
   @ApiProperty({ description: 'Project manager reference' })
   @Prop({
@@ -101,10 +96,6 @@ export class Project {
   @ApiProperty({ example: 'https://res.cloudinary.com/example/execution-memo.pdf' })
   @Prop({ required: true })
   executionMemoUrl: string;
-
-  @ApiProperty({ example: 'https://res.cloudinary.com/example/signed-budget.pdf' })
-  @Prop({ required: true })
-  signedBudgetUrl: string;
 
   @ApiProperty({ description: 'Document references for additional uploads', type: [Object] })
   @Prop({
@@ -237,6 +228,11 @@ export class Project {
     budget: number;
     actualCost?: number;
   }[];
+
+  @ApiProperty({ description: 'Project invoices' })
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Invoice' }], default: [] })
+  invoices: MongooseSchema.Types.ObjectId[];
+
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

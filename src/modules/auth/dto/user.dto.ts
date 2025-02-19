@@ -138,11 +138,9 @@ export class CreateUserDto {
   @ApiProperty({
     description: 'Roles assigned in the app',
     example: ['employee'],
-    enum: ['employee', 'admin', 'hr', 'finance'],
   })
   @IsOptional()
   @IsArray()
-  @IsEnum(['employee', 'admin', 'hr', 'finance'], { each: true })
   roles?: string[];
 
   @ApiProperty({
