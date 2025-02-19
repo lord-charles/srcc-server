@@ -452,11 +452,6 @@ SRCC Team
       throw new BadRequestException('Invalid email format');
     }
 
-    // Validate KRA PIN format (example: A123456789P)
-    const kraPinRegex = /^[A-Z]\d{9}[A-Z]$/;
-    if (!kraPinRegex.test(orgData.kraPin)) {
-      throw new BadRequestException('Invalid KRA PIN format. Must be in format: A123456789P');
-    }
   }
 
   async getOrganizations(): Promise<Organization[]> {
