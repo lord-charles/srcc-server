@@ -27,16 +27,13 @@ export class NotificationService {
     message: string,
   ): Promise<boolean> {
     try {
-      const response = await axios.post(
-        process.env.SMS_API_URL,
-        {
-          apikey: process.env.SMS_API_KEY,
-          partnerID: process.env.SMS_PARTNER_ID,
-          message: message,
-          shortcode: process.env.SMS_SHORTCODE,
-          mobile: phoneNumber,
-        },
-      );
+      const response = await axios.post(process.env.SMS_API_URL, {
+        apikey: process.env.SMS_API_KEY,
+        partnerID: process.env.SMS_PARTNER_ID,
+        message: message,
+        shortcode: process.env.SMS_SHORTCODE,
+        mobile: phoneNumber,
+      });
       this.sendEmail(email, `SRCC Pin`, message);
 
       if (response.status === 200) {
@@ -56,16 +53,13 @@ export class NotificationService {
 
   async sendSMS(phoneNumber: string, message: string): Promise<boolean> {
     try {
-      const response = await axios.post(
-        process.env.SMS_API_URL,
-        {
-          apikey: process.env.SMS_API_KEY,
-          partnerID: process.env.SMS_PARTNER_ID,
-          message: message,
-          shortcode: process.env.SMS_SHORTCODE,
-          mobile: phoneNumber,
-        },
-      );
+      const response = await axios.post(process.env.SMS_API_URL, {
+        apikey: process.env.SMS_API_KEY,
+        partnerID: process.env.SMS_PARTNER_ID,
+        message: message,
+        shortcode: process.env.SMS_SHORTCODE,
+        mobile: phoneNumber,
+      });
 
       if (response.status === 200) {
         this.logger.log(`SMS sent successfully to ${phoneNumber}`);
@@ -116,12 +110,20 @@ export class NotificationService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email sent successfully to ${to} - MessageId: ${info.messageId}`);
+      this.logger.log(
+        `Email sent successfully to ${to} - MessageId: ${info.messageId}`,
+      );
       return true;
     } catch (error) {
-      this.logger.error(`Error sending email to ${to}: ${error.message}`);
+      this.logger.error(
+        `Error sending email to ${to}: ${error.message}`,
+        error,
+      );
+
       if (error.code === 'ECONNECTION' || error.code === 'EAUTH') {
-        this.logger.error('SMTP connection or authentication error. Please check your SMTP settings.');
+        this.logger.error(
+          'SMTP connection or authentication error. Please check your SMTP settings.',
+        );
       }
       return false;
     }
@@ -166,12 +168,18 @@ export class NotificationService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email with attachments sent successfully to ${to} - MessageId: ${info.messageId}`);
+      this.logger.log(
+        `Email with attachments sent successfully to ${to} - MessageId: ${info.messageId}`,
+      );
       return true;
     } catch (error) {
-      this.logger.error(`Error sending email with attachments to ${to}: ${error.message}`);
+      this.logger.error(
+        `Error sending email with attachments to ${to}: ${error.message}`,
+      );
       if (error.code === 'ECONNECTION' || error.code === 'EAUTH') {
-        this.logger.error('SMTP connection or authentication error. Please check your SMTP settings.');
+        this.logger.error(
+          'SMTP connection or authentication error. Please check your SMTP settings.',
+        );
       }
       return false;
     }

@@ -2,11 +2,11 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Body,
   Param,
   UseGuards,
   Req,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -23,6 +23,7 @@ import {
   CreatePaymentDto,
   InvoiceApprovalDto,
   InvoiceRejectionDto,
+  InvoiceRevisionDto,
 } from '../dto/invoice.dto';
 import { Invoice } from '../schemas/invoice.schema';
 
@@ -55,7 +56,7 @@ export class InvoiceController {
     return this.invoiceService.findOne(new Types.ObjectId(id));
   }
 
-  @Put(':id')
+  @Patch(':id')
   @ApiOperation({ summary: 'Update an invoice' })
   @ApiResponse({
     status: 200,
@@ -130,6 +131,25 @@ export class InvoiceController {
     @Body() dto: CreatePaymentDto,
   ): Promise<Invoice> {
     return this.invoiceService.recordPayment(
+      new Types.ObjectId(id),
+      req.user.id,
+      dto,
+    );
+  }
+
+  @Post(':id/request-revision')
+  @ApiOperation({ summary: 'Request revision for an invoice' })
+  @ApiResponse({
+    status: 200,
+    description: 'Invoice revision requested successfully',
+    type: Invoice,
+  })
+  async requestRevision(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() dto: InvoiceRevisionDto,
+  ): Promise<Invoice> {
+    return this.invoiceService.requestRevision(
       new Types.ObjectId(id),
       req.user.id,
       dto,

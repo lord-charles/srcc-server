@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Req,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -40,19 +41,44 @@ export class BudgetController {
     description: 'Budget created successfully',
     type: Budget,
   })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Req() req: any, @Body() dto: CreateBudgetDto): Promise<Budget> {
     return this.budgetService.create(req.user.id, dto);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a budget by ID' })
+  @ApiOperation({
+    summary: 'Get a budget by ID',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: '65d4a5e9c1656d8f4c0c2d1e',
+      },
+    ],
+  })
   @ApiResponse({ status: 200, description: 'Budget found', type: Budget })
+  @ApiResponse({ status: 404, description: 'Budget not found' })
   async findOne(@Param('id') id: string): Promise<Budget> {
     return this.budgetService.findOne(new Types.ObjectId(id));
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Update a budget' })
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Update a budget',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: '65d4a5e9c1656d8f4c0c2d1e',
+      },
+    ],
+  })
   @ApiResponse({
     status: 200,
     description: 'Budget updated successfully',
@@ -67,7 +93,18 @@ export class BudgetController {
   }
 
   @Post(':id/submit')
-  @ApiOperation({ summary: 'Submit budget for approval' })
+  @ApiOperation({
+    summary: 'Submit budget for approval',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: '65d4a5e9c1656d8f4c0c2d1e',
+      },
+    ],
+  })
   @ApiResponse({
     status: 200,
     description: 'Budget submitted for approval',
@@ -84,7 +121,18 @@ export class BudgetController {
   }
 
   @Post(':id/approve')
-  @ApiOperation({ summary: 'Approve a budget' })
+  @ApiOperation({
+    summary: 'Approve a budget',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: '65d4a5e9c1656d8f4c0c2d1e',
+      },
+    ],
+  })
   @ApiResponse({ status: 200, description: 'Budget approved', type: Budget })
   async approve(
     @Param('id') id: string,
@@ -95,7 +143,18 @@ export class BudgetController {
   }
 
   @Post(':id/reject')
-  @ApiOperation({ summary: 'Reject a budget' })
+  @ApiOperation({
+    summary: 'Reject a budget',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: '65d4a5e9c1656d8f4c0c2d1e',
+      },
+    ],
+  })
   @ApiResponse({ status: 200, description: 'Budget rejected', type: Budget })
   async reject(
     @Param('id') id: string,
@@ -106,7 +165,18 @@ export class BudgetController {
   }
 
   @Post(':id/request-revision')
-  @ApiOperation({ summary: 'Request budget revision' })
+  @ApiOperation({
+    summary: 'Request budget revision',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: '65d4a5e9c1656d8f4c0c2d1e',
+      },
+    ],
+  })
   @ApiResponse({
     status: 200,
     description: 'Budget revision requested',
@@ -125,7 +195,18 @@ export class BudgetController {
   }
 
   @Get('project/:projectId')
-  @ApiOperation({ summary: 'Get budget by project ID' })
+  @ApiOperation({
+    summary: 'Get budget by project ID',
+    parameters: [
+      {
+        name: 'projectId',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        example: '65d4a5e9c1656d8f4c0c2d1e',
+      },
+    ],
+  })
   @ApiResponse({ status: 200, description: 'Budget found', type: Budget })
   async findByProject(@Param('projectId') projectId: string): Promise<Budget> {
     return this.budgetService.findByProject(new Types.ObjectId(projectId));

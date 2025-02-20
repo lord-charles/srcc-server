@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type InvoiceDocument = Invoice & Document;
 
@@ -67,8 +67,32 @@ class PaymentDetails {
   receiptUrl?: string;
 }
 
+@Schema()
+export class RevisionRequest {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  requestedBy: Types.ObjectId;
+
+  @Prop({ required: true })
+  requestedAt: Date;
+
+  @Prop({ required: true })
+  comments: string;
+
+  @Prop({ type: [String], required: true })
+  changes: string[];
+
+  @Prop({ required: true })
+  returnToStatus: string;
+
+  @Prop({ required: true })
+  returnToLevel: string;
+}
+
 @Schema({ timestamps: true })
-export class Invoice {
+export class Invoice extends Document {
+  @ApiProperty({ description: 'MongoDB generated id' })
+  _id: MongooseSchema.Types.ObjectId;
+
   @ApiProperty({ description: 'Reference to the project' })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Project', required: true })
   projectId: MongooseSchema.Types.ObjectId;
@@ -172,6 +196,10 @@ export class Invoice {
     rejectedAt: Date;
     reason: string;
   };
+
+  @ApiProperty({ description: 'Revision request details' })
+  @Prop({ type: RevisionRequest })
+  revisionRequest?: RevisionRequest;
 
   @ApiProperty({ description: 'User who created the invoice' })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
