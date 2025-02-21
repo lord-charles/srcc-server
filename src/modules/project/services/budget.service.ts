@@ -441,11 +441,11 @@ export class BudgetService {
 
     if (existingBudget) {
       // Check if budget can be updated based on status
-      if (existingBudget.status !== 'draft' && existingBudget.status !== 'revision_requested') {
-        throw new BadRequestException(
-          'Budget can only be updated when in draft or revision requested status'
-        );
-      }
+      // if (existingBudget.status !== 'draft' && existingBudget.status !== 'revision_requested') {
+      //   throw new BadRequestException(
+      //     'Budget can only be updated when in draft or revision requested status'
+      //   );
+      // }
 
       // Create update object with only the fields that are provided
       const updateFields = {};
