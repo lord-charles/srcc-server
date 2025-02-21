@@ -436,6 +436,46 @@ export class BudgetService {
       throw new NotFoundException('Project not found');
     }
 
+    // Check if budget already exists for this project
+    const existingBudget = await this.budgetModel.findOne({ projectId: dto.projectId });
+
+    if (existingBudget) {
+      // Check if budget can be updated based on status
+      if (existingBudget.status !== 'draft' && existingBudget.status !== 'revision_requested') {
+        throw new BadRequestException(
+          'Budget can only be updated when in draft or revision requested status'
+        );
+      }
+
+      // Only update the fields that are provided in the DTO
+      const updateFields = Object.entries(dto).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
+      const updatedBudget = await this.budgetModel.findByIdAndUpdate(
+        existingBudget._id,
+        {
+          $set: {
+            ...updateFields,
+            updatedBy: userId,
+          },
+          $push: {
+            auditTrail: {
+              action: 'UPDATED',
+              performedBy: userId,
+              performedAt: new Date(),
+              details: { updatedFields: Object.keys(updateFields) },
+            },
+          },
+        },
+        { new: true }
+      );
+      return updatedBudget;
+    }
+
     const budget = new this.budgetModel({
       ...dto,
       status: 'draft',
