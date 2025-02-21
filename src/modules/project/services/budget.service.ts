@@ -437,11 +437,15 @@ export class BudgetService {
     }
 
     // Check if budget already exists for this project
-    const existingBudget = await this.budgetModel.findOne({
-      projectId: dto.projectId,
-    }).select('-__v'); // Exclude version field
+    const existingBudget = await this.budgetModel
+      .findOne({
+        _id: project.budgetId, // Use the budgetId from the project
+      })
+      .select('-__v'); // Exclude version field
 
     if (existingBudget) {
+      console.log('Found existing budget:', existingBudget._id);
+      
       // Create update object with only the fields that are provided
       const updateFields: any = {};
 
@@ -485,7 +489,8 @@ export class BudgetService {
         }
       });
 
-      console.log('Update fields:', updateFields);
+      console.log('Update fields:', JSON.stringify(updateFields, null, 2));
+      console.log('Updating budget with ID:', existingBudget._id);
 
       // Use $set to update only the provided fields
       const updatedBudget = await this.budgetModel
