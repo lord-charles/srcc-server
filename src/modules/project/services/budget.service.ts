@@ -439,19 +439,34 @@ export class BudgetService {
     // Check if budget already exists for this project
     const existingBudget = await this.budgetModel.findOne({
       projectId: dto.projectId,
-    });
+    }).select('-__v'); // Exclude version field
 
     if (existingBudget) {
       // Create update object with only the fields that are provided
       const updateFields: any = {};
 
-      // Handle array fields separately to ensure proper merging
-      if (dto.internalCategories?.length > 0) {
+      // Define valid budget fields
+      const validBudgetFields = [
+        'projectId',
+        'internalCategories',
+        'externalCategories',
+        'currency',
+        'totalInternalBudget',
+        'totalExternalBudget',
+        'totalInternalSpent',
+        'totalExternalSpent',
+        'status',
+        'notes',
+        'auditTrail'
+      ];
+
+      // Only update arrays if they are provided in the DTO
+      if (dto.internalCategories) {
         updateFields.internalCategories = dto.internalCategories;
         updateFields.totalInternalBudget = dto.totalInternalBudget || 0;
       }
 
-      if (dto.externalCategories?.length > 0) {
+      if (dto.externalCategories) {
         updateFields.externalCategories = dto.externalCategories;
         updateFields.totalExternalBudget = dto.totalExternalBudget || 0;
       }
@@ -460,6 +475,7 @@ export class BudgetService {
       Object.entries(dto).forEach(([key, value]) => {
         if (
           value !== undefined &&
+          validBudgetFields.includes(key) &&
           key !== 'internalCategories' &&
           key !== 'externalCategories' &&
           key !== 'totalInternalBudget' &&
@@ -472,34 +488,38 @@ export class BudgetService {
       console.log('Update fields:', updateFields);
 
       // Use $set to update only the provided fields
-      const updatedBudget = await this.budgetModel.findByIdAndUpdate(
-        existingBudget._id,
-        {
-          $set: {
-            ...updateFields,
-            updatedBy: userId,
-            updatedAt: new Date(),
-          },
-          $push: {
-            auditTrail: {
-              action: 'UPDATED',
-              performedBy: userId,
-              performedAt: new Date(),
-              details: { updatedFields: Object.keys(updateFields) },
+      const updatedBudget = await this.budgetModel
+        .findByIdAndUpdate(
+          existingBudget._id,
+          {
+            $set: {
+              ...updateFields,
+              updatedBy: userId,
+              updatedAt: new Date(),
+            },
+            $push: {
+              auditTrail: {
+                action: 'UPDATED',
+                performedBy: userId,
+                performedAt: new Date(),
+                details: { updatedFields: Object.keys(updateFields) },
+              },
             },
           },
-        },
-        {
-          new: true,
-          runValidators: true, // Enable validation for update operation
-        },
-      );
-
-      console.log(updatedBudget);
+          {
+            new: true,
+            runValidators: true,
+            lean: true,
+          }
+        )
+        .select('-__v'); // Exclude version field from result
 
       if (!updatedBudget) {
         throw new Error('Failed to update budget');
       }
+
+      // Log the cleaned update result
+      console.log('Updated budget:', JSON.stringify(updatedBudget, null, 2));
 
       return updatedBudget;
     }
@@ -525,7 +545,7 @@ export class BudgetService {
       budgetId: savedBudget._id,
     });
 
-    return savedBudget;
+    return savedBudget.toObject({ versionKey: false });
   }
 
   async approve(
