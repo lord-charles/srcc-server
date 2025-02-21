@@ -447,13 +447,22 @@ export class BudgetService {
         );
       }
 
-      // Only update the fields that are provided in the DTO
-      const updateFields = Object.entries(dto).reduce((acc, [key, value]) => {
+      // Create update object with only the fields that are provided
+      const updateFields = {};
+      Object.entries(dto).forEach(([key, value]) => {
         if (value !== undefined) {
-          acc[key] = value;
+          // Handle arrays (like internalCategories) separately
+          if (Array.isArray(value)) {
+            updateFields[key] = value;
+          } else if (value === null) {
+            updateFields[key] = null;
+          } else if (typeof value === 'object') {
+            updateFields[key] = value;
+          } else {
+            updateFields[key] = value;
+          }
         }
-        return acc;
-      }, {});
+      });
 
       const updatedBudget = await this.budgetModel.findByIdAndUpdate(
         existingBudget._id,
