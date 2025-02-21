@@ -437,41 +437,48 @@ export class BudgetService {
     }
 
     // Check if budget already exists for this project
-    const existingBudget = await this.budgetModel.findOne({ projectId: dto.projectId });
+    const existingBudget = await this.budgetModel.findOne({
+      projectId: dto.projectId,
+    });
 
     if (existingBudget) {
-      // Check if budget can be updated based on status
-      // if (existingBudget.status !== 'draft' && existingBudget.status !== 'revision_requested') {
-      //   throw new BadRequestException(
-      //     'Budget can only be updated when in draft or revision requested status'
-      //   );
-      // }
-
       // Create update object with only the fields that are provided
-      const updateFields = {};
+      const updateFields: any = {};
+
+      // Handle array fields separately to ensure proper merging
+      if (dto.internalCategories?.length > 0) {
+        updateFields.internalCategories = dto.internalCategories;
+        updateFields.totalInternalBudget = dto.totalInternalBudget || 0;
+      }
+
+      if (dto.externalCategories?.length > 0) {
+        updateFields.externalCategories = dto.externalCategories;
+        updateFields.totalExternalBudget = dto.totalExternalBudget || 0;
+      }
+
+      // Handle other non-array fields
       Object.entries(dto).forEach(([key, value]) => {
-        if (value !== undefined) {
-          // Handle arrays (like internalCategories) separately
-          if (Array.isArray(value)) {
-            updateFields[key] = value;
-          } else if (value === null) {
-            updateFields[key] = null;
-          } else if (typeof value === 'object') {
-            updateFields[key] = value;
-          } else {
-            updateFields[key] = value;
-          }
+        if (
+          value !== undefined &&
+          key !== 'internalCategories' &&
+          key !== 'externalCategories' &&
+          key !== 'totalInternalBudget' &&
+          key !== 'totalExternalBudget'
+        ) {
+          updateFields[key] = value;
         }
       });
 
-      console.log(updateFields);
+      console.log('Update fields:', updateFields);
 
+      // Use $set to update only the provided fields
       const updatedBudget = await this.budgetModel.findByIdAndUpdate(
         existingBudget._id,
         {
           $set: {
             ...updateFields,
             updatedBy: userId,
+            updatedAt: new Date(),
           },
           $push: {
             auditTrail: {
@@ -482,11 +489,20 @@ export class BudgetService {
             },
           },
         },
-        { new: true }
+        {
+          new: true,
+          runValidators: true, // Enable validation for update operation
+        },
       );
+
+      if (!updatedBudget) {
+        throw new Error('Failed to update budget');
+      }
+
       return updatedBudget;
     }
 
+    // Create new budget if it doesn't exist
     const budget = new this.budgetModel({
       ...dto,
       status: 'draft',
