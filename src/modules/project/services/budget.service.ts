@@ -464,6 +464,8 @@ export class BudgetService {
         }
       });
 
+      console.log(updateFields);
+
       const updatedBudget = await this.budgetModel.findByIdAndUpdate(
         existingBudget._id,
         {
