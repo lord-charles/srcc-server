@@ -495,6 +495,8 @@ export class BudgetService {
         },
       );
 
+      console.log(updatedBudget);
+
       if (!updatedBudget) {
         throw new Error('Failed to update budget');
       }
