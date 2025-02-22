@@ -212,4 +212,40 @@ export class ProjectService {
       )
       .exec();
   }
+
+  async addMilestone(
+    projectId: string,
+    milestoneData: any,
+  ): Promise<Project> {
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $push: { milestones: milestoneData } },
+        { new: true },
+      )
+      .exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+    return project;
+  }
+
+  async deleteMilestone(
+    projectId: string,
+    milestoneId: string,
+  ): Promise<Project> {
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $pull: { milestones: { _id: milestoneId } } },
+        { new: true },
+      )
+      .exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+    return project;
+  }
 }
