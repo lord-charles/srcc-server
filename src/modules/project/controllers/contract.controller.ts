@@ -156,6 +156,20 @@ export class ContractController {
     return await this.contractService.findAll(filters);
   }
 
+  @Get('my-contracts')
+  @ApiOperation({ summary: 'Get contracts for the current user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of contracts for the current user.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  async findMyContracts(@Req() req) {
+    return await this.contractService.findMyContracts(req.user._id);
+  }
+
   @Get(':id')
   @Roles('admin', 'project_manager', 'team_member')
   @ApiOperation({ summary: 'Get a contract by ID' })
@@ -322,11 +336,6 @@ export class ContractController {
     @Body() verifyContractOtpDto: VerifyContractOtpDto,
     @Req() req,
   ) {
-    this.logger.log(
-      `Verifying OTP for contract ${id} by user ${req.user.userId}`,
-    );
-
-    // Get contract to check if user is authorized
     const contract = await this.contractService.findOne(id);
 
     // For team members, only allow them to verify OTP for their own contracts

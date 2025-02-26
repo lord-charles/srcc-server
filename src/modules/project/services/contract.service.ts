@@ -182,6 +182,24 @@ export class ContractService {
     }
   }
 
+  //  * Find my contracts
+  async findMyContracts(userId: string): Promise<Contract[]> {
+    try {
+      console.log('userId', userId);
+      return await this.contractModel
+        .find({ contractedUserId: new Types.ObjectId(userId) })
+        .populate('projectId', 'name')
+        .populate('contractedUserId', 'firstName lastName email phoneNumber')
+        .exec();
+    } catch (error) {
+      this.logger.error(
+        `Error finding contracts by project ID: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
   //  * Find contracts by project ID
   async findByProject(projectId: string): Promise<Contract[]> {
     try {
