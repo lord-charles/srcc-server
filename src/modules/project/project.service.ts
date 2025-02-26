@@ -29,6 +29,7 @@ export class ProjectService {
       .populate('teamMembers.userId', 'firstName lastName email _id')
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email')
+      .populate('teamMemberContracts')
       .populate({
         path: 'budgetId',
         populate: [
@@ -213,10 +214,7 @@ export class ProjectService {
       .exec();
   }
 
-  async addMilestone(
-    projectId: string,
-    milestoneData: any,
-  ): Promise<Project> {
+  async addMilestone(projectId: string, milestoneData: any): Promise<Project> {
     const project = await this.projectModel
       .findByIdAndUpdate(
         projectId,

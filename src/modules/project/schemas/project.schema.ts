@@ -6,11 +6,17 @@ export type ProjectDocument = Project & Document;
 
 @Schema({ timestamps: true })
 export class Project {
-  @ApiProperty({ example: 'Health System Upgrade', description: 'The name of the project' })
+  @ApiProperty({
+    example: 'Health System Upgrade',
+    description: 'The name of the project',
+  })
   @Prop({ required: true, trim: true })
   name: string;
 
-  @ApiProperty({ example: 'A project to upgrade the health system infrastructure.', description: 'A brief description of the project' })
+  @ApiProperty({
+    example: 'A project to upgrade the health system infrastructure.',
+    description: 'A brief description of the project',
+  })
   @Prop({ required: true, trim: true })
   description: string;
 
@@ -30,19 +36,36 @@ export class Project {
   @Prop({ required: true })
   contractEndDate: Date;
 
-  @ApiProperty({ example: 'Ministry of Health', description: 'The client or organization funding the project' })
+  @ApiProperty({
+    example: 'Ministry of Health',
+    description: 'The client or organization funding the project',
+  })
   @Prop({ required: true, trim: true })
   client: string;
 
   @ApiProperty({
     example: 'active',
     description: 'Project status',
-    enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled']
+    enum: [
+      'draft',
+      'pending_approval',
+      'active',
+      'on_hold',
+      'completed',
+      'cancelled',
+    ],
   })
   @Prop({
     required: true,
-    enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'],
-    default: 'draft'
+    enum: [
+      'draft',
+      'pending_approval',
+      'active',
+      'on_hold',
+      'completed',
+      'cancelled',
+    ],
+    default: 'draft',
   })
   status: string;
 
@@ -58,20 +81,26 @@ export class Project {
   @Prop({
     type: MongooseSchema.Types.ObjectId,
     ref: 'User',
-    required: false
+    required: false,
   })
   projectManagerId?: MongooseSchema.Types.ObjectId;
 
+  @ApiProperty({ description: 'Project manager contract reference' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Contract' })
+  projectManagerContractId?: MongooseSchema.Types.ObjectId;
+
   @ApiProperty({ description: 'Team members assigned to the project' })
   @Prop({
-    type: [{
-      userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
-      startDate: { type: Date },
-      endDate: { type: Date },
-      responsibilities: [String]
-    }],
+    type: [
+      {
+        userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        startDate: { type: Date },
+        endDate: { type: Date },
+        responsibilities: [String],
+      },
+    ],
     required: false,
-    default: []
+    default: [],
   })
   teamMembers?: {
     userId: MongooseSchema.Types.ObjectId;
@@ -81,31 +110,60 @@ export class Project {
     responsibilities: string[];
   }[];
 
-  @ApiProperty({ example: 'Public Procurement', description: 'The procurement method used' })
+  @ApiProperty({ description: 'Team member contracts' })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Contract' }],
+    default: [],
+  })
+  teamMemberContracts: MongooseSchema.Types.ObjectId[];
+
+  @ApiProperty({
+    example: 'Public Procurement',
+    description: 'The procurement method used',
+  })
   @Prop({ required: true, trim: true })
   procurementMethod: string;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/example/project-proposal.pdf' })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/example/project-proposal.pdf',
+  })
   @Prop({ required: true })
   projectProposalUrl: string;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/example/signed-contract.pdf' })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/example/signed-contract.pdf',
+  })
   @Prop({ required: true })
   signedContractUrl: string;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/example/execution-memo.pdf' })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/example/execution-memo.pdf',
+  })
   @Prop({ required: true })
   executionMemoUrl: string;
 
-  @ApiProperty({ description: 'Document references for additional uploads', type: [Object] })
+  @ApiProperty({
+    description: 'Document references for additional uploads',
+    type: [Object],
+  })
   @Prop({
-    type: [{
-      type: { type: String, required: true, enum: ['contract', 'budget', 'memo', 'report', 'other'] },
-      url: { type: String, required: true },
-      name: { type: String, required: true },
-      uploadedAt: { type: Date, default: Date.now },
-      uploadedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User', required: true }
-    }]
+    type: [
+      {
+        type: {
+          type: String,
+          required: true,
+          enum: ['contract', 'budget', 'memo', 'report', 'other'],
+        },
+        url: { type: String, required: true },
+        name: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now },
+        uploadedBy: {
+          type: MongooseSchema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+      },
+    ],
   })
   documents: {
     type: string;
@@ -118,7 +176,7 @@ export class Project {
   @ApiProperty({
     example: 'High',
     description: 'Risk level assessment for the project',
-    enum: ['Low', 'Medium', 'High']
+    enum: ['Low', 'Medium', 'High'],
   })
   @Prop({ enum: ['Low', 'Medium', 'High'], default: 'Medium', required: false })
   riskLevel?: string;
@@ -129,9 +187,9 @@ export class Project {
       factors: { type: [String], default: [] },
       mitigationStrategies: { type: [String], default: [] },
       lastAssessmentDate: { type: String },
-      nextAssessmentDate: { type: String }
+      nextAssessmentDate: { type: String },
     },
-    _id: false
+    _id: false,
   })
   riskAssessment?: {
     factors: string[];
@@ -140,36 +198,53 @@ export class Project {
     nextAssessmentDate?: string;
   };
 
-  @ApiProperty({ example: 'Quarterly', description: 'Frequency of progress reports' })
-  @Prop({ enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'], default: 'Monthly', required: false })
+  @ApiProperty({
+    example: 'Quarterly',
+    description: 'Frequency of progress reports',
+  })
+  @Prop({
+    enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'],
+    default: 'Monthly',
+    required: false,
+  })
   reportingFrequency?: string;
 
-  @ApiProperty({ example: '2024-06-30', description: 'Actual completion date of the project' })
+  @ApiProperty({
+    example: '2024-06-30',
+    description: 'Actual completion date of the project',
+  })
   @Prop({ required: false })
   actualCompletionDate?: Date;
 
-  @ApiProperty({ example: 500000, description: 'Total amount spent so far on the project' })
+  @ApiProperty({
+    example: 500000,
+    description: 'Total amount spent so far on the project',
+  })
   @Prop({ required: true, default: 0 })
   amountSpent: number;
 
   @ApiProperty({ description: 'Financial tracking' })
   @Prop({
     type: {
-      invoices: [{
-        number: String,
-        amount: Number,
-        date: Date,
-        status: { type: String, enum: ['pending', 'paid', 'cancelled'] },
-        description: String
-      }],
-      expenses: [{
-        category: String,
-        amount: Number,
-        date: Date,
-        description: String,
-        approvedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User' }
-      }]
-    }
+      invoices: [
+        {
+          number: String,
+          amount: Number,
+          date: Date,
+          status: { type: String, enum: ['pending', 'paid', 'cancelled'] },
+          description: String,
+        },
+      ],
+      expenses: [
+        {
+          category: String,
+          amount: Number,
+          date: Date,
+          description: String,
+          approvedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        },
+      ],
+    },
   })
   financialTracking: {
     invoices: {
@@ -190,13 +265,15 @@ export class Project {
 
   @ApiProperty({ description: 'Project KPIs and metrics' })
   @Prop({
-    type: [{
-      name: String,
-      target: Number,
-      current: Number,
-      unit: String,
-      lastUpdated: Date
-    }]
+    type: [
+      {
+        name: String,
+        target: Number,
+        current: Number,
+        unit: String,
+        lastUpdated: Date,
+      },
+    ],
   })
   kpis: {
     name: string;
@@ -208,16 +285,18 @@ export class Project {
 
   @ApiProperty({ description: 'Milestones of the project', type: [Object] })
   @Prop({
-    type: [{
-      title: { type: String, required: true },
-      description: { type: String, required: true },
-      dueDate: { type: Date, required: true },
-      completed: { type: Boolean, default: false },
-      completionDate: { type: Date },
-      budget: { type: Number, required: true },
-      actualCost: { type: Number }
-    }],
-    required: false
+    type: [
+      {
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+        dueDate: { type: Date, required: true },
+        completed: { type: Boolean, default: false },
+        completionDate: { type: Date },
+        budget: { type: Number, required: true },
+        actualCost: { type: Number },
+      },
+    ],
+    required: false,
   })
   milestones?: {
     title: string;
@@ -230,9 +309,11 @@ export class Project {
   }[];
 
   @ApiProperty({ description: 'Project invoices' })
-  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Invoice' }], default: [] })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Invoice' }],
+    default: [],
+  })
   invoices: MongooseSchema.Types.ObjectId[];
-
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

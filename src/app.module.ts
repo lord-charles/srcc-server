@@ -7,7 +7,6 @@ import { SystemConfigModule } from './modules/system-config/system-config.module
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SystemLogsModule } from './modules/system-logs/system-logs.module';
 import { ProjectModule } from './modules/project/project.module';
-import { ContractModule } from './modules/contract/contract.module';
 
 @Module({
   imports: [
@@ -20,7 +19,6 @@ import { ContractModule } from './modules/contract/contract.module';
     NotificationsModule,
     SystemLogsModule,
     ProjectModule,
-    ContractModule,
   ],
   controllers: [],
   providers: [],

@@ -4,7 +4,6 @@ import { ProjectController } from './project.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Project, ProjectSchema } from './schemas/project.schema';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
-import { Contract, ContractSchema } from '../contract/schemas/contract.schema';
 import { Invoice, InvoiceSchema } from './schemas/invoice.schema';
 import { InvoiceController } from './controllers/invoice.controller';
 import { BudgetController } from './controllers/budget.controller';
@@ -13,6 +12,9 @@ import { BudgetService } from './services/budget.service';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import { NotificationService } from '../notifications/services/notification.service';
 import { Budget, BudgetSchema } from './schemas/budget.schema';
+import { Contract, ContractSchema } from './schemas/contract.schema';
+import { ContractController } from './controllers/contract.controller';
+import { ContractService } from './services/contract.service';
 
 @Module({
   imports: [
@@ -25,13 +27,19 @@ import { Budget, BudgetSchema } from './schemas/budget.schema';
     ]),
     CloudinaryModule,
   ],
-  controllers: [ProjectController, InvoiceController, BudgetController],
+  controllers: [
+    ProjectController,
+    InvoiceController,
+    BudgetController,
+    ContractController,
+  ],
   providers: [
     ProjectService,
     InvoiceService,
     BudgetService,
     NotificationService,
+    ContractService,
   ],
-  exports: [ProjectService],
+  exports: [ProjectService, ContractService],
 })
 export class ProjectModule {}

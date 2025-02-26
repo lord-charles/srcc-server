@@ -445,7 +445,7 @@ export class BudgetService {
 
     if (existingBudget) {
       console.log('Found existing budget:', existingBudget._id);
-      
+
       // Create update object with only the fields that are provided
       const updateFields: any = {};
 
@@ -461,7 +461,7 @@ export class BudgetService {
         'totalExternalSpent',
         'status',
         'notes',
-        'auditTrail'
+        'auditTrail',
       ];
 
       // Only update arrays if they are provided in the DTO
@@ -489,9 +489,6 @@ export class BudgetService {
         }
       });
 
-      console.log('Update fields:', JSON.stringify(updateFields, null, 2));
-      console.log('Updating budget with ID:', existingBudget._id);
-
       // Use $set to update only the provided fields
       const updatedBudget = await this.budgetModel
         .findByIdAndUpdate(
@@ -515,16 +512,13 @@ export class BudgetService {
             new: true,
             runValidators: true,
             lean: true,
-          }
+          },
         )
-        .select('-__v'); // Exclude version field from result
+        .select('-__v');
 
       if (!updatedBudget) {
         throw new Error('Failed to update budget');
       }
-
-      // Log the cleaned update result
-      console.log('Updated budget:', JSON.stringify(updatedBudget, null, 2));
 
       return updatedBudget;
     }
