@@ -205,8 +205,8 @@ export class ContractService {
         .findById(id)
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('projectId', 'name')
-        .populate('createdBy', 'firstName lastName')
-        .populate('updatedBy', 'firstName lastName')
+        .populate('createdBy', 'firstName lastName email')
+        .populate('updatedBy', 'firstName lastName email')
         .exec();
 
       if (!contract) {
@@ -270,6 +270,10 @@ export class ContractService {
 
       const contract = await this.contractModel
         .findByIdAndUpdate(id, updateData, { new: true })
+        .populate('contractedUserId', 'firstName lastName email phoneNumber')
+        .populate('projectId', 'name')
+        .populate('createdBy', 'firstName lastName email')
+        .populate('updatedBy', 'firstName lastName email')
         .exec();
 
       if (!contract) {

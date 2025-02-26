@@ -29,7 +29,6 @@ export class ProjectService {
       .populate('teamMembers.userId', 'firstName lastName email _id')
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email')
-      .populate('teamMemberContracts')
       .populate({
         path: 'budgetId',
         populate: [
@@ -42,11 +41,17 @@ export class ProjectService {
       .populate({
         path: 'invoices',
         populate: [
-          { path: 'issuedBy', select: 'firstName lastName email' }, // Populate issuedBy
+          { path: 'issuedBy', select: 'firstName lastName email' },
           {
             path: 'auditTrail.performedBy',
             select: 'firstName lastName email',
           },
+        ],
+      })
+      .populate({
+        path: 'teamMemberContracts',
+        populate: [
+          { path: 'contractedUserId', select: 'firstName lastName email' },
         ],
       })
       .exec();
