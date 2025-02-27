@@ -740,6 +740,7 @@ export class BudgetService {
     return budget;
   }
 
+
   async findAll(): Promise<Budget[]> {
     return this.budgetModel
       .find()
