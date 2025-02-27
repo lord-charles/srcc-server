@@ -35,7 +35,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 export class ContractController {
   private readonly logger = new Logger(ContractController.name);
 
-  constructor(private readonly contractService: ContractService) {}
+  constructor(private readonly contractService: ContractService) { }
 
   @Post()
   @Roles('admin', 'project_manager')
@@ -265,7 +265,7 @@ export class ContractController {
   }
 
   @Post(':id/generate-otp')
-  @Roles('admin', 'project_manager', 'team_member')
+  // @Roles('admin', 'project_manager', 'team_member')
   @ApiOperation({ summary: 'Generate OTP for contract acceptance' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -312,7 +312,7 @@ export class ContractController {
   }
 
   @Post(':id/verify-otp')
-  @Roles('admin', 'project_manager', 'team_member')
+  // @Roles('admin', 'project_manager', 'team_member')
   @ApiOperation({ summary: 'Verify OTP and accept contract' })
   @ApiResponse({
     status: HttpStatus.OK,
