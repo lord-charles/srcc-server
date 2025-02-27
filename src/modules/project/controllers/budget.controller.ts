@@ -47,6 +47,18 @@ export class BudgetController {
     return this.budgetService.create(req.user.id, dto);
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Get all budgets' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all budgets',
+    type: [Budget],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async findAll(): Promise<Budget[]> {
+    return this.budgetService.findAll();
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get a budget by ID',

@@ -30,7 +30,7 @@ export class BudgetService {
     @InjectModel(Project.name) private projectModel: Model<Project>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly notificationService: NotificationService,
-  ) {}
+  ) { }
 
   private async notifyStakeholders(
     budget: Budget,
@@ -100,16 +100,15 @@ export class BudgetService {
             <p><strong>Version:</strong> ${budget.version}</p>
           </div>
 
-          ${
-            comments
-              ? `
+          ${comments
+        ? `
           <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
             <h3 style="color: #34495e; margin-top: 0;">Comments</h3>
             <p>${comments}</p>
           </div>
           `
-              : ''
-          }
+        : ''
+      }
 
           <div style="background-color: white; padding: 15px; border-radius: 5px;">
             <p style="margin-bottom: 20px;">You can view the complete budget details in the <a href="https://srcc.strathmore.edu/budgets/${budget.id}" style="color: #3498db; text-decoration: none;">SRCC Portal</a>.</p>
@@ -741,6 +740,34 @@ export class BudgetService {
     return budget;
   }
 
+  async findAll(): Promise<Budget[]> {
+    return this.budgetModel
+      .find()
+      .select('-auditTrail')
+      .populate({
+        path: 'projectId',
+        select: 'name description startDate endDate status',
+      })
+      .populate({
+        path: 'createdBy updatedBy approvedBy',
+        select: 'firstName lastName email phoneNumber employeeId',
+      })
+      .populate({
+        path: 'approvalFlow.checkerApprovals.approverId approvalFlow.managerApprovals.approverId approvalFlow.financeApprovals.approverId',
+        select: 'firstName lastName email employeeId',
+      })
+      .populate({
+        path: 'rejectionDetails.rejectedBy',
+        select: 'firstName lastName email employeeId',
+      })
+      .populate({
+        path: 'revisionRequest.requestedBy',
+        select: 'firstName lastName email employeeId',
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   private async generateBaseEmailMessage(
     budget: Budget,
     project: Project,
@@ -807,16 +834,15 @@ export class BudgetService {
             </div>
           </div>
 
-          ${
-            budget.notes
-              ? `
+          ${budget.notes
+        ? `
           <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
             <h3 style="color: #34495e; margin-top: 0;">Additional Notes</h3>
             <p style="margin: 0;">${budget.notes}</p>
           </div>
           `
-              : ''
-          }
+        : ''
+      }
 
           <div style="background-color: white; padding: 15px; border-radius: 5px;">
             <p style="margin-bottom: 20px;">You can view the complete budget details in the <a href="https://srcc.strathmore.edu/budgets/${budget.id}" style="color: #3498db; text-decoration: none;">SRCC Portal</a>.</p>
