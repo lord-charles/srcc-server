@@ -743,7 +743,6 @@ export class BudgetService {
   async findAll(): Promise<Budget[]> {
     return this.budgetModel
       .find()
-      .select('-auditTrail')
       .populate({
         path: 'projectId',
         select: 'name description startDate endDate status',
