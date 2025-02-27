@@ -764,6 +764,10 @@ export class BudgetService {
         path: 'revisionRequest.requestedBy',
         select: 'firstName lastName email employeeId',
       })
+      .populate({
+        path: 'auditTrail.performedBy',
+        select: 'firstName lastName email',
+      })
       .sort({ createdAt: -1 })
       .exec();
   }
