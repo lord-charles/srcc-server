@@ -464,15 +464,15 @@ export class ConsultantController {
           : typeof registerOrgDto.servicesOffered === 'string'
             ? [registerOrgDto.servicesOffered] // Single string value
             : Object.keys(registerOrgDto)
-                .filter(key => key.startsWith('servicesOffered['))
-                .map(key => registerOrgDto[key]),
+              .filter(key => key.startsWith('servicesOffered['))
+              .map(key => registerOrgDto[key]),
         industries: Array.isArray(registerOrgDto.industries)
           ? registerOrgDto.industries
           : typeof registerOrgDto.industries === 'string'
             ? [registerOrgDto.industries] // Single string value
             : Object.keys(registerOrgDto)
-                .filter(key => key.startsWith('industries['))
-                .map(key => registerOrgDto[key]),
+              .filter(key => key.startsWith('industries['))
+              .map(key => registerOrgDto[key]),
         // Parse objects
         contactPerson: typeof registerOrgDto.contactPerson === 'string'
           ? JSON.parse(registerOrgDto.contactPerson)
@@ -511,7 +511,7 @@ export class ConsultantController {
 
   @Get('pending')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'hr')
+  // @Roles('admin', 'hr')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all pending consultant applications' })
   async getPendingConsultants() {
@@ -520,7 +520,7 @@ export class ConsultantController {
 
   @Get('organizations')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'hr')
+  // @Roles('admin', 'hr')
   @ApiBearerAuth()
   async getOrganizations() {
     return this.consultantService.getOrganizations();
@@ -528,7 +528,7 @@ export class ConsultantController {
 
   @Get('organization/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'hr')
+  // @Roles('admin', 'hr')
   @ApiBearerAuth()
   async getOrganization(@Param('id') id: string) {
     return this.consultantService.getOrganization(id);
@@ -536,7 +536,7 @@ export class ConsultantController {
 
   @Patch(':id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'hr')
+  // @Roles('admin', 'hr')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Approve a consultant application' })
   async approveConsultant(@Param('id') id: string) {
@@ -545,7 +545,7 @@ export class ConsultantController {
 
   @Patch('organization/:id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'hr')
+  // @Roles('admin', 'hr')
   @ApiBearerAuth()
   async approveOrganization(@Param('id') id: string) {
     return this.consultantService.approveOrganization(id);
@@ -553,7 +553,7 @@ export class ConsultantController {
 
   @Patch(':id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin', 'hr')
+  // @Roles('admin', 'hr')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Reject a consultant application' })
   async rejectConsultant(
