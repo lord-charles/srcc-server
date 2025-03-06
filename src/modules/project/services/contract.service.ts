@@ -196,10 +196,9 @@ export class ContractService {
   //  * Find my contracts
   async findMyContracts(userId: string): Promise<Contract[]> {
     try {
-      console.log('userId', userId);
       return await this.contractModel
         .find({ contractedUserId: new Types.ObjectId(userId) })
-        .populate('projectId', 'name')
+        .populate('projectId', 'name milestones')
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .exec();
     } catch (error) {
@@ -233,7 +232,7 @@ export class ContractService {
       const contract = await this.contractModel 
         .findById(id)
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
-        .populate('projectId', 'name milestones')
+        .populate('projectId', 'name')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
         .exec();
