@@ -230,10 +230,10 @@ export class ContractService {
   //  * Find a contract by ID
   async findOne(id: string): Promise<Contract> {
     try {
-      const contract = await this.contractModel
+      const contract = await this.contractModel 
         .findById(id)
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
-        .populate('projectId', 'name')
+        .populate('projectId', 'name milestones')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
         .exec();
