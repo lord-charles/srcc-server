@@ -15,6 +15,7 @@ import * as crypto from 'crypto';
 import { User } from 'src/modules/auth/schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { Project } from 'project';
+import { ContractApprovalDto, ContractRejectionDto } from '../dto/contract-approval.dto';
 
 interface OtpData {
   otp: string;
@@ -30,6 +31,16 @@ export class ContractService {
   private readonly MAX_OTP_ATTEMPTS = 5;
   private readonly OTP_COOLDOWN_MINUTES = 2;
   private readonly OTP_EXPIRY_MINUTES: number;
+
+  private readonly roleMap = {
+    finance: 'finance_approver',
+    md: 'managing_director',
+  } as const;
+
+  private readonly approvalDeadlines = {
+    finance: 48, 
+    md: 72, 
+  } as const;
 
   constructor(
     @InjectModel(Contract.name) private contractModel: Model<ContractDocument>,
@@ -115,7 +126,7 @@ export class ContractService {
         contractNumber,
         createdBy: new Types.ObjectId(currentUserId),
         updatedBy: new Types.ObjectId(currentUserId),
-        status: createContractDto.status || 'draft',
+        status: 'pending_finance_approval',
       });
 
       const savedContract = await newContract.save();
@@ -124,20 +135,20 @@ export class ContractService {
       });
 
       // Send notification if user has contact details
-      if (user.email && user.phoneNumber) {
-        await this.sendContractNotification(savedContract, user).catch(
-          (error) => {
-            this.logger.error(
-              `Failed to send contract notification: ${error.message}`,
-              error.stack,
-            );
-          },
-        );
-      } else {
-        this.logger.warn(
-          `Could not send notification to user ${user._id}: Missing email or phone number`,
-        );
-      }
+      // if (user.email && user.phoneNumber) {
+      //   await this.sendContractNotification(savedContract, user).catch(
+      //     (error) => {
+      //       this.logger.error(
+      //         `Failed to send contract notification: ${error.message}`,
+      //         error.stack,
+      //       );
+      //     },
+      //   );
+      // } else {
+      //   this.logger.warn(
+      //     `Could not send notification to user ${user._id}: Missing email or phone number`,
+      //   );
+      // }
 
       return savedContract;
     } catch (error) {
@@ -537,32 +548,6 @@ export class ContractService {
     }
   }
 
-  //  * Send contract notification to user
-  private async sendContractNotification(
-    contract: Contract,
-    user: any,
-  ): Promise<void> {
-    const subject = `New Contract Assignment - ${contract.contractNumber}`;
-
-    await this.notificationService.sendContractNotification(
-      user.email,
-      user.phoneNumber,
-      subject,
-      {
-        contractNumber: contract.contractNumber,
-        description: contract.description,
-        contractValue: contract.contractValue,
-        currency: contract.currency,
-        startDate: contract.startDate,
-        endDate: contract.endDate,
-        recipientName: `${user.firstName} ${user.lastName}`,
-      },
-    );
-
-    this.logger.log(
-      `Contract notification sent to user ${user._id} for contract ${contract.contractNumber}`,
-    );
-  }
 
   //  * Send contract acceptance confirmation
   private async sendContractAcceptanceConfirmation(
@@ -656,4 +641,409 @@ export class ContractService {
       `Contract acceptance confirmation sent to user ${user._id} for contract ${contract.contractNumber}`,
     );
   }
+
+  async submitForApproval(
+    id: string,
+    userId: Types.ObjectId,
+  ): Promise<Contract> {
+    const contract = await this.findOne(id);
+
+    if (contract.status !== 'draft') {
+      throw new BadRequestException(
+        'Contract must be in draft status to initiate approval workflow',
+      );
+    }
+
+    const nextStatus = 'pending_finance_approval';
+    const nextLevel = 'finance';
+    const approvers = await this.getApprovers(nextLevel);
+
+    const updatedContract = await this.contractModel.findByIdAndUpdate(
+      id,
+      {
+        status: nextStatus,
+        updatedBy: userId,
+        currentLevelDeadline: this.calculateDeadline(this.approvalDeadlines.finance),
+        $push: {
+          amendments: {
+            date: new Date(),
+            description: 'Contract submitted for financial review and approval',
+            changedFields: ['status'],
+            approvedBy: userId,
+          },
+        },
+      },
+      { new: true },
+    ).populate('projectId contractedUserId');
+
+    await this.notifyApprovers(updatedContract, approvers, nextLevel);
+
+    return updatedContract;
+  }
+
+  private calculateDeadline(hours: number): Date {
+    const deadline = new Date();
+    deadline.setHours(deadline.getHours() + hours);
+    return deadline;
+  }
+
+  async approve(
+    id:   string,
+    userId: string,
+    dto: ContractApprovalDto,
+  ): Promise<Contract> {
+    const contract = await this.findOne(id);
+    let nextStatus: string;
+    let nextLevel: string;
+    let nextDeadline: Date | null;
+
+    switch (contract.status) {
+      case 'pending_finance_approval':
+        nextStatus = 'pending_md_approval';
+        nextLevel = 'md';
+        nextDeadline = this.calculateDeadline(this.approvalDeadlines.md);
+        break;
+      case 'pending_md_approval':
+        nextStatus = 'active';
+        nextLevel = null;
+        nextDeadline = null;
+        break;
+      default:
+        throw new BadRequestException(
+          'Contract is not in an appropriate status for approval',
+        );
+    }
+
+    const currentLevel = contract.status.split('_')[1];
+    const approvalField = `${currentLevel}Approvals`;
+
+    const update: any = {
+      status: nextStatus,
+      updatedBy: userId,
+      currentLevelDeadline: nextDeadline,
+      $push: {
+        [`approvalFlow.${approvalField}`]: {
+          approverId: userId,
+          approvedAt: new Date(),
+          comments: dto.comments,
+        },
+        amendments: {
+          date: new Date(),
+          description: `Contract approved by ${this.formatRole(currentLevel)}`,
+          changedFields: ['status'],
+          approvedBy: userId,
+        },
+      },
+    };
+
+    if (nextStatus === 'active') {
+      update.finalApproval = {
+        approvedBy: userId,
+        approvedAt: new Date(),
+      };
+    }
+
+    const updatedContract = await this.contractModel.findByIdAndUpdate(
+      id,
+      update,
+      { new: true },
+    ).populate('projectId contractedUserId');
+
+    // Notify relevant parties based on approval stage
+    if (nextLevel) {
+      const nextApprovers = await this.getApprovers(nextLevel);
+      await this.notifyApprovers(updatedContract, nextApprovers, nextLevel);
+    } else {
+      await this.notifyContractActivation(updatedContract);
+    }
+
+    return updatedContract;
+  }
+
+  private async notifyApprovers(
+    contract: Contract,
+    approvers: User[],
+    level: string,
+  ): Promise<void> {
+    const project = await this.projectModel.findById(contract.projectId);
+    const contractedUser = await this.userModel.findById(contract.contractedUserId);
+
+    const emailTemplate = this.generateApprovalEmailTemplate(
+      contract,
+      project,
+      contractedUser,
+      level,
+    );
+
+    const approverPromises = approvers.map(async (approver) => {
+      await this.notificationService.sendEmail(
+        approver.email,
+        `Action Required: Contract Review - ${contract.contractNumber}`,
+        emailTemplate(approver),
+      );
+    });
+
+    await Promise.all(approverPromises);
+  }
+
+  private generateApprovalEmailTemplate(
+    contract: Contract,
+    project: Project,
+    contractedUser: User,
+    level: string,
+  ): (approver: User) => string {
+    return (approver: User) => `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+          <h2 style="color: #2c3e50; margin-bottom: 20px;">Contract Review Required</h2>
+          
+          <div style="background-color: #e74c3c; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <p style="margin: 0;"><strong>⚠️ Your approval is required as ${this.formatRole(level)}</strong></p>
+          </div>
+
+          <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <h3 style="color: #34495e; margin-top: 0;">Contract Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0;"><strong>Contract Number:</strong></td>
+                <td style="padding: 8px 0;">${contract.contractNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0;"><strong>Project:</strong></td>
+                <td style="padding: 8px 0;">${project.name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0;"><strong>Contractor:</strong></td>
+                <td style="padding: 8px 0;">${contractedUser.firstName} ${contractedUser.lastName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0;"><strong>Value:</strong></td>
+                <td style="padding: 8px 0;">${contract.currency} ${contract.contractValue.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0;"><strong>Duration:</strong></td>
+                <td style="padding: 8px 0;">${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <h3 style="color: #34495e; margin-top: 0;">Required Actions</h3>
+            <p>Please review the contract details and take appropriate action based on:</p>
+            <ul style="color: #34495e;">
+              <li>Compliance with organizational policies</li>
+              <li>Budget allocation and financial viability</li>
+              <li>Contract terms and conditions</li>
+              <li>Project alignment and resource requirements</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="https://srcc.strathmore.edu/contracts/${contract._id}/review" 
+               style="display: inline-block; background-color: #2ecc71; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Review Contract
+            </a>
+          </div>
+
+          <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; font-size: 12px; color: #666;">
+            <p style="margin: 0;">This notification was sent to you because you are designated as a ${this.formatRole(level)} in the SRCC system.</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private formatRole(role: string): string {
+    return role === 'md' 
+      ? 'Managing Director'
+      : role.split('_')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+  }
+
+  private async getApprovers(level: string): Promise<User[]> {
+    const requiredRole = this.roleMap[level];
+
+    if (!requiredRole) {
+      throw new BadRequestException(`Invalid approval level: ${level}`);
+    }
+
+    const approvers = await this.userModel
+      .find({
+        roles: { $in: [requiredRole] },
+        status: 'active',
+      })
+      .lean();
+
+    if (!approvers.length) {
+      throw new Error(
+        `No active approvers found for level: ${level}. Please contact system administrator.`,
+      );
+    }
+
+    return approvers;
+  }
+
+
+  private async notifyContractActivation(contract: Contract): Promise<void> {
+    const user = await this.userModel.findById(contract.contractedUserId);
+    const project = await this.projectModel.findById(contract.projectId);
+
+    if (!user || !project) {
+      throw new NotFoundException('User or Project not found');
+    }
+
+    const subject = `Action Required: Contract Acceptance - ${contract.contractNumber}`;
+    const message = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+          <h2 style="color: #2c3e50;">Contract Ready for Acceptance</h2>
+          
+          <div style="background-color: #e74c3c; color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>⚠️ Action Required: Please review and accept your contract</strong></p>
+          </div>
+          
+          <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p>Dear ${user.firstName} ${user.lastName},</p>
+            <p>Your contract for project "${project.name}" has been approved and is ready for your acceptance.</p>
+            
+            <div style="margin: 20px 0;">
+              <strong>Contract Details:</strong>
+              <ul>
+                <li>Contract Number: ${contract.contractNumber}</li>
+                <li>Project: ${project.name}</li>
+                <li>Value: ${contract.currency} ${contract.contractValue.toLocaleString()}</li>
+                <li>Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}</li>
+              </ul>
+            </div>
+
+            <div style="margin: 20px 0;">
+              <p><strong>Next Steps:</strong></p>
+              <ol>
+                <li>Review the contract details carefully</li>
+                <li>Generate an OTP for contract acceptance</li>
+                <li>Enter the OTP to formally accept the contract</li>
+              </ol>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+              <a href="https://srcc.strathmore.edu/contracts/${contract._id}/accept" 
+                 style="display: inline-block; background-color: #2ecc71; color: white; padding: 12px 24px; 
+                        text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Review and Accept Contract
+              </a>
+            </div>
+          </div>
+          
+          <div style="font-size: 12px; color: #666; margin-top: 20px;">
+            <p>If you have any questions, please contact the SRCC support team.</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (user.email) {
+      await this.notificationService.sendEmail(user.email, subject, message);
+    }
+
+    if (user.phoneNumber) {
+      const smsMessage = `SRCC: Your contract (${contract.contractNumber}) has been approved and requires your acceptance. Please check your email for instructions.`;
+      await this.notificationService.sendSMS(user.phoneNumber, smsMessage);
+    }
+  }
+
+  private async sendContractNotification(
+    contract: Contract,
+    user: User,
+  ): Promise<void> {
+    const project = await this.projectModel.findById(contract.projectId);
+    
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const subject = `New Contract Assignment - ${contract.contractNumber}`;
+    const message = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+          <h2 style="color: #2c3e50;">New Contract Assignment</h2>
+          
+          <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p>Dear ${user.firstName} ${user.lastName},</p>
+            <p>A new contract has been created for you in the project "${project.name}".</p>
+            
+            <div style="margin: 20px 0;">
+              <strong>Contract Details:</strong>
+              <ul>
+                <li>Contract Number: ${contract.contractNumber}</li>
+                <li>Description: ${contract.description}</li>
+                <li>Value: ${contract.currency} ${contract.contractValue.toLocaleString()}</li>
+                <li>Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}</li>
+              </ul>
+            </div>
+
+            <p>The contract is currently under review. You will be notified once it is ready for your acceptance.</p>
+          </div>
+          
+          <div style="font-size: 12px; color: #666; margin-top: 20px;">
+            <p>This is an automated message from the SRCC Contract Management System.</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (user.email) {
+      await this.notificationService.sendEmail(user.email, subject, message);
+    }
+
+    if (user.phoneNumber) {
+      const smsMessage = `SRCC: A new contract (${contract.contractNumber}) has been created for you. Please check your email for details.`;
+      await this.notificationService.sendSMS(user.phoneNumber, smsMessage);
+    }
+  }
+
+  async reject(
+    id: string,
+    userId: string,
+    dto: ContractRejectionDto,
+  ): Promise<Contract> {
+    const contract = await this.findOne(id);
+
+    if (!contract.status.startsWith('pending_')) {
+      throw new BadRequestException('Contract is not in an approvable status');
+    }
+
+    const updatedContract = await this.contractModel.findByIdAndUpdate(
+      id,
+      {
+        status: 'rejected',
+        updatedBy: userId,
+        currentLevelDeadline: null,
+        rejectionDetails: {
+          rejectedBy: userId,
+          rejectedAt: new Date(),
+          reason: dto.reason,
+          level: dto.level,
+        },
+        $push: {
+          amendments: {
+            date: new Date(),
+            description: `Contract rejected by ${this.formatRole(dto.level)}`,
+            changedFields: ['status'],
+            approvedBy: userId,
+          },
+        },
+      },
+      { new: true },
+    ).populate('projectId contractedUserId');
+
+    // Notify stakeholders of rejection
+    // const user = await this.userModel.findById(contract.contractedUserId);
+
+
+    return updatedContract;
+  }
 }
+
+

@@ -27,6 +27,7 @@ import { VerifyContractOtpDto } from '../dto/verify-contract-otp.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
+import { ContractApprovalDto, ContractRejectionDto } from '../dto/contract-approval.dto';
 
 @ApiTags('contracts')
 @Controller('contracts')
@@ -362,5 +363,44 @@ export class ContractController {
       message: 'Contract accepted successfully',
       contract: updatedContract,
     };
+  }
+
+  @Post(':id/approve')
+  @Roles('finance_approver', 'managing_director')
+  @ApiOperation({ summary: 'Approve a contract' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Contract approved successfully.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid approval request or contract status.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized.',
+  })
+  async approve(
+    @Param('id') id: string,
+    @Body() approvalDto: ContractApprovalDto,
+    @Req() req,
+  ) {
+    this.logger.log(`Approving contract ${id} by user ${req.user.userId}`);
+    return await this.contractService.approve(id, req.user.userId, approvalDto);
+  }
+
+  @Post(':id/reject')
+  @Roles('finance_approver', 'managing_director')
+  @ApiOperation({ summary: 'Reject a contract' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Contract rejected successfully.',
+  })
+  async reject(
+    @Param('id') id: string,
+    @Body() rejectionDto: ContractRejectionDto,
+    @Req() req,
+  ) {
+    return await this.contractService.reject(id, req.user.userId, rejectionDto);
   }
 }

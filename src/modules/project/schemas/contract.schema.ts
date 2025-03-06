@@ -5,7 +5,7 @@ import { Document, Schema as MongooseSchema } from 'mongoose';
 export type ContractDocument = Contract & Document;
 
 @Schema({ timestamps: true })
-export class Contract {
+export class Contract extends Document {
   @ApiProperty({
     example: 'CONT-2024-001',
     description: 'The unique contract number',
