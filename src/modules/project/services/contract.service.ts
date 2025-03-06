@@ -704,7 +704,7 @@ export class ContractService {
         nextDeadline = this.calculateDeadline(this.approvalDeadlines.md);
         break;
       case 'pending_md_approval':
-        nextStatus = 'active';
+        nextStatus = 'pending_acceptance';
         nextLevel = null;
         nextDeadline = null;
         break;
@@ -736,7 +736,7 @@ export class ContractService {
       },
     };
 
-    if (nextStatus === 'active') {
+    if (nextStatus === 'pending_acceptance') {
       update.finalApproval = {
         approvedBy: userId,
         approvedAt: new Date(),
