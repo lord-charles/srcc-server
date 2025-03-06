@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model, Types, Document, Mongoose } from 'mongoose';
@@ -67,6 +68,7 @@ type ApprovalFlow = {
 
 @Injectable()
 export class ClaimsService {
+  private readonly logger = new Logger(ClaimsService.name);
   private readonly roleMap = {
     checker: 'claim_checker',
     manager: 'claim_manager',
@@ -225,6 +227,25 @@ export class ClaimsService {
       .populate('projectId', 'name')
       .populate('contractId', 'contractNumber')
       .exec();
+  }
+  async findAllClaims(filters: any = {}): Promise<any[]> {
+    try {
+      return await this.claimModel
+        .find(filters)
+        .populate('projectId', 'name description')
+        .populate('contractId', 'contractNumber contractValue')
+        .populate('claimantId', 'firstName lastName email')
+        .populate('createdBy', 'firstName lastName')
+        .populate('updatedBy', 'firstName lastName')
+        .sort({ createdAt: -1 })
+        .exec();
+    } catch (error) {
+       this.logger.error(
+          `Error finding claims: ${error.message}`,
+          error.stack,
+        );
+      throw error;
+    }
   }
 
   async findOne(id: string, userId: Types.ObjectId) {

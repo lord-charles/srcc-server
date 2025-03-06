@@ -8,9 +8,11 @@ import {
   UseGuards,
   Request,
   BadRequestException,
+  HttpStatus,
+  Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
-import { Types } from 'mongoose';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiBody, ApiQuery } from '@nestjs/swagger';
+import {  Types } from 'mongoose';
 import { ClaimsService } from './claims.service';
 import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimDto } from './dto/update-claim.dto';
@@ -110,6 +112,44 @@ export class ClaimsController {
   })
   findAll(@Request() req: any) {
     return this.claimsService.findAll(new Types.ObjectId(req.user.id));
+  }
+
+  
+  @Get('claims')
+  @Roles('admin', 'finance_approver', 'claim_manager')
+  @ApiOperation({ summary: 'Get all claims with optional date filtering' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    description: 'Filter claims from this date (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    description: 'Filter claims until this date (YYYY-MM-DD)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of all claims with populated references',
+  })
+  async findAllClaims(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const filters = {};
+    
+    if (startDate) {
+      filters['createdAt'] = { $gte: new Date(startDate) };
+    }
+    
+    if (endDate) {
+      filters['createdAt'] = { 
+        ...filters['createdAt'],
+        $lte: new Date(endDate)
+      };
+    }
+
+    return await this.claimsService.findAllClaims(filters);
   }
 
   @Get(':id')

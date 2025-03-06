@@ -16,6 +16,7 @@ import { User } from 'src/modules/auth/schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { Project } from 'project';
 import { ContractApprovalDto, ContractRejectionDto } from '../dto/contract-approval.dto';
+import { Claim, ClaimDocument } from 'src/modules/claims/schemas/claim.schema';
 
 interface OtpData {
   otp: string;
@@ -1043,6 +1044,8 @@ export class ContractService {
 
     return updatedContract;
   }
+
+  
 }
 
 

@@ -403,4 +403,5 @@ export class ContractController {
   ) {
     return await this.contractService.reject(id, req.user.userId, rejectionDto);
   }
+
 }
