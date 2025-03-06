@@ -7,6 +7,7 @@ import { SystemConfigModule } from './modules/system-config/system-config.module
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SystemLogsModule } from './modules/system-logs/system-logs.module';
 import { ProjectModule } from './modules/project/project.module';
+import { ClaimsModule } from './modules/claims/claims.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ProjectModule } from './modules/project/project.module';
     NotificationsModule,
     SystemLogsModule,
     ProjectModule,
+    ClaimsModule
   ],
   controllers: [],
   providers: [],

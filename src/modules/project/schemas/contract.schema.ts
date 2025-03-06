@@ -35,26 +35,32 @@ export class Contract {
   currency: string;
 
   @ApiProperty({
-    example: 'active',
+    example: 'draft',
     description: 'Contract status',
     enum: [
       'draft',
+      'pending_finance_approval',
+      'pending_md_approval',
       'pending_signature',
       'active',
       'suspended',
       'terminated',
       'completed',
+      'rejected'
     ],
   })
   @Prop({
     required: true,
     enum: [
       'draft',
+      'pending_finance_approval',
+      'pending_md_approval',
       'pending_signature',
       'active',
       'suspended',
       'terminated',
       'completed',
+      'rejected'
     ],
     default: 'draft',
   })
@@ -108,6 +114,66 @@ export class Contract {
     changedFields?: string[];
     approvedBy?: MongooseSchema.Types.ObjectId;
   }[];
+
+  @ApiProperty({ description: 'Approval workflow tracking' })
+  @Prop({
+    type: {
+      financeApprovals: [{
+        approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        approvedAt: Date,
+        comments: String
+      }],
+      mdApprovals: [{
+        approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        approvedAt: Date,
+        comments: String
+      }]
+    }
+  })
+  approvalFlow: {
+    financeApprovals?: {
+      approverId: MongooseSchema.Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+    }[];
+    mdApprovals?: {
+      approverId: MongooseSchema.Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+    }[];
+  };
+
+  @ApiProperty({ description: 'Current approval level deadline' })
+  @Prop()
+  currentLevelDeadline?: Date;
+
+  @ApiProperty({ description: 'Final approval details' })
+  @Prop({
+    type: {
+      approvedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+      approvedAt: Date
+    }
+  })
+  finalApproval?: {
+    approvedBy: MongooseSchema.Types.ObjectId;
+    approvedAt: Date;
+  };
+
+  @ApiProperty({ description: 'Rejection details if contract is rejected' })
+  @Prop({
+    type: {
+      rejectedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+      rejectedAt: Date,
+      reason: String,
+      level: String
+    }
+  })
+  rejectionDetails?: {
+    rejectedBy: MongooseSchema.Types.ObjectId;
+    rejectedAt: Date;
+    reason: string;
+    level: string;
+  };
 }
 
 export const ContractSchema = SchemaFactory.createForClass(Contract);

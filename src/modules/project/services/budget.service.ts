@@ -287,7 +287,6 @@ export class BudgetService {
     }
 
     const approvers = await this.getApprovers(nextLevel);
-    console.log(approvers);
 
     const updatedBudget = await this.budgetModel.findByIdAndUpdate(
       id,
