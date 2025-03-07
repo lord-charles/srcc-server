@@ -477,4 +477,18 @@ export class ClaimsController {
   cancel(@Param('id') id: string, @Request() req: any) {
     return this.claimsService.cancel(id, new Types.ObjectId(req.user.id));
   }
+
+  @Get('by-contract/:contractId')
+  @ApiOperation({ 
+    summary: 'Get all claims for a specific contract',
+    description: 'Returns all claims associated with the given contract ID, sorted by creation date in descending order. Includes milestone details and populated references.'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns an array of ClaimDocument objects with populated references including project, contract, claimant, and milestone details'
+  })
+  @ApiResponse({ status: 400, description: 'Invalid contract ID format' })
+  async findClaimsByContract(@Param('contractId') contractId: string, @Request() req: any) {
+    return await this.claimsService.findClaimsByContract(contractId, req.user.id);
+  }
 }

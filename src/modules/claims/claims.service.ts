@@ -248,6 +248,30 @@ export class ClaimsService {
     }
   }
 
+  async findClaimsByContract(contractId: string, claimantId: string): Promise<any[]> {
+    try {
+      return await this.claimModel
+        .find({ 
+          contractId: new Types.ObjectId(contractId),
+          claimantId: new Types.ObjectId(claimantId)
+        })
+        .populate('projectId', 'name description')
+        .populate('contractId', 'contractNumber contractValue')
+        .populate('claimantId', 'firstName lastName email')
+        .populate('createdBy', 'firstName lastName')
+        .populate('updatedBy', 'firstName lastName')
+        .populate('milestones.milestoneId', 'title description')
+        .sort({ createdAt: -1 })
+        .exec();
+    } catch (error) {
+      this.logger.error(
+        `Error finding claims for contract ${contractId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
   async findOne(id: string, userId: Types.ObjectId) {
     const claim = await this.claimModel
       .findOne({ _id: id, claimantId: userId })
