@@ -8,6 +8,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SystemLogsModule } from './modules/system-logs/system-logs.module';
 import { ProjectModule } from './modules/project/project.module';
 import { ClaimsModule } from './modules/claims/claims.module';
+import { ImprestModule } from './modules/imprest/imprest.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { ClaimsModule } from './modules/claims/claims.module';
     NotificationsModule,
     SystemLogsModule,
     ProjectModule,
-    ClaimsModule
+    ClaimsModule,
+    ImprestModule
   ],
   controllers: [],
   providers: [],
