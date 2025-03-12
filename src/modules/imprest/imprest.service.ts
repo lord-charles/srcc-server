@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Imprest, ImprestDocument } from './schemas/imprest.schema';
 import { CreateImprestDto } from './dto/create-imprest.dto';
-import { ImprestApprovalDto, ImprestRejectionDto, ImprestAccountingDto } from './dto/imprest-approval.dto';
+import { ImprestApprovalDto, ImprestRejectionDto, ImprestAccountingDto, ImprestDisbursementDto } from './dto/imprest-approval.dto';
 import { NotificationService } from '../notifications/services/notification.service';
 import { User } from '../auth/schemas/user.schema';
 
@@ -15,7 +15,11 @@ export class ImprestService {
     private notificationService: NotificationService,
   ) {}
 
-  async create(createImprestDto: CreateImprestDto, userId: string): Promise<ImprestDocument> {
+  async create(
+    createImprestDto: CreateImprestDto, 
+    userId: string,
+    attachments: { fileName: string; fileUrl: string; uploadedAt: Date }[] = []
+  ): Promise<ImprestDocument> {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -32,6 +36,7 @@ export class ImprestService {
       requestDate: new Date().toISOString().split('T')[0],
       dueDate: dueDate.toISOString().split('T')[0],
       status: 'pending_hod',
+      attachments: attachments,
     });
 
     const savedImprest = await imprest.save();
@@ -49,9 +54,10 @@ A new imprest request requires your approval:
 Request Details:
 - Employee: ${user.firstName} ${user.lastName}
 - Department: ${user.department}
-- Amount: ${createImprestDto.currency} ${createImprestDto.amount.toFixed(2)}
+- Amount: ${createImprestDto.currency} ${createImprestDto.amount}
 - Purpose: ${createImprestDto.paymentReason}
 - Type: ${createImprestDto.paymentType}
+${attachments.length > 0 ? `- Attachments: ${attachments.length} file(s) attached` : ''}
 
 Additional Information:
 ${createImprestDto.explanation}
@@ -330,7 +336,7 @@ SRCC Finance Team`
     return savedImprest;
   }
 
-  async recordDisbursement(id: string, userId: string, amount: number): Promise<ImprestDocument> {
+  async recordDisbursement(id: string, userId: string, disbursementDto: ImprestDisbursementDto): Promise<ImprestDocument> {
     const imprest = await this.findOne(id);
     
     if (imprest.status !== 'approved') {
@@ -340,7 +346,8 @@ SRCC Finance Team`
     imprest.disbursement = {
       disbursedBy: new Types.ObjectId(userId),
       disbursedAt: new Date(),
-      amount,
+      amount: disbursementDto.amount,
+      comments: disbursementDto.comments,
     };
     imprest.status = 'disbursed';
 
@@ -357,9 +364,10 @@ SRCC Finance Team`
 Your imprest funds have been disbursed:
 
 Disbursement Details:
-- Amount: ${imprest.currency} ${amount.toFixed(2)}
+- Amount: ${imprest.currency} ${disbursementDto.amount.toFixed(2)}
 - Purpose: ${imprest.paymentReason}
 - Due Date: ${imprest.dueDate}
+${disbursementDto.comments ? `- Comments: ${disbursementDto.comments}` : ''}
 
 Important Reminders:
 1. All expenses must be accounted for within 72 hours (by ${imprest.dueDate})
@@ -375,23 +383,34 @@ SRCC Finance Team`
     return savedImprest;
   }
 
-  async submitAccounting(id: string, userId: string, accountingDto: ImprestAccountingDto): Promise<ImprestDocument> {
-    const imprest = await this.findOne(id);
-    
-    if (imprest.status !== 'disbursed') {
-      throw new BadRequestException('Imprest request is not in disbursed state');
+  async submitAccounting(
+    id: string, 
+    userId: string, 
+    accountingDto: ImprestAccountingDto,
+    processedReceipts: { description: string; amount: number; receiptUrl: string; uploadedAt: Date }[] = []
+  ): Promise<ImprestDocument> {
+    const imprest = await this.imprestModel.findById(id);
+    if (!imprest) {
+      throw new NotFoundException('Imprest request not found');
     }
 
-    const totalAmount = accountingDto.receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
+    if (imprest.status !== 'disbursed') {
+      throw new BadRequestException('Imprest must be disbursed before accounting');
+    }
+
+    if (imprest.requestedBy.toString() !== userId) {
+      throw new BadRequestException('Only the requester can submit accounting');
+    }
+
+    // Calculate total amount and balance
+    const totalAmount = processedReceipts.reduce((sum, receipt) => sum + receipt.amount, 0);
     const balance = imprest.disbursement.amount - totalAmount;
 
+    // Update imprest with accounting details
     imprest.accounting = {
       verifiedBy: new Types.ObjectId(userId),
       verifiedAt: new Date(),
-      receipts: accountingDto.receipts.map(receipt => ({
-        ...receipt,
-        uploadedAt: new Date(),
-      })),
+      receipts: processedReceipts,
       totalAmount,
       balance,
       comments: accountingDto.comments,
@@ -417,7 +436,7 @@ Request Details:
 - Total Spent: ${imprest.currency} ${totalAmount.toFixed(2)}
 - Balance: ${imprest.currency} ${balance.toFixed(2)}
 
-Number of Receipts: ${accountingDto.receipts.length}
+Number of Receipts: ${processedReceipts.length}
 
 Please review the submitted receipts and accounting through the SRCC portal.
 

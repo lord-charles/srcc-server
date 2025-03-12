@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsEnum, Min, IsNotEmpty } from 'class-validator';
+import { IsString, IsNumber, IsEnum, Min, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateImprestDto {
   @ApiProperty({
@@ -43,4 +43,16 @@ export class CreateImprestDto {
   @IsString()
   @IsNotEmpty()
   explanation: string;
+  
+  @ApiProperty({
+    description: 'Optional file attachments',
+    type: 'array',
+    items: {
+      type: 'string',
+      format: 'binary',
+    },
+    required: false,
+  })
+  @IsOptional()
+  attachments?: any[];
 }

@@ -146,6 +146,7 @@ export class Imprest {
       disbursedBy: { type: Types.ObjectId, ref: 'User' },
       disbursedAt: Date,
       amount: Number,
+      comments: String,
     },
     _id: false,
   })
@@ -153,6 +154,7 @@ export class Imprest {
     disbursedBy: Types.ObjectId;
     disbursedAt: Date;
     amount: number;
+    comments?: string;
   };
 
   @ApiProperty({ description: 'Accounting details' })
@@ -186,6 +188,23 @@ export class Imprest {
     comments?: string;
   };
 
+  @ApiProperty({ 
+    description: 'Optional file attachments for the imprest request',
+    type: [Object],
+  })
+  @Prop({
+    type: [{
+      fileName: String,
+      fileUrl: String,
+      uploadedAt: Date,
+    }],
+    default: [],
+  })
+  attachments?: {
+    fileName: string;
+    fileUrl: string;
+    uploadedAt: Date;
+  }[];
   
 }
 
