@@ -44,6 +44,13 @@ export class ImprestController {
     return this.imprestService.findAll(filters);
   }
 
+  @Get('my-imprest')
+  @ApiOperation({ summary: 'Get all imprest requests created by the user' })
+  @ApiResponse({ status: 200, description: 'Returns all imprest requests created by the user.' })
+  async findMyImprests(@Req() req: any) {
+    return this.imprestService.findMyImprests(req.user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific imprest request' })
   @ApiResponse({ status: 200, description: 'Returns the imprest request.' })

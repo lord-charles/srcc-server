@@ -185,6 +185,8 @@ export class Imprest {
     balance: number;
     comments?: string;
   };
+
+  
 }
 
 export const ImprestSchema = SchemaFactory.createForClass(Imprest);
