@@ -230,7 +230,7 @@ export class ImprestController {
         throw new BadRequestException('Number of receipt files must match number of receipt entries');
       }
     } catch (error) {
-      console.log(error);
+      console.log("error", error);
       throw new BadRequestException('Invalid receipts data format');
     }
 
