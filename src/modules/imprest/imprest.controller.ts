@@ -230,7 +230,7 @@ export class ImprestController {
         throw new BadRequestException('Number of receipt files must match number of receipt entries');
       }
     } catch (error) {
-      console.log("error", error.message);
+
       throw new BadRequestException(error.message);
     }
 
