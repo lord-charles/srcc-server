@@ -96,6 +96,10 @@ SRCC Finance Team`
           path: 'accounting.verifiedBy',
           select: 'firstName lastName email',
         },
+        {
+          path: 'rejection.rejectedBy',
+          select: 'firstName lastName email',
+        },
       ])
       .sort({ createdAt: -1 })
       .exec();
