@@ -77,44 +77,12 @@ export class Claim {
   @ApiProperty({
     example: 'pending_checker_approval',
     description: 'Current status of the claim',
-    enum: [
-      'draft',
-      'pending_checker_approval',
-      'pending_reviewer_approval',
-      'pending_approver_approval',
-      'pending_srcc_checker_approval',
-      'pending_srcc_finance_approval',
-      'pending_director_approval',
-      'pending_academic_director_approval',
-      'pending_finance_approval',
-      'approved',
-      'rejected',
-      'paid',
-      'cancelled',
-      'revision_requested'
-    ],
   })
   @Prop({
     required: true,
-    enum: [
-      'draft',
-      'pending_checker_approval',
-      'pending_reviewer_approval',
-      'pending_approver_approval',
-      'pending_srcc_checker_approval',
-      'pending_srcc_finance_approval',
-      'pending_director_approval',
-      'pending_academic_director_approval',
-      'pending_finance_approval',
-      'approved',
-      'rejected',
-      'paid',
-      'cancelled',
-      'revision_requested'
-    ],
     default: 'draft',
   })
-  status: ClaimStatus;
+  status: string;
 
   @ApiProperty({ description: 'Current version of the claim' })
   @Prop({ type: Number, default: 1 })
