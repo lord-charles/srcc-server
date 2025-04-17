@@ -242,21 +242,56 @@ export class ClaimsService {
       .exec();
   }
   async findAllClaims(filters: any = {}): Promise<any[]> {
+    interface PopulatedProject {
+      _id: Types.ObjectId;
+      name: string;
+      description: string;
+      department: string;
+    }
+
+    interface PopulatedClaim extends Omit<ClaimDocument, 'projectId'> {
+      projectId: PopulatedProject;
+    }
     try {
-      return await this.claimModel
+      const rawClaims = await this.claimModel
         .find(filters)
-        .populate('projectId', 'name description')
+        .populate('projectId', 'name description department')
         .populate('contractId', 'contractNumber contractValue')
         .populate('claimantId', 'firstName lastName email')
         .populate('createdBy', 'firstName lastName')
         .populate('updatedBy', 'firstName lastName')
         .sort({ createdAt: -1 })
+        .lean()
         .exec();
+
+      const claims = rawClaims as unknown as PopulatedClaim[];
+
+      // Add approval flow to each claim
+      const enhancedClaims = await Promise.all(
+        claims.map(async (claim: PopulatedClaim) => {
+          if (!claim.projectId?.department) {
+            return claim;
+          }
+
+          // Get the approval flow for the project's department
+          const approvalFlow = await this.approvalFlowService.getApprovalFlow(claim.projectId.department);
+          if (!approvalFlow) {
+            return claim;
+          }
+
+          return {
+            ...claim,
+            approvalFlow
+          };
+        })
+      );
+
+      return enhancedClaims;
     } catch (error) {
-       this.logger.error(
-          `Error finding claims: ${error.message}`,
-          error.stack,
-        );
+      this.logger.error(
+        `Error finding claims: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
