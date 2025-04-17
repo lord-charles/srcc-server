@@ -84,6 +84,14 @@ export class CreateProjectDto {
   name: string;
 
   @ApiProperty({
+    example: 'SU',
+    description: 'The department of the project'
+  })
+  @IsNotEmpty()
+  @IsString()
+  department: string;
+
+  @ApiProperty({
     example: 'A comprehensive project to upgrade the health system infrastructure including new equipment and staff training.',
     description: 'Detailed description of the project scope, objectives, and expected outcomes.'
   })

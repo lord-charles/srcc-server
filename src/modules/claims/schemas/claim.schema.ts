@@ -1,22 +1,39 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { Document, Types as MongooseSchema } from 'mongoose';
+
+export type ClaimStatus =
+  | 'draft'
+  | 'pending_checker_approval'
+  | 'pending_reviewer_approval'
+  | 'pending_approver_approval'
+  | 'pending_srcc_checker_approval'
+  | 'pending_srcc_finance_approval'
+  | 'pending_director_approval'
+  | 'pending_academic_director_approval'
+  | 'pending_finance_approval'
+  | 'approved'
+  | 'rejected'
+  | 'paid'
+  | 'cancelled'
+  | 'revision_requested';
 
 export type ClaimDocument = Claim & Document;
 
 @Schema({ timestamps: true })
 export class Claim {
   @ApiProperty({ description: 'Reference to the project' })
-  @Prop({ type: MongooseSchema.ObjectId, ref: 'Project', required: true })
-  projectId: MongooseSchema.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Project', required: true })
+  projectId: Types.ObjectId;
 
   @ApiProperty({ description: 'Reference to the team member contract' })
-  @Prop({ type: MongooseSchema.ObjectId, ref: 'Contract', required: true })
-  contractId: MongooseSchema.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Contract', required: true })
+  contractId: Types.ObjectId;
 
   @ApiProperty({ description: 'Team member making the claim' })
-  @Prop({ type: MongooseSchema.ObjectId, ref: 'User', required: true })
-  claimantId: MongooseSchema.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  claimantId: Types.ObjectId;
 
   @ApiProperty({
     example: 50000,
@@ -63,7 +80,12 @@ export class Claim {
     enum: [
       'draft',
       'pending_checker_approval',
-      'pending_manager_approval',
+      'pending_reviewer_approval',
+      'pending_approver_approval',
+      'pending_srcc_checker_approval',
+      'pending_srcc_finance_approval',
+      'pending_director_approval',
+      'pending_academic_director_approval',
       'pending_finance_approval',
       'approved',
       'rejected',
@@ -77,7 +99,12 @@ export class Claim {
     enum: [
       'draft',
       'pending_checker_approval',
-      'pending_manager_approval',
+      'pending_reviewer_approval',
+      'pending_approver_approval',
+      'pending_srcc_checker_approval',
+      'pending_srcc_finance_approval',
+      'pending_director_approval',
+      'pending_academic_director_approval',
       'pending_finance_approval',
       'approved',
       'rejected',
@@ -87,7 +114,7 @@ export class Claim {
     ],
     default: 'draft',
   })
-  status: string;
+  status: ClaimStatus;
 
   @ApiProperty({ description: 'Current version of the claim' })
   @Prop({ type: Number, default: 1 })
@@ -110,7 +137,7 @@ export class Claim {
     _id: false,
   })
   revisionRequest?: {
-    requestedBy: MongooseSchema.ObjectId;
+    requestedBy: Types.ObjectId;
     requestedAt: Date;
     reason: string;
     returnToStatus: string;
@@ -134,7 +161,7 @@ export class Claim {
     name: string;
     type: string;
     uploadedAt: Date;
-    uploadedBy: MongooseSchema.ObjectId;
+    uploadedBy: Types.ObjectId;
   }[];
 
   @ApiProperty({ description: 'Approval details' })
@@ -144,35 +171,101 @@ export class Claim {
         approvedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
         approvedAt: Date,
         comments: String,
+        department: String,
       },
-      managerApproval: {
+      reviewerApproval: {
         approvedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
         approvedAt: Date,
         comments: String,
+        department: String,
+      },
+      approverApproval: {
+        approvedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
+        approvedAt: Date,
+        comments: String,
+        department: String,
+      },
+      srccCheckerApproval: {
+        approvedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
+        approvedAt: Date,
+        comments: String,
+        department: String,
+      },
+      srccFinanceApproval: {
+        approvedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
+        approvedAt: Date,
+        comments: String,
+        department: String,
+      },
+      directorApproval: {
+        approvedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
+        approvedAt: Date,
+        comments: String,
+        department: String,
+      },
+      academicDirectorApproval: {
+        approvedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
+        approvedAt: Date,
+        comments: String,
+        department: String,
       },
       financeApproval: {
         approvedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
         approvedAt: Date,
         comments: String,
+        department: String,
       },
     },
     _id: false,
   })
   approval?: {
     checkerApproval?: {
-      approvedBy: MongooseSchema.ObjectId;
+      approvedBy: Types.ObjectId;
       approvedAt: Date;
       comments?: string;
+      department: string;
     };
-    managerApproval?: {
-      approvedBy: MongooseSchema.ObjectId;
+    reviewerApproval?: {
+      approvedBy: Types.ObjectId;
       approvedAt: Date;
       comments?: string;
+      department: string;
+    };
+    approverApproval?: {
+      approvedBy: Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+      department: string;
+    };
+    srccCheckerApproval?: {
+      approvedBy: Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+      department: string;
+    };
+    srccFinanceApproval?: {
+      approvedBy: Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+      department: string;
+    };
+    directorApproval?: {
+      approvedBy: Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+      department: string;
+    };
+    academicDirectorApproval?: {
+      approvedBy: Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+      department: string;
     };
     financeApproval?: {
-      approvedBy: MongooseSchema.ObjectId;
+      approvedBy: Types.ObjectId;
       approvedAt: Date;
       comments?: string;
+      department: string;
     };
   };
 
@@ -194,7 +287,7 @@ export class Claim {
     _id: false,
   })
   payment?: {
-    paidBy: MongooseSchema.ObjectId;
+    contractId: Types.ObjectId;
     paidAt: Date;
     transactionId: string;
     paymentMethod: string;
@@ -210,27 +303,31 @@ export class Claim {
   @ApiProperty({ description: 'Rejection details if claim was rejected' })
   @Prop({
     type: {
-      rejectedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
+      projectId: MongooseSchema.Types.ObjectId,
       rejectedAt: Date,
       reason: String,
       level: String,
+      department: String,
+      rejectedBy: MongooseSchema.Types.ObjectId,
     },
     _id: false,
   })
   rejection?: {
-    rejectedBy: MongooseSchema.ObjectId;
+    projectId: Types.ObjectId;
     rejectedAt: Date;
     reason: string;
     level: string;
+    department: string;
+    rejectedBy: Types.ObjectId;
   };
 
   @ApiProperty({ description: 'User who created the claim' })
-  @Prop({ type: MongooseSchema.ObjectId, ref: 'User', required: true })
-  createdBy: MongooseSchema.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
   @ApiProperty({ description: 'User who last updated the claim' })
-  @Prop({ type: MongooseSchema.ObjectId, ref: 'User', required: true })
-  updatedBy: MongooseSchema.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 
   @ApiProperty({ description: 'Notes or comments about the claim' })
   @Prop({ type: String })
@@ -246,8 +343,8 @@ export class Claim {
   }])
   auditTrail: {
     action: string;
-    performedBy: MongooseSchema.ObjectId;
-    performedAt: Date;
+    performedBy: Types.ObjectId;
+      performedAt: Date;
     details?: Record<string, any>;
     previousValues?: Record<string, any>;
   }[];

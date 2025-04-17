@@ -8,6 +8,9 @@ import { Project, ProjectSchema } from '../project/schemas/project.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Contract, ContractSchema } from '../project/schemas/contract.schema';
+import { ApprovalFlow, ApprovalFlowSchema } from './schemas/approval-flow.schema';
+import { ApprovalFlowService } from './approval-flow.service';
+
 
 @Module({
   imports: [
@@ -16,11 +19,12 @@ import { Contract, ContractSchema } from '../project/schemas/contract.schema';
       { name: Contract.name, schema: ContractSchema },
       { name: Project.name, schema: ProjectSchema },
       { name: User.name, schema: UserSchema },
+      { name: ApprovalFlow.name, schema: ApprovalFlowSchema },
     ]),
     NotificationsModule,
   ],
   controllers: [ClaimsController],
-  providers: [ClaimsService, ClaimsNotificationService],
+  providers: [ClaimsService, ClaimsNotificationService, ApprovalFlowService],
   exports: [ClaimsService],
 })
 export class ClaimsModule {}

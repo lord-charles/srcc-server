@@ -14,13 +14,17 @@ import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimDto } from './dto/update-claim.dto';
 import { NotificationService } from '../notifications/services/notification.service';
 import { ClaimsNotificationService } from './claims-notification.service';
-
-type ApprovalLevel = 'checker' | 'manager' | 'finance';
+import { ApprovalFlowService } from './approval-flow.service';
 
 const CLAIM_STATUSES = [
   'draft',
   'pending_checker_approval',
-  'pending_manager_approval',
+  'pending_reviewer_approval',
+  'pending_approver_approval',
+  'pending_srcc_checker_approval',
+  'pending_srcc_finance_approval',
+  'pending_director_approval',
+  'pending_academic_director_approval',
   'pending_finance_approval',
   'approved',
   'rejected',
@@ -30,21 +34,6 @@ const CLAIM_STATUSES = [
 ] as const;
 
 type ClaimStatus = typeof CLAIM_STATUSES[number];
-
-type MilestoneClaim = {
-  milestoneId: string;
-  percentageClaimed: number;
-};
-
-type MilestoneDetails = {
-  milestoneId: string;
-  title: string;
-  percentageClaimed: number;
-  maxClaimableAmount: number;
-  previouslyClaimed: number;
-  currentClaim: number;
-  remainingClaimable: number;
-};
 
 interface ProjectMilestone {
   _id: Types.ObjectId;
@@ -57,33 +46,30 @@ interface ProjectMilestone {
   actualCost?: number;
 }
 
+type ApprovalRole = keyof typeof ClaimsService.roleMap;
+
 type ApprovalFlowStep = {
   nextStatus: ClaimStatus;
-  nextLevel: ApprovalLevel | null;
-};
-
-type ApprovalFlow = {
-  [K in Extract<ClaimStatus, `pending_${ApprovalLevel}_approval`>]: ApprovalFlowStep;
+  role: ApprovalRole;
+  department: string;
 };
 
 @Injectable()
 export class ClaimsService {
   private readonly logger = new Logger(ClaimsService.name);
-  private readonly roleMap = {
-    checker: 'claim_checker',
-    manager: 'claim_manager',
-    finance: 'finance_approver',
+  public static readonly roleMap = {
+    claim_checker: 'claim_checker',
+    claim_reviewer: 'claim_reviewer',
+    claim_approver: 'claim_approver',
+    head_of_programs: 'head_of_programs',
+    director: 'director',
+    academic_director: 'academic_director',
+    finance_approver: 'finance_approver'
   } as const;
 
-  private readonly approvalFlow: ApprovalFlow = {
-    pending_checker_approval: { nextStatus: 'pending_manager_approval', nextLevel: 'manager' },
-    pending_manager_approval: { nextStatus: 'pending_finance_approval', nextLevel: 'finance' },
-    pending_finance_approval: { nextStatus: 'approved', nextLevel: null },
-  };
-
-  private getApprovalLevel(status: ClaimStatus): ApprovalLevel {
+  private getApprovalLevel(status: ClaimStatus): string | null {
     const level = status.split('_')[1];
-    if (level === 'checker' || level === 'manager' || level === 'finance') {
+    if (level && Object.keys(ClaimsService.roleMap).includes(level)) {
       return level;
     }
     // throw new BadRequestException(`Invalid approval level in status: ${status}`);
@@ -106,11 +92,15 @@ export class ClaimsService {
 
     switch (claim.status as ClaimStatus) {
       case 'pending_checker_approval':
-      case 'pending_manager_approval':
+      case 'pending_reviewer_approval':
+      case 'pending_approver_approval':
+      case 'pending_srcc_checker_approval':
+      case 'pending_srcc_finance_approval':
+      case 'pending_director_approval':
+      case 'pending_academic_director_approval':
       case 'pending_finance_approval': {
-        const level = this.getApprovalLevel(claim.status as ClaimStatus);
-
-        const approvers = await this.getApprovers(level);
+        const currentRole = claim.status.replace('pending_', '').replace('_approval', '') as ApprovalRole;
+        const approvers = await this.getApprovers(currentRole);
         await this.claimsNotificationService.notifyClaimSubmitted(claim, project, claimant, approvers);
         break;
       }
@@ -118,8 +108,8 @@ export class ClaimsService {
         await this.claimsNotificationService.notifyClaimApproved(claim, project, claimant, updatedBy);
         break;
       case 'rejected': {
-        // Get rejection comments from the appropriate approval level
-        const level = claim.status === 'rejected' ? this.getApprovalLevel(claim.status as ClaimStatus) : null;
+        // Get rejection comments from the rejection details
+        const level = claim.rejection?.level;
         let comments = 'No reason provided';
         if (level) {
           const approval = claim.approval?.[`${level}Approval`];
@@ -145,16 +135,25 @@ export class ClaimsService {
     }
   }
 
-  private getNextApprovalLevel(currentStatus: ClaimStatus): ApprovalFlowStep | null {
-    return this.approvalFlow[currentStatus as keyof typeof this.approvalFlow] || null;
+  private async getNextApprovalStep(claim: ClaimDocument): Promise<{
+    nextStatus: string;
+    role: string;
+    department: string;
+  } | null> {
+    const project = await this.projectModel.findById(claim.projectId);
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+    return this.approvalFlowService.getNextApprovalStep(project.department, claim.status);
   }
 
   constructor(
-    @InjectModel(Claim.name) private claimModel: Model<ClaimDocument>,
-    @InjectModel(Contract.name) private contractModel: Model<ContractDocument>,
-    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel('Claim') private claimModel: Model<ClaimDocument>,
+    @InjectModel('Contract') private contractModel: Model<ContractDocument>,
+    @InjectModel('Project') private projectModel: Model<ProjectDocument>,
+    @InjectModel('User') private userModel: Model<UserDocument>,
     private readonly claimsNotificationService: ClaimsNotificationService,
+    private readonly approvalFlowService: ApprovalFlowService,
   ) {}
 
   async create(createClaimDto: CreateClaimDto, userId: Types.ObjectId): Promise<ClaimDocument> {
@@ -173,12 +172,21 @@ export class ClaimsService {
 
 
 
+    // Get the approval flow for the project's department
+    const approvalFlow = await this.approvalFlowService.getApprovalFlow(project.department);
+    if (!approvalFlow || !approvalFlow.steps.length) {
+      throw new BadRequestException(`No approval flow configured for department: ${project.department}`);
+    }
+
+    // Get the initial status from the first step in the approval flow
+    const initialStatus = `pending_${approvalFlow.steps[0].role}_approval`;
+
     // Create the claim
     const claim = new this.claimModel({
       ...createClaimDto,
       contractId: new Types.ObjectId(createClaimDto.contractId),
       projectId: new Types.ObjectId(createClaimDto.projectId),
-      status: 'pending_checker_approval',
+      status: initialStatus,
       createdBy: userId,
       updatedBy: userId,
       claimantId: userId,
@@ -311,7 +319,7 @@ export class ClaimsService {
 
 
   private async getApprovers(level: string): Promise<UserDocument[]> {
-    const requiredRole = this.roleMap[level];
+    const requiredRole = ClaimsService.roleMap[level as ApprovalRole];
 
     if (!requiredRole) {
       throw new BadRequestException(`Invalid approval level: ${level}`);
@@ -358,21 +366,30 @@ export class ClaimsService {
       throw new NotFoundException('Claim not found');
     }
 
-    const currentLevel = this.getApprovalLevel(claim.status as ClaimStatus);
     const approver = await this.userModel.findById(userId);
     if (!approver) {
       throw new NotFoundException('Approver not found');
     }
 
-    // Check if user has the required role
-    if (!approver.roles?.includes(this.roleMap[currentLevel])) {
-      throw new BadRequestException(`User does not have ${currentLevel} approval rights`);
+    const project = await this.projectModel.findById(claim.projectId);
+    if (!project) {
+      throw new NotFoundException('Project not found');
     }
 
-    // Get next approval level
-    const next = this.getNextApprovalLevel(claim.status as ClaimStatus);
+    // Get next step in approval flow
+    const next = await this.getNextApprovalStep(claim);
+console.log(next)
+
     if (!next) {
-      throw new BadRequestException('Invalid approval flow');
+      throw new BadRequestException('Invalid approval flow state');
+    }
+
+    // Extract current role from status (e.g., 'pending_claim_checker_approval' -> 'claim_checker')
+    const currentRole = claim.status.replace('pending_', '').replace('_approval', '');
+
+    // Check if user has the required role
+    if (!approver.roles?.includes(ClaimsService.roleMap[currentRole as ApprovalRole])) {
+      throw new BadRequestException(`User does not have ${currentRole} approval rights`);
     }
 
     // Update claim status and approval details
@@ -380,12 +397,13 @@ export class ClaimsService {
       id,
       {
         status: next.nextStatus,
-        [`approval.${currentLevel}Approval`]: {
+        [`approval.${currentRole}Approval`]: {
           approvedBy: userId,
           approvedAt: new Date(),
           comments,
+          department: next.department
         },
-        currentLevelDeadline: next.nextLevel
+        currentLevelDeadline: next.nextStatus !== 'approved'
           ? new Date(Date.now() + 24 * 60 * 60 * 1000)
           : undefined,
         $push: {
@@ -394,8 +412,10 @@ export class ClaimsService {
             performedBy: userId,
             performedAt: new Date(),
             details: {
-              level: currentLevel,
+              role: currentRole,
+              department: next.department,
               comments,
+              nextStatus: next.nextStatus
             },
           },
         },
@@ -416,19 +436,16 @@ export class ClaimsService {
   async reject(id: string, reason: string, userId: Types.ObjectId): Promise<ClaimDocument> {
     const claim = await this.findOne(id, userId);
 
-    if (claim.status !== 'pending_checker_approval' && 
-        claim.status !== 'pending_manager_approval' && 
-        claim.status !== 'pending_finance_approval') {
+    if (!claim.status.startsWith('pending_') || claim.status === 'approved') {
       throw new BadRequestException('Only pending claims can be rejected');
     }
 
-    // Verify user has appropriate role for current approval level
-    const currentLevel = this.getApprovalLevel(claim.status);
-    const requiredRole = this.roleMap[currentLevel];
+    // Extract current role from status
+    const currentRole = claim.status.replace('pending_', '').replace('_approval', '') as ApprovalRole;
     const user = await this.userModel.findById(userId);
     
-    if (!user?.roles.includes(requiredRole)) {
-      throw new BadRequestException(`Only users with ${currentLevel} role can reject at this stage`);
+    if (!user?.roles.includes(ClaimsService.roleMap[currentRole])) {
+      throw new BadRequestException(`Only users with ${currentRole} role can reject at this stage`);
     }
 
     const updateData = {
@@ -437,7 +454,7 @@ export class ClaimsService {
         rejectedBy: userId,
         rejectedAt: new Date(),
         reason,
-        level: currentLevel,
+        level: currentRole,
       },
       updatedBy: userId,
       $push: {
@@ -447,7 +464,7 @@ export class ClaimsService {
           performedAt: new Date(),
           details: { 
             reason,
-            level: currentLevel,
+            level: currentRole,
             status: 'rejected',
           },
         },
@@ -479,19 +496,16 @@ export class ClaimsService {
   ): Promise<ClaimDocument> {
     const claim = await this.findOne(id, userId);
 
-    if (claim.status !== 'pending_checker_approval' && 
-        claim.status !== 'pending_manager_approval' && 
-        claim.status !== 'pending_finance_approval') {
+    if (!claim.status.startsWith('pending_') || claim.status === 'approved') {
       throw new BadRequestException('Only pending claims can be sent for revision');
     }
 
-    // Verify user has appropriate role for current approval level
-    const currentLevel = this.getApprovalLevel(claim.status);
-    const requiredRole = this.roleMap[currentLevel];
+    // Extract current role from status
+    const currentRole = claim.status.replace('pending_', '').replace('_approval', '') as ApprovalRole;
     const user = await this.userModel.findById(userId);
     
-    if (!user?.roles.includes(requiredRole)) {
-      throw new BadRequestException(`Only users with ${currentLevel} role can request revision at this stage`);
+    if (!user?.roles.includes(ClaimsService.roleMap[currentRole])) {
+      throw new BadRequestException(`Only users with ${currentRole} role can request revision at this stage`);
     }
 
     const updateData = {
@@ -501,7 +515,7 @@ export class ClaimsService {
         requestedAt: new Date(),
         reason,
         returnToStatus,
-        returnToLevel: currentLevel,
+        returnToLevel: currentRole,
         comments,
       },
       updatedBy: userId,
@@ -514,7 +528,7 @@ export class ClaimsService {
           details: {
             reason,
             returnToStatus,
-            returnToLevel: currentLevel,
+            returnToLevel: currentRole,
             comments,
             previousVersion: claim.version,
           },

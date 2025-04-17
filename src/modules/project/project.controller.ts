@@ -67,6 +67,7 @@ export class ProjectController {
       type: 'object',
       properties: {
         name: { type: 'string', example: 'Health System Upgrade' },
+        department: { type: 'string', example: 'SU' },
         description: {
           type: 'string',
           example: 'Comprehensive upgrade of the hospital management system',

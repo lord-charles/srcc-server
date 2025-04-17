@@ -14,6 +14,13 @@ export class Project {
   name: string;
 
   @ApiProperty({
+    example: 'SU',
+    description: 'The department of the project',
+  })
+  @Prop({ required: true})
+  department: string;
+
+  @ApiProperty({
     example: 'A project to upgrade the health system infrastructure.',
     description: 'A brief description of the project',
   })
