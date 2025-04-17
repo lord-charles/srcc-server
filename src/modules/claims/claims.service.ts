@@ -64,7 +64,12 @@ export class ClaimsService {
     head_of_programs: 'head_of_programs',
     director: 'director',
     academic_director: 'academic_director',
-    finance_approver: 'finance_approver'
+    finance_approver: 'finance_approver',
+    finance: 'finance_approver',
+    srcc_checker: 'srcc_checker',
+    srcc_finance: 'srcc_finance',
+    reviewer: 'reviewer',
+    approver: 'approver'
   } as const;
 
   private getApprovalLevel(status: ClaimStatus): string | null {
@@ -333,7 +338,7 @@ export class ClaimsService {
       .lean();
 
     if (!approvers.length) {
-      throw new Error(
+      throw new BadRequestException(
         `No active approvers found for level: ${level}. Please contact system administrator.`,
       );
     }
