@@ -2,11 +2,20 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsEmail,
+  IsOptional,
+  MinLength,
+  MaxLength,
   IsNotEmpty,
   IsMongoId,
 } from 'class-validator';
 
 export class LoginUserDto {
+  @ApiProperty({ description: '4-digit registration PIN (for pending accounts)', required: false })
+  @IsOptional()
+  @IsString()
+  @MinLength(4)
+  @MaxLength(4)
+  pin?: string;
   @ApiProperty({
     description: 'Employee email address',
     example: 'jane.wanjiku@company.com',
@@ -14,14 +23,6 @@ export class LoginUserDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
-
-  @ApiProperty({
-    description: 'Account password',
-    example: 'securePassword123',
-  })
-  @IsString()
-  @IsNotEmpty()
-  password: string;
 }
 
 export class EmailDto {

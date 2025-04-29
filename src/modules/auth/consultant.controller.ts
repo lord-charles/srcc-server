@@ -9,6 +9,7 @@ import {
   Param,
   UseGuards,
   Get,
+  Req,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
@@ -20,6 +21,8 @@ import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { Public } from './decorators/public.decorator';
 import { RegisterOrganizationDto } from './dto/register-organization.dto';
+import { Request as ExpressRequest } from 'express';
+
 
 @ApiTags('consultants')
 @Controller('consultants')
@@ -52,7 +55,6 @@ export class ConsultantController {
         lastName: { type: 'string', example: 'Wanjiku' },
         middleName: { type: 'string', example: 'Njeri' },
         email: { type: 'string', example: 'jane.wanjiku@example.com' },
-        password: { type: 'string' },
         phoneNumber: { type: 'string', example: '+254712345678' },
         alternativePhoneNumber: { type: 'string', example: '+254723456789' },
         nationalId: { type: 'string', example: '23456789' },
@@ -156,7 +158,6 @@ export class ConsultantController {
         }
       },
       required: [
-        'firstName', 'lastName', 'email', 'password', 'phoneNumber',
         'nationalId', 'kraPinNumber', 'dateOfBirth', 'physicalAddress',
         'county', 'skills', 'education', 'academicCertificates',
         'yearsOfExperience', 'hourlyRate', 'preferredWorkTypes',
@@ -188,6 +189,7 @@ export class ConsultantController {
   }))
   async register(
     @Body() registerConsultantDto: RegisterConsultantDto,
+    @Req() req: ExpressRequest,
     @UploadedFiles() files: {
       cv?: Express.Multer.File[],
       academicCertificateFiles?: Express.Multer.File[],
@@ -291,7 +293,7 @@ export class ConsultantController {
       }
 
       // Register consultant
-      return this.consultantService.register(parsedData);
+      return this.consultantService.register(parsedData, req);
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -403,6 +405,8 @@ export class ConsultantController {
   }))
   async registerOrganization(
     @Body() registerOrgDto: RegisterOrganizationDto,
+        @Req() req: ExpressRequest,
+    
     @UploadedFiles() files: {
       registrationCertificate?: Express.Multer.File[],
       kraCertificate?: Express.Multer.File[],
@@ -500,7 +504,7 @@ export class ConsultantController {
       }
 
       // Register organization
-      return this.consultantService.registerOrganization(parsedData);
+      return this.consultantService.registerOrganization(parsedData, req);
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;

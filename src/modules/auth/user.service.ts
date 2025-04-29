@@ -1,19 +1,10 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
-import {
-  LoginUserDto,
-  EmailDto,
-  ResetPasswordDto,
-  UpdatePasswordDto,
-} from './dto/login.dto';
-import * as bcrypt from 'bcrypt';
+import {  UpdateUserDto } from './dto/user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { User, UserDocument } from './schemas/user.schema';
 import { NotificationService } from '../notifications/services/notification.service';
@@ -30,90 +21,11 @@ export class UserService {
     private readonly systemLogsService: SystemLogsService,
   ) {}
 
-  private generatePin(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
-  }
 
-  async register(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.userModel.findOne({
-      $or: [
-        { email: createUserDto.email },
-        { phoneNumber: createUserDto.phoneNumber },
-        { nationalId: createUserDto.nationalId },
-      ],
-    });
-
-    if (existingUser) {
-      throw new BadRequestException(
-        'User with provided details already exists',
-      );
-    }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
-    // Create new user with hashed password
-    const user = new this.userModel({
-      ...createUserDto,
-      password: hashedPassword,
-    });
-
-    return user.save();
-  }
-
-  async findByEmail(email: string): Promise<User> {
+  async findByEmail(email: string): Promise<UserDocument> {
     return this.userModel.findOne({ email });
   }
 
-  async login(
-    loginUserDto: LoginUserDto,
-  ): Promise<{ token: string; user: User }> {
-    const user = await this.findByEmail(loginUserDto.email);
-
-    if (!user || !(await bcrypt.compare(loginUserDto.password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const token = this.jwtService.sign({ sub: user.employeeId.toString(), email: user.email });
-    return { token, user };
-  }
-
-  /**
-   * @description Logout the current employee
-   */
-  async logout(): Promise<{ message: string }> {
-    // Handle JWT invalidation here if required
-    return { message: 'Logged out successfully' };
-  }
-
-  /**
-   * @description Request PIN reset
-   * @param emailDto
-   */
-  async requestPasswordReset(emailDto: EmailDto): Promise<{ message: string }> {
-    const user = await this.userModel.findOne({ email: emailDto.email });
-    if (!user) throw new NotFoundException('Email not found');
-
-    // Logic for generating and sending reset token to email
-    return { message: 'Password reset instructions sent to email' };
-  }
-
-  /**
-   * @description Reset PIN
-   * @param resetPasswordDto
-   */
-  async resetPassword(
-    resetPasswordDto: ResetPasswordDto,
-  ): Promise<{ message: string }> {
-    // Implement token validation logic here
-    const hashedPin = await bcrypt.hash(resetPasswordDto.password, 10);
-    await this.userModel.updateOne(
-      { email: resetPasswordDto.token },
-      { pin: hashedPin },
-    );
-
-    return { message: 'Password reset successfully' };
-  }
 
   async findById(id: string): Promise<User> {
     const user = await this.userModel.findById(id);
@@ -196,47 +108,6 @@ export class UserService {
       user.employeeId?.toString(),
       req,
     );
-  }
-
-  /**
-   * @description Update an employee's PIN
-   * @param updatePasswordDto
-   */
-  async updatePassword(
-    updatePasswordDto: UpdatePasswordDto,
-    req?: Request,
-  ): Promise<{ message: string }> {
-    const user = await this.userModel.findById(updatePasswordDto.userId);
-
-    if (
-      !user ||
-      !(await bcrypt.compare(updatePasswordDto.currentPassword, user.password))
-    ) {
-      if (user) {
-        await this.systemLogsService.createLog(
-          'PIN Update Failed',
-          `Failed PIN update attempt for user ${user.firstName} ${user.lastName}`,
-          LogSeverity.WARNING,
-          user.employeeId?.toString(),
-          req,
-        );
-      }
-      throw new BadRequestException('Invalid current PIN');
-    }
-
-    const hashedPin = await bcrypt.hash(updatePasswordDto.newPassword, 10);
-    user.password = hashedPin;
-    await user.save();
-
-    await this.systemLogsService.createLog(
-      'PIN Update',
-      `PIN successfully updated for user ${user.firstName} ${user.lastName}`,
-      LogSeverity.INFO,
-      user.employeeId?.toString(),
-      req,
-    );
-
-    return { message: 'Password updated successfully' };
   }
 
   /**

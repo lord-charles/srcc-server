@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { Organization, OrganizationDocument } from './schemas/organization.schema';
 import { NotificationService } from '../notifications/services/notification.service';
-import * as bcrypt from 'bcrypt';
+import { Request } from 'express';
 import { SystemLogsService } from '../system-logs/services/system-logs.service';
 import { LogSeverity } from '../system-logs/schemas/system-log.schema';
 
@@ -15,6 +15,7 @@ export class ConsultantService {
     @InjectModel(Organization.name) private organizationModel: Model<OrganizationDocument>,
     private readonly notificationService: NotificationService,
     private readonly systemLogService: SystemLogsService,
+    private readonly systemLogsService: SystemLogsService,
   ) { }
 
   private async validateUniqueFields(consultantData: any) {
@@ -295,17 +296,23 @@ SRCC Team
     );
   }
 
-  async register(consultantData: any): Promise<UserDocument> {
+  private generatePin(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  async register(consultantData: any,
+        req?: Request,
+  ): Promise<UserDocument> {
     // Validate unique fields
     await this.validateUniqueFields(consultantData);
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(consultantData.password, 10);
+    // Generate and save registration PIN
+    const registrationPin = this.generatePin();
+    consultantData.registrationPin = registrationPin;
 
     // Create new consultant
     const newConsultant = new this.userModel({
       ...consultantData,
-      password: hashedPassword,
       status: 'pending',
       roles: ['consultant']
     });
@@ -313,9 +320,21 @@ SRCC Team
     // Save the consultant
     const savedConsultant = await newConsultant.save();
 
-    // Send notifications
-    await this.sendRegistrationNotifications(savedConsultant);
+    // Send PIN via NotificationService
+    const pinMsg = `Your SRCC registration PIN is: ${registrationPin}. This PIN will be required to activate your account when approved.`;
+    await this.notificationService.sendRegistrationPin(savedConsultant.phoneNumber, savedConsultant.email, pinMsg);
 
+    // Send notifications
+    await this.sendRegistrationNotifications(savedConsultant); 
+
+    // Log successful registration
+    await this.systemLogsService.createLog(
+      'User Registration',
+      `New user registered: ${savedConsultant.firstName} ${savedConsultant.lastName} (${savedConsultant.email})`,
+      LogSeverity.INFO,
+      savedConsultant.employeeId?.toString(),
+      req,
+    );
     return savedConsultant;
   }
 
@@ -342,6 +361,13 @@ SRCC Team
     // Send notifications
     await this.sendApprovalNotifications(updatedConsultant);
 
+    // Log successful approval
+    await this.systemLogsService.createLog(
+      'User Approval',
+      `User approved: ${updatedConsultant.firstName} ${updatedConsultant.lastName} (${updatedConsultant.email})`,
+      LogSeverity.INFO,
+      updatedConsultant.employeeId?.toString(),
+    );
     return updatedConsultant;
   }
 
@@ -365,7 +391,7 @@ SRCC Team
   }
 
   // Organization Services
-  async registerOrganization(registerOrgDto: any): Promise<Organization> {
+  async registerOrganization(registerOrgDto: any, req?: Request): Promise<Organization> {
     try {
       // Validate organization data
       await this.validateOrganizationData(registerOrgDto);

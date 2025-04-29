@@ -193,12 +193,6 @@ export class User {
   @Prop({ required: true, unique: true })
   nssfNumber: string;
 
-  @ApiProperty({
-    description: 'User password',
-    example: 'securePassword123'
-  })
-  @Prop({ required: true })
-  password: string;
 
   @ApiProperty({
     description: 'Status of the consultant account',
@@ -332,6 +326,13 @@ export class User {
   @Prop({ type: MpesaDetails })
   mpesaDetails?: MpesaDetails;
 
+  @ApiProperty({ description: '4-digit PIN for registration/activation', required: false })
+  @Prop({ required: false })
+  registrationPin?: string;
+
+  @ApiProperty({ description: '4-digit PIN for password reset', required: false })
+  @Prop({ required: false })
+  resetPin?: string;
 }
 
 @Schema({ _id: false, timestamps: true })

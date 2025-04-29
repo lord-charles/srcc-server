@@ -14,61 +14,133 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from './dto/user.dto';
 import { LoginUserDto } from './dto/login.dto';
 import { AuthResponse } from './interfaces/auth.interface';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Request as ExpressRequest } from 'express';
 import { User, UserDocument } from './schemas/user.schema';
+import { Roles } from './decorators/roles.decorator';
+import { RolesGuard } from './guards/roles.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
+ 
   @Public()
-  @Post('/register')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({
-    summary: 'Register a new employee',
-    description: 'Create a new employee account and return access token',
-  })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'User registered successfully',
-    schema: {
-      properties: {
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            firstName: { type: 'string' },
-            lastName: { type: 'string' },
-            email: { type: 'string' },
-            roles: { type: 'array', items: { type: 'string' } },
-          },
-        },
-        token: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data',
-  })
-  @ApiResponse({
-    status: HttpStatus.CONFLICT,
-    description: 'User with provided National ID already exists',
-  })
-  async register(
-    @Body() createUserDto: CreateUserDto,
-    @Req() req: ExpressRequest,
-  ): Promise<AuthResponse> {
-    return this.authService.register(createUserDto, req);
+  @Post('/forgot-password/request')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset', description: 'Send a 4-digit reset PIN to user email and phone.' })
+  @ApiResponse({ status: 200, description: 'Reset PIN sent if user exists.' })
+  async requestPasswordReset(@Body() dto: ForgotPasswordDto) {
+    return this.authService.requestPasswordReset(dto);
   }
+
+  @Post('/suspend')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Suspend user account',
+    description: `Suspend a user account by email. This endpoint is restricted to admin users only.\n\n- Requires a valid JWT token and admin role.\n- The email must belong to an existing user.\n- The user's status will be set to 'suspended'.\n- All suspension actions are logged for audit purposes.`
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['email'],
+      properties: {
+        email: {
+          type: 'string',
+          format: 'email',
+          example: 'user@example.com',
+          description: 'Email address of the user to suspend.'
+        }
+      }
+    },
+    description: 'Email address of the user to suspend.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User account suspended.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'User user@example.com has been suspended.' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 404 },
+        message: { type: 'string', example: 'User not found' },
+        error: { type: 'string', example: 'Not Found' }
+      }
+    }
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async suspendUser(@Body('email') email: string) {
+    return this.authService.suspendUser(email);
+  }
+
+  @Post('/activate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Activate user account',
+    description: `Reactivate a previously suspended user account by email. This endpoint is restricted to admin users only.\n\n- Requires a valid JWT token and admin role.\n- The email must belong to an existing user.\n- The user's status will be set to 'active'.\n- All activation actions are logged for audit purposes.`
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['email'],
+      properties: {
+        email: {
+          type: 'string',
+          format: 'email',
+          example: 'user@example.com',
+          description: 'Email address of the user to activate.'
+        }
+      }
+    },
+    description: 'Email address of the user to activate.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User account reactivated.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'User user@example.com has been reactivated.' }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 404 },
+        message: { type: 'string', example: 'User not found' },
+        error: { type: 'string', example: 'Not Found' }
+      }
+    }
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async activateUser(@Body('email') email: string) {
+    return this.authService.activateUser(email);
+  }
+
 
   @Public()
   @Post('/login')

@@ -125,16 +125,7 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   nationalId: string;
-
-  @ApiProperty({
-    description: 'Account password',
-    example: 'securePassword123',
-  })
-  @IsString()
-  @MinLength(8)
-  @IsNotEmpty()
-  password: string;
-
+  
   @ApiProperty({
     description: 'Roles assigned in the app',
     example: ['employee'],
