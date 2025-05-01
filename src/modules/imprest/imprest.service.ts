@@ -419,19 +419,19 @@ SRCC Finance Team`
       balance,
       comments: accountingDto.comments,
     };
-    imprest.status = 'accounted';
+    imprest.status = 'pending_accounting_approval';
 
     const savedImprest = await imprest.save();
 
     // Notify accountants about the accounting submission
-    const accountants = await this.userModel.find({ role: 'accountant' });
+    const accountants = await this.userModel.find({ roles: { $in: ['accountant'] }, status: 'active' });
     for (const accountant of accountants) {
       await this.notificationService.sendEmail(
         accountant.email,
-        'Imprest Accounting Submitted',
+        'Imprest Accounting Pending Approval',
         `Dear ${accountant.firstName} ${accountant.lastName},
 
-An imprest accounting has been submitted for review:
+An imprest accounting has been submitted and is pending your approval:
 
 Request Details:
 - Employee: ${imprest.employeeName}
@@ -442,13 +442,40 @@ Request Details:
 
 Number of Receipts: ${processedReceipts.length}
 
-Please review the submitted receipts and accounting through the SRCC portal.
+Please review and approve the submitted receipts and accounting through the SRCC portal.
 
 Best regards,
 SRCC Finance Team`
       );
     }
 
+    return savedImprest;
+  }
+
+  async approveAccounting(id: string, userId: string, comments?: string): Promise<ImprestDocument> {
+    const imprest = await this.findOne(id);
+    const user = await this.userModel.findById(userId);
+    if (!user || !user.roles.includes('accountant')) {
+      throw new BadRequestException('User is not an accountant');
+    }
+    if (imprest.status !== 'pending_accounting_approval') {
+      throw new BadRequestException('Imprest accounting is not pending approval');
+    }
+    //  append approval comments
+    if (comments) {
+      imprest.accounting.comments = (imprest.accounting.comments ? imprest.accounting.comments + '\n' : '') + '[Accountant Approval] ' + comments;
+    }
+    imprest.status = 'accounted';
+    const savedImprest = await imprest.save();
+    // Notify requester
+    const requester = await this.userModel.findById(imprest.requestedBy);
+    if (requester) {
+      await this.notificationService.sendEmail(
+        requester.email,
+        'Imprest Accounting Approved',
+        `Dear ${imprest.employeeName},\n\nYour imprest accounting submission has been reviewed and approved by the accountant.\n\nRequest Details:\n- Original Amount: ${imprest.currency} ${imprest.disbursement.amount.toFixed(2)}\n- Total Spent: ${imprest.currency} ${imprest.accounting.totalAmount.toFixed(2)}\n- Balance: ${imprest.currency} ${imprest.accounting.balance.toFixed(2)}\n\nThank you for completing your accounting.\n\nBest regards,\nSRCC Finance Team`
+      );
+    }
     return savedImprest;
   }
 

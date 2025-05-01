@@ -258,4 +258,24 @@ export class ImprestController {
       processedReceipts
     );
   }
+
+  @Post(':id/accounting/approve')
+  @Roles('accountant')
+  @ApiOperation({ summary: 'Approve imprest accounting (accountant only)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        comments: { type: 'string', example: 'All receipts verified, OK for closure.' }
+      }
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Imprest accounting approved.' })
+  async approveAccounting(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() body: { comments?: string }
+  ) {
+    return this.imprestService.approveAccounting(id, req.user.id, body.comments);
+  }
 }

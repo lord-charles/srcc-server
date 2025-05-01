@@ -84,6 +84,7 @@ export class Imprest {
       'approved',
       'rejected',
       'disbursed',
+      'pending_accounting_approval',
       'accounted',
       'overdue',
     ],
