@@ -39,7 +39,7 @@ export class ContractController {
   constructor(private readonly contractService: ContractService) { }
 
   @Post()
-  @Roles('admin', 'project_manager')
+  // @Roles('admin', 'project_manager')
   @ApiOperation({ summary: 'Create a new contract' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -65,7 +65,7 @@ export class ContractController {
   }
 
   @Get()
-  @Roles('admin', 'project_manager')
+  // @Roles('admin', 'project_manager')
   @ApiOperation({ summary: 'Get all contracts with optional filtering' })
   @ApiQuery({
     name: 'status',
@@ -113,7 +113,7 @@ export class ContractController {
   }
 
   @Get('project/:projectId')
-  @Roles('admin', 'project_manager', 'team_member')
+  // @Roles('admin', 'project_manager', 'team_member')
   @ApiOperation({ summary: 'Get contracts by project ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -133,7 +133,7 @@ export class ContractController {
   }
 
   @Get('user/:userId')
-  @Roles('admin', 'project_manager', 'team_member')
+  // @Roles('admin', 'project_manager', 'team_member')
   @ApiOperation({ summary: 'Get contracts by user ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -172,7 +172,7 @@ export class ContractController {
   }
 
   @Get(':id')
-  @Roles('admin', 'project_manager', 'team_member')
+  // @Roles('admin', 'project_manager', 'team_member')
   @ApiOperation({ summary: 'Get a contract by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -205,7 +205,7 @@ export class ContractController {
   }
 
   @Patch(':id')
-  @Roles('admin', 'project_manager')
+  // @Roles('admin', 'project_manager')
   @ApiOperation({ summary: 'Update a contract' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -241,7 +241,7 @@ export class ContractController {
   }
 
   @Delete(':id')
-  @Roles('admin')
+  // @Roles('admin')
   @ApiOperation({ summary: 'Delete a contract' })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
@@ -366,7 +366,7 @@ export class ContractController {
   }
 
   @Post(':id/approve')
-  @Roles('finance_approver', 'managing_director')
+  // @Roles('finance_approver', 'managing_director')
   @ApiOperation({ summary: 'Approve a contract' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -390,7 +390,7 @@ export class ContractController {
   }
 
   @Post(':id/reject')
-  @Roles('finance_approver', 'managing_director')
+  // @Roles('finance_approver', 'managing_director')
   @ApiOperation({ summary: 'Reject a contract' })
   @ApiResponse({
     status: HttpStatus.OK,

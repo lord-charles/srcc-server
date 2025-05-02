@@ -116,7 +116,7 @@ export class ClaimsController {
 
   
   @Get('claims')
-  @Roles('admin', 'finance_approver', 'claim_manager')
+  // @Roles('admin', 'finance_approver', 'claim_manager')
   @ApiOperation({ summary: 'Get all claims with optional date filtering' })
   @ApiQuery({
     name: 'startDate',
@@ -293,7 +293,7 @@ export class ClaimsController {
   })
   @ApiResponse({ status: 403, description: 'User does not have required role for current approval level' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
-  @Roles('claim_checker', 'claim_manager', 'finance_approver')
+  // @Roles('claim_checker', 'claim_manager', 'finance_approver')
   approve(
     @Param('id') id: string,
     @Body('comments') comments: string,
@@ -333,7 +333,7 @@ export class ClaimsController {
   })
   @ApiResponse({ status: 403, description: 'User does not have required role for current approval level' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
-  @Roles('claim_checker', 'claim_manager', 'finance_approver')
+  // @Roles('claim_checker', 'claim_manager', 'finance_approver')
   reject(
     @Param('id') id: string,
     @Body('reason') reason: string,
@@ -384,7 +384,7 @@ export class ClaimsController {
   })
   @ApiResponse({ status: 403, description: 'User does not have required role for current approval level' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
-  @Roles('claim_checker', 'claim_manager', 'finance_approver')
+  // @Roles('claim_checker', 'claim_manager', 'finance_approver')
   requestRevision(
     @Param('id') id: string,
     @Body('reason') reason: string,
@@ -443,7 +443,7 @@ export class ClaimsController {
   })
   @ApiResponse({ status: 403, description: 'User does not have finance_approver role' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
-  @Roles('finance_approver')
+  // @Roles('finance_approver')
   markAsPaid(
     @Param('id') id: string,
     @Body() paymentDetails: {

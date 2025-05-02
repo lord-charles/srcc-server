@@ -119,7 +119,7 @@ export class ImprestController {
   }
 
   @Post(':id/approve/hod')
-  @Roles('hod')
+  // @Roles('hod')
   @ApiOperation({ summary: 'Approve imprest request by HOD' })
   @ApiResponse({ status: 200, description: 'Imprest request approved by HOD.' })
   async approveByHod(
@@ -131,7 +131,7 @@ export class ImprestController {
   }
 
   @Post(':id/approve/accountant')
-  @Roles('accountant')
+  // @Roles('accountant')
   @ApiOperation({ summary: 'Approve imprest request by accountant' })
   @ApiResponse({ status: 200, description: 'Imprest request approved by accountant.' })
   async approveByAccountant(
@@ -143,7 +143,7 @@ export class ImprestController {
   }
 
   @Post(':id/reject')
-  @Roles('hod', 'accountant')
+  // @Roles('hod', 'accountant')
   @ApiOperation({ summary: 'Reject imprest request' })
   @ApiResponse({ status: 200, description: 'Imprest request rejected.' })
   async reject(
@@ -155,7 +155,7 @@ export class ImprestController {
   }
 
   @Post(':id/disburse')
-  @Roles('accountant')
+  // @Roles('accountant')
   @ApiOperation({ summary: 'Record imprest disbursement' })
   @ApiResponse({ status: 200, description: 'Imprest disbursement recorded.' })
   async recordDisbursement(
@@ -260,7 +260,7 @@ export class ImprestController {
   }
 
   @Post(':id/accounting/approve')
-  @Roles('accountant')
+  // @Roles('accountant')
   @ApiOperation({ summary: 'Approve imprest accounting (accountant only)' })
   @ApiBody({
     schema: {
