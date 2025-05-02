@@ -109,15 +109,34 @@ export class CreatePaymentDto {
     example: 100000,
     description: 'Amount paid in this transaction'
   })
+  @IsOptional()
   @IsNumber()
   @Min(0)
   amountPaid: number;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required: false,
+    description: 'Payment receipt file (PDF, image, etc.)'
+  })
+  receiptFile?: Express.Multer.File;
+
+  @ApiProperty({
+    example: 'Payment for milestone 1',
+    description: 'Comments about this payment',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  comments?: string;
 
   @ApiProperty({
     example: 'MPESA',
     description: 'Payment method used'
   })
   @IsString()
+  @IsOptional()
   paymentMethod: string;
 
   @ApiProperty({
@@ -125,6 +144,7 @@ export class CreatePaymentDto {
     description: 'Reference number for the payment'
   })
   @IsString()
+  @IsOptional()
   referenceNumber: string;
 
   @ApiProperty({

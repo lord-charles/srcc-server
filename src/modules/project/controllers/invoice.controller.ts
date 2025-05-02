@@ -7,9 +7,15 @@ import {
   UseGuards,
   Req,
   Patch,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -32,7 +38,10 @@ import { Invoice } from '../schemas/invoice.schema';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class InvoiceController {
-  constructor(private readonly invoiceService: InvoiceService) {}
+  constructor(
+    private readonly invoiceService: InvoiceService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new invoice' })
@@ -118,7 +127,24 @@ export class InvoiceController {
   }
 
   @Post(':id/payments')
+  @UseInterceptors(FileInterceptor('receiptFile'))
   @ApiOperation({ summary: 'Record a payment for an invoice' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        amountPaid: { type: 'number', example: 100000 },
+        paymentMethod: { type: 'string', example: 'MPESA' },
+        referenceNumber: { type: 'string', example: 'QK7XLPBRN5' },
+        paymentDate: { type: 'string', format: 'date', example: '2025-02-20' },
+        notes: { type: 'string', example: 'First installment payment' },
+        comments: { type: 'string', example: 'Payment for milestone 1' },
+        receiptFile: { type: 'string', format: 'binary', description: 'Payment receipt file (PDF, image, etc.)' },
+      },
+      required: ['amountPaid', 'paymentMethod', 'referenceNumber', 'paymentDate']
+    }
+  })
   @ApiResponse({
     status: 200,
     description: 'Payment recorded successfully',
@@ -127,16 +153,52 @@ export class InvoiceController {
   async recordPayment(
     @Param('id') id: string,
     @Req() req: any,
-
+    @UploadedFile() receiptFile: Express.Multer.File,
     @Body() dto: CreatePaymentDto,
   ): Promise<Invoice> {
+    let receiptUrl: string | undefined = undefined;
+    if (receiptFile) {
+      const uploadResult = await this.cloudinaryService.uploadFile(receiptFile, 'payment-receipts');
+      receiptUrl = uploadResult.secure_url;
+    }
+    const paymentDtoWithReceipt = {
+      ...dto,
+      receiptUrl,
+    };
     return this.invoiceService.recordPayment(
       new Types.ObjectId(id),
       req.user.id,
-      dto,
+      paymentDtoWithReceipt,
     );
   }
 
+  @Patch(':id/actual-invoice')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Attach or update the actual invoice document' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', description: 'Actual invoice PDF or document' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Actual invoice document uploaded and URL saved', type: Invoice })
+  async attachOrUpdateActualInvoice(
+    @Param('id') id: string,
+    @Req() req: any,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<Invoice> {
+    const uploadResult = await this.cloudinaryService.uploadFile(file, 'actual-invoices');
+    return this.invoiceService.attachOrUpdateActualInvoice(
+      new Types.ObjectId(id),
+      uploadResult.secure_url,
+      req.user.id,
+    );
+  }
+
+ 
   @Post(':id/request-revision')
   @ApiOperation({ summary: 'Request revision for an invoice' })
   @ApiResponse({

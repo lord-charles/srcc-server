@@ -444,11 +444,11 @@ export class InvoiceService {
   ): Promise<Invoice> {
     const invoice = await this.findOne(id);
 
-    if (invoice.status !== 'approved' && invoice.status !== 'partially_paid') {
-      throw new BadRequestException(
-        'Invoice must be approved before recording payment',
-      );
-    }
+    // if (invoice.status !== 'approved' && invoice.status !== 'partially_paid') {
+    //   throw new BadRequestException(
+    //     'Invoice must be approved before recording payment',
+    //   );
+    // }
 
     const totalPaid =
       invoice.payments.reduce((sum, payment) => sum + payment.amountPaid, 0) +
@@ -486,6 +486,30 @@ export class InvoiceService {
 
   async findByProject(projectId: Types.ObjectId): Promise<Invoice[]> {
     return this.invoiceModel.find({ projectId }).sort({ invoiceDate: -1 });
+  }
+
+  /**
+   * Attach or update the actualInvoice URL for an invoice
+   */
+  async attachOrUpdateActualInvoice(
+    id: Types.ObjectId,
+    url: string,
+    userId: any,
+  ): Promise<Invoice> {
+    const invoice = await this.invoiceModel.findById(id);
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+    invoice.actualInvoice = url;
+    invoice.updatedBy = userId;
+    invoice.auditTrail.push({
+      action: 'ACTUAL_INVOICE_UPDATED',
+      performedBy: userId,
+      performedAt: new Date(),
+      details: { actualInvoice: url },
+    });
+    await invoice.save();
+    return invoice;
   }
 
   async markAsOverdue(): Promise<void> {

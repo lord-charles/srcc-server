@@ -65,6 +65,10 @@ class PaymentDetails {
   @ApiProperty({ description: 'Payment receipt URL' })
   @Prop()
   receiptUrl?: string;
+
+  @ApiProperty({ description: 'Comments about the payment', example: 'Payment for milestone 1' })
+  @Prop()
+  comments?: string;
 }
 
 @Schema()
@@ -162,6 +166,10 @@ export class Invoice extends Document {
   @ApiProperty({ description: 'Internal notes' })
   @Prop()
   internalNotes?: string;
+
+  @ApiProperty({ description: 'URL to the actual invoice file' })
+  @Prop()
+  actualInvoice?: string;
 
   @ApiProperty({ description: 'Payment tracking' })
   @Prop({ type: [PaymentDetails], default: [] })

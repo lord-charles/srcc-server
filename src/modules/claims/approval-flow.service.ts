@@ -121,7 +121,7 @@ export class ApprovalFlowService {
             description: 'Final finance approval by SRCC',
             nextStatus: 'approved'
           }
-          
+
         ]
       }
     ];
@@ -136,15 +136,15 @@ export class ApprovalFlowService {
   }
 
   async getApprovalFlow(department: string): Promise<ApprovalFlowDocument> {
-    const flow = await this.approvalFlowModel.findOne({ 
-      department, 
-      isActive: true 
+    const flow = await this.approvalFlowModel.findOne({
+      department,
+      isActive: true
     });
-    
+
     if (!flow) {
       throw new NotFoundException(`No active approval flow found for department ${department}`);
     }
-    
+
     return flow;
   }
 
@@ -155,7 +155,7 @@ export class ApprovalFlowService {
   } | null> {
     const flow = await this.getApprovalFlow(department);
     console.log(flow)
-    
+
     // For initial submission
     if (currentStatus === 'draft') {
       const firstStep = flow.steps[0];
@@ -167,7 +167,7 @@ export class ApprovalFlowService {
     }
 
     // Find current step
-    const currentStep = flow.steps.find(step => 
+    const currentStep = flow.steps.find(step =>
       currentStatus === `pending_${step.role}_approval`
     );
     console.log(currentStatus, currentStep);
@@ -177,9 +177,9 @@ export class ApprovalFlowService {
     }
 
     // Find next step
-    const nextStep = flow.steps.find(step => 
-      currentStep.nextStatus === 'approved' 
-        ? step.stepNumber === currentStep.stepNumber 
+    const nextStep = flow.steps.find(step =>
+      currentStep.nextStatus === 'approved'
+        ? step.stepNumber === currentStep.stepNumber
         : step.stepNumber === currentStep.stepNumber + 1
     );
 
@@ -188,5 +188,28 @@ export class ApprovalFlowService {
       role: nextStep.role,
       department: nextStep.department
     } : null;
+  }
+  
+async addApprovalFlow(dto: Partial<ApprovalFlow>): Promise<ApprovalFlowDocument> {
+    // Upsert based on department
+    return this.approvalFlowModel.findOneAndUpdate(
+      { department: dto.department },
+      dto,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
+
+  async deleteApprovalFlow(id: string): Promise<boolean> {
+    const res = await this.approvalFlowModel.findByIdAndDelete(id);
+    return !!res;
+  }
+
+
+  async getApprovalFlows(): Promise<ApprovalFlowDocument[]> {
+    return this.approvalFlowModel.find();
+  }
+
+  async getApprovalFlowById(id: string): Promise<ApprovalFlowDocument | null> {
+    return this.approvalFlowModel.findById(id);
   }
 }
