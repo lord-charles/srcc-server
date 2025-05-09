@@ -17,7 +17,7 @@ export class Project {
     example: 'SU',
     description: 'The department of the project',
   })
-  @Prop({ required: true})
+  @Prop({ required: true })
   department: string;
 
   @ApiProperty({
@@ -42,6 +42,13 @@ export class Project {
   @ApiProperty({ example: '2025-12-31', description: 'Contract end date' })
   @Prop({ required: true })
   contractEndDate: Date;
+
+  @ApiProperty({
+    example: 20251231,
+    description: 'Total project value',
+  })
+  @Prop({ required: true })
+  totalProjectValue: number;
 
   @ApiProperty({
     example: 'Ministry of Health',

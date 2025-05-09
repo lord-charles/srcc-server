@@ -99,13 +99,13 @@ export class CreateProjectDto {
   @IsString()
   description: string;
 
-  @ApiProperty({
-    example: 5000000,
-    description: 'Total budget allocated for the project in the specified currency'
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  totalBudget: number;
+  // @ApiProperty({
+  //   example: 5000000,
+  //   description: 'Total budget allocated for the project in the specified currency'
+  // })
+  // @IsNotEmpty()
+  // @IsNumber()
+  // totalBudget: number;
 
   @ApiProperty({
     example: 4800000,

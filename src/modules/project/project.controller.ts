@@ -39,7 +39,7 @@ export class ProjectController {
   constructor(
     private readonly projectService: ProjectService,
     private readonly cloudinaryService: CloudinaryService,
-  ) {}
+  ) { }
 
   @Post()
   @ApiOperation({
@@ -67,13 +67,13 @@ export class ProjectController {
       type: 'object',
       properties: {
         name: { type: 'string', example: 'Health System Upgrade' },
-        department: { type: 'string', example: 'SU' },
+        department: { type: 'string', example: 'ILAB' },
         description: {
           type: 'string',
           example: 'Comprehensive upgrade of the hospital management system',
         },
-        totalBudget: { type: 'number', example: 5000000 },
-        totalProjectValue: { type: 'number', example: 5500000 },
+        // totalBudget: { type: 'number', example: 5000000 },
+        totalProjectValue: { type: 'number', example: 2300000 },
         currency: {
           type: 'string',
           enum: ['KES', 'USD', 'EUR', 'GBP'],
@@ -308,9 +308,10 @@ export class ProjectController {
       status: createProjectDto.status || 'draft',
       createdBy: req.user.id,
       updatedBy: req.user.id,
+      totalProjectValue: createProjectDto.totalProjectValue !== undefined ? Number(createProjectDto.totalProjectValue) : undefined,
     };
 
-    // Parse dates in nested objects
+    // Parse dates and numeric fields in nested objects
     if (Array.isArray(parsedData.teamMembers)) {
       parsedData.teamMembers = parsedData.teamMembers.map((member) => ({
         ...member,
@@ -325,6 +326,9 @@ export class ProjectController {
         dueDate: new Date(milestone.dueDate),
         completionDate: milestone.completionDate
           ? new Date(milestone.completionDate)
+          : undefined,
+        actualCost: milestone.actualCost !== undefined && milestone.actualCost !== null
+          ? Number(milestone.actualCost)
           : undefined,
       }));
     }
