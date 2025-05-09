@@ -33,17 +33,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly systemLogsService: SystemLogsService,
     private readonly notificationService: NotificationService,
-  ) {}
+  ) { }
 
   private generatePin(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
 
-
-
-  /**
-   * Forgot password - request PIN
-   */
   async requestPasswordReset(dto: ForgotPasswordDto): Promise<{ message: string }> {
     const user = await this.userService.findByEmail(dto.email) as UserDocument;
     if (!user) throw new BadRequestException('User not found');
@@ -219,11 +214,6 @@ export class AuthService {
     return userWithoutPassword;
   }
 
-  /**
-   * Get user profile by ID
-   * @param userId User ID
-   * @returns Sanitized user profile
-   */
   async getUserProfile(userId: string): Promise<Partial<User>> {
     const user = await this.userService.findById(userId);
     if (!user) {

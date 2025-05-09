@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {  UpdateUserDto } from './dto/user.dto';
+import { UpdateUserDto } from './dto/user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { User, UserDocument } from './schemas/user.schema';
 import { NotificationService } from '../notifications/services/notification.service';
@@ -19,7 +19,7 @@ export class UserService {
     private readonly jwtService: JwtService,
     private readonly notificationService: NotificationService,
     private readonly systemLogsService: SystemLogsService,
-  ) {}
+  ) { }
 
 
   async findByEmail(email: string): Promise<UserDocument> {
@@ -34,11 +34,6 @@ export class UserService {
     return user;
   }
 
-  /**
-   * @description List all employees with optional filters
-   * @param filters
-   * @returns Paginated list of employees
-   */
   async findAll(filters: any): Promise<{ data: User[]; total: number }> {
     const {
       page = 1,

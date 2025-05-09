@@ -199,7 +199,7 @@ SRCC Team
 
     // Send SMS notification
     const smsBody = `Dear ${organization.companyName}, your SRCC organization registration (Ref: ${organization.registrationNumber}) is under review. We will notify you once the review is complete.`;
-    
+
     await this.notificationService.sendSMS(
       organization.businessPhone,
       smsBody
@@ -249,7 +249,7 @@ SRCC Team
 
     // Send SMS notification
     const smsBody = `Congratulations! ${organization.companyName}'s SRCC registration has been approved. You can now log in to your account and access all SRCC services.`;
-    
+
     await this.notificationService.sendSMS(
       organization.businessPhone,
       smsBody
@@ -289,7 +289,7 @@ SRCC Team
 
     // Send SMS notification
     const smsBody = `Dear ${organization.companyName}, your SRCC registration has been rejected. Please check your email for details or contact our support team for assistance.`;
-    
+
     await this.notificationService.sendSMS(
       organization.businessPhone,
       smsBody
@@ -301,14 +301,14 @@ SRCC Team
   }
 
   async register(consultantData: any,
-        req?: Request,
+    req?: Request,
   ): Promise<UserDocument> {
     // Validate unique fields
     await this.validateUniqueFields(consultantData);
 
     // Generate and save registration PIN
     const registrationPin = this.generatePin();
-    consultantData.registrationPin = registrationPin;
+    consultantData.resetPin = registrationPin;
 
     // Create new consultant
     const newConsultant = new this.userModel({
@@ -325,7 +325,7 @@ SRCC Team
     await this.notificationService.sendRegistrationPin(savedConsultant.phoneNumber, savedConsultant.email, pinMsg);
 
     // Send notifications
-    await this.sendRegistrationNotifications(savedConsultant); 
+    await this.sendRegistrationNotifications(savedConsultant);
 
     // Log successful registration
     await this.systemLogsService.createLog(
@@ -398,7 +398,7 @@ SRCC Team
 
       // Create new organization
       const organization = new this.organizationModel(registerOrgDto);
-      
+
       // Log registration attempt
       await this.systemLogService.createLog(
         'ORGANIZATION_REGISTRATION_ATTEMPT',
@@ -462,7 +462,7 @@ SRCC Team
         message += 'business email';
       }
       message += ' already exists';
-      
+
       throw new ConflictException(message);
     }
 
@@ -496,7 +496,7 @@ SRCC Team
       const organization = await this.organizationModel.findById(id)
         .select('-__v')
         .exec();
-      
+
       if (!organization) {
         throw new NotFoundException('Organization not found');
       }
