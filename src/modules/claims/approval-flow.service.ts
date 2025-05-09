@@ -123,7 +123,171 @@ export class ApprovalFlowService {
           }
 
         ]
-      }
+      },
+      {
+        department: 'ILAB',
+        description: 'ILAB Claims Approval Flow',
+        steps: [
+          {
+            stepNumber: 1,
+            role: 'claim_checker',
+            department: 'ILAB',
+            description: 'Initial check by ILAB staff',
+            nextStatus: 'pending_reviewer_approval'
+          },
+          {
+            stepNumber: 2,
+            role: 'reviewer',
+            department: 'ILAB',
+            description: 'Review by ILAB staff',
+            nextStatus: 'pending_approver_approval'
+          },
+          {
+            stepNumber: 3,
+            role: 'approver',
+            department: 'ILAB',
+            description: 'Approval by ILAB staff',
+            nextStatus: 'pending_srcc_checker_approval'
+          },
+          {
+            stepNumber: 4,
+            role: 'srcc_checker',
+            department: 'SRCC',
+            description: 'Check by SRCC staff',
+            nextStatus: 'pending_srcc_finance_approval'
+          },
+          {
+            stepNumber: 5,
+            role: 'srcc_finance',
+            department: 'SRCC',
+            description: 'Final finance approval by SRCC',
+            nextStatus: 'approved'
+          }
+        ]
+      },
+      {
+        department: 'SERC',
+        description: 'SERC Claims Approval Flow',
+        steps: [
+          {
+            stepNumber: 1,
+            role: 'claim_checker',
+            department: 'SERC',
+            description: 'Initial check by SERC staff',
+            nextStatus: 'pending_reviewer_approval'
+          },
+          {
+            stepNumber: 2,
+            role: 'reviewer',
+            department: 'SERC',
+            description: 'Review by SERC staff',
+            nextStatus: 'pending_approver_approval'
+          },
+          {
+            stepNumber: 3,
+            role: 'approver',
+            department: 'SERC',
+            description: 'Approval by SERC staff',
+            nextStatus: 'pending_srcc_checker_approval'
+          },
+          {
+            stepNumber: 4,
+            role: 'srcc_checker',
+            department: 'SRCC',
+            description: 'Check by SRCC staff',
+            nextStatus: 'pending_srcc_finance_approval'
+          },
+          {
+            stepNumber: 5,
+            role: 'srcc_finance',
+            department: 'SRCC',
+            description: 'Final finance approval by SRCC',
+            nextStatus: 'approved'
+          }
+        ]
+      },
+      {
+        department: 'SIMS',
+        description: 'SIMS Claims Approval Flow',
+        steps: [
+          {
+            stepNumber: 1,
+            role: 'claim_checker',
+            department: 'SIMS',
+            description: 'Initial check by SIMS staff',
+            nextStatus: 'pending_reviewer_approval'
+          },
+          {
+            stepNumber: 2,
+            role: 'reviewer',
+            department: 'SIMS',
+            description: 'Review by SIMS staff',
+            nextStatus: 'pending_approver_approval'
+          },
+          {
+            stepNumber: 3,
+            role: 'approver',
+            department: 'SIMS',
+            description: 'Approval by SIMS staff',
+            nextStatus: 'pending_srcc_checker_approval'
+          },
+          {
+            stepNumber: 4,
+            role: 'srcc_checker',
+            department: 'SRCC',
+            description: 'Check by SRCC staff',
+            nextStatus: 'pending_srcc_finance_approval'
+          },
+          {
+            stepNumber: 5,
+            role: 'srcc_finance',
+            department: 'SRCC',
+            description: 'Final finance approval by SRCC',
+            nextStatus: 'approved'
+          }
+        ]
+      },
+      {
+        department: 'SHSS',
+        description: 'SHSS Claims Approval Flow',
+        steps: [
+          {
+            stepNumber: 1,
+            role: 'claim_checker',
+            department: 'SHSS',
+            description: 'Initial check by SHSS staff',
+            nextStatus: 'pending_reviewer_approval'
+          },
+          {
+            stepNumber: 2,
+            role: 'reviewer',
+            department: 'SHSS',
+            description: 'Review by SHSS staff',
+            nextStatus: 'pending_approver_approval'
+          },
+          {
+            stepNumber: 3,
+            role: 'approver',
+            department: 'SHSS',
+            description: 'Approval by SHSS staff',
+            nextStatus: 'pending_srcc_checker_approval'
+          },
+          {
+            stepNumber: 4,
+            role: 'srcc_checker',
+            department: 'SRCC',
+            description: 'Check by SRCC staff',
+            nextStatus: 'pending_srcc_finance_approval'
+          },
+          {
+            stepNumber: 5,
+            role: 'srcc_finance',
+            department: 'SRCC',
+            description: 'Final finance approval by SRCC',
+            nextStatus: 'approved'
+          }
+        ]
+      },
     ];
 
     for (const flow of defaultFlows) {
@@ -189,8 +353,8 @@ export class ApprovalFlowService {
       department: nextStep.department
     } : null;
   }
-  
-async addApprovalFlow(dto: Partial<ApprovalFlow>): Promise<ApprovalFlowDocument> {
+
+  async addApprovalFlow(dto: Partial<ApprovalFlow>): Promise<ApprovalFlowDocument> {
     // Upsert based on department
     return this.approvalFlowModel.findOneAndUpdate(
       { department: dto.department },
