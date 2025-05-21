@@ -183,15 +183,15 @@ export class User {
     description: 'NHIF number',
     example: 'NHIF123456',
   })
-  @Prop({ required: true, unique: true })
-  nhifNumber: string;
+  @Prop()
+  nhifNumber?: string;
 
   @ApiProperty({
     description: 'NSSF number',
     example: 'NSSF123456',
   })
-  @Prop({ required: true, unique: true })
-  nssfNumber: string;
+  @Prop()
+  nssfNumber?: string;
 
 
   @ApiProperty({

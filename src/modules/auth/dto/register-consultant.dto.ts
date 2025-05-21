@@ -80,13 +80,13 @@ class EmergencyContactDto {
   @IsString()
   name: string;
 
-  
+
   @IsOptional()
   @ApiProperty({ description: 'Relationship to the consultant', example: 'Spouse' })
   @IsString()
   relationship: string;
 
-  
+
   @IsOptional()
   @ApiProperty({ description: 'Primary phone number', example: '+254712345678' })
   @IsString()
@@ -175,12 +175,12 @@ export class RegisterConsultantDto {
   county: string;
 
   @ApiProperty({ description: 'NSSF number', example: 'NSSF123456' })
-  @IsString()
-  nssfNumber: string;
+  @IsOptional()
+  nssfNumber?: string;
 
   @ApiProperty({ description: 'NHIF number', example: 'NHIF123456' })
-  @IsString()
-  nhifNumber: string;
+  @IsOptional()
+  nhifNumber?: string;
 
   @ApiProperty({ description: 'NSSF deduction amount', example: 200 })
   @IsOptional()
