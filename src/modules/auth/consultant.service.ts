@@ -303,38 +303,41 @@ SRCC Team
   async register(consultantData: any,
     req?: Request,
   ): Promise<UserDocument> {
-    // Validate unique fields
     await this.validateUniqueFields(consultantData);
 
-    // Generate and save registration PIN
     const registrationPin = this.generatePin();
     consultantData.resetPin = registrationPin;
 
-    // Create new consultant
     const newConsultant = new this.userModel({
       ...consultantData,
       status: 'pending',
       roles: ['consultant']
     });
 
-    // Save the consultant
     const savedConsultant = await newConsultant.save();
 
-    // Send PIN via NotificationService
-    const pinMsg = `Your SRCC registration PIN is: ${registrationPin}. This PIN will be required to activate your account when approved.`;
-    await this.notificationService.sendRegistrationPin(savedConsultant.phoneNumber, savedConsultant.email, pinMsg);
+    // Fire-and-forget notifications and logging
+    (async () => {
+      try {
+        const pinMsg = `Your SRCC registration PIN is: ${registrationPin}. This PIN will be required to activate your account when approved.`;
+        await this.notificationService.sendRegistrationPin(savedConsultant.phoneNumber, savedConsultant.email, pinMsg);
+        await this.sendRegistrationNotifications(savedConsultant);
+      } catch (err) {
+        console.error('Failed to send registration notifications:', err);
+      }
+      try {
+        await this.systemLogsService.createLog(
+          'User Registration',
+          `New user registered: ${savedConsultant.firstName} ${savedConsultant.lastName} (${savedConsultant.email})`,
+          LogSeverity.INFO,
+          savedConsultant.employeeId?.toString(),
+          req,
+        );
+      } catch (err) {
+        console.error('Failed to create system log:', err);
+      }
+    })();
 
-    // Send notifications
-    await this.sendRegistrationNotifications(savedConsultant);
-
-    // Log successful registration
-    await this.systemLogsService.createLog(
-      'User Registration',
-      `New user registered: ${savedConsultant.firstName} ${savedConsultant.lastName} (${savedConsultant.email})`,
-      LogSeverity.INFO,
-      savedConsultant.employeeId?.toString(),
-      req,
-    );
     return savedConsultant;
   }
 
