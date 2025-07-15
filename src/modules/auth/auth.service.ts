@@ -25,6 +25,10 @@ import { User, UserDocument } from './schemas/user.schema';
 import { SystemLogsService } from '../system-logs/services/system-logs.service';
 import { LogSeverity } from '../system-logs/schemas/system-log.schema';
 import { Request } from 'express';
+import {
+  ConfirmPasswordResetDto,
+  RequestPasswordResetDto,
+} from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -33,23 +37,32 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly systemLogsService: SystemLogsService,
     private readonly notificationService: NotificationService,
-  ) { }
+  ) {}
 
   private generatePin(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
 
-  async requestPasswordReset(dto: ForgotPasswordDto): Promise<{ message: string }> {
-    const user = await this.userService.findByEmail(dto.email) as UserDocument;
-    if (!user) throw new BadRequestException('User not found');
-    const pin = this.generatePin();
-    user.resetPin = pin;
-    await user.save();
-    const msg = `Your new SRCC registration PIN is: ${pin}`;
-    await this.notificationService.sendRegistrationPin(user.phoneNumber, user.email, msg);
-    return { message: 'A new registration PIN has been sent to your email and phone.' };
-
-  }
+  // async requestPasswordReset(
+  //   dto: ForgotPasswordDto,
+  // ): Promise<{ message: string }> {
+  //   const user = (await this.userService.findByEmail(
+  //     dto.email,
+  //   )) as UserDocument;
+  //   if (!user) throw new BadRequestException('User not found');
+  //   const pin = this.generatePin();
+  //   user.resetPin = pin;
+  //   await user.save();
+  //   const msg = `Your new SRCC registration PIN is: ${pin}`;
+  //   await this.notificationService.sendRegistrationPin(
+  //     user.phoneNumber,
+  //     user.email,
+  //     msg,
+  //   );
+  //   return {
+  //     message: 'A new registration PIN has been sent to your email and phone.',
+  //   };
+  // }
 
   async login(
     loginUserDto: LoginUserDto,
@@ -67,31 +80,37 @@ export class AuthService {
           undefined,
           req,
         );
-        throw new UnauthorizedException('No account found with the provided email address.');
+        throw new UnauthorizedException(
+          'No account found with the provided email address.',
+        );
       }
 
       // Require PIN for authentication based on user status
       if (user.status === 'pending') {
-        if (!loginUserDto.pin || loginUserDto.pin !== user.registrationPin) {
+        if (!loginUserDto.password || loginUserDto.password !== user.password) {
           await this.systemLogsService.createLog(
             'Login Failed',
-            `Invalid registration PIN attempt for pending user: ${user.email}`,
+            `Invalid password attempt for pending user: ${user.email}`,
             LogSeverity.WARNING,
             user.employeeId?.toString(),
             req,
           );
-          throw new UnauthorizedException('The registration PIN you entered is incorrect or missing.');
+          throw new UnauthorizedException(
+            'The password you entered is incorrect or missing.',
+          );
         }
       } else if (user.status === 'active') {
-        if (!loginUserDto.pin || loginUserDto.pin !== user.resetPin) {
+        if (!loginUserDto.password || loginUserDto.password !== user.password) {
           await this.systemLogsService.createLog(
             'Login Failed',
-            `Invalid login PIN attempt for active user: ${user.email}`,
+            `Invalid password attempt for active user: ${user.email}`,
             LogSeverity.WARNING,
             user.employeeId?.toString(),
             req,
           );
-          throw new UnauthorizedException('The login PIN you entered is incorrect or missing.');
+          throw new UnauthorizedException(
+            'The password you entered is incorrect or missing.',
+          );
         }
       } else {
         // Handle account status
@@ -104,7 +123,9 @@ export class AuthService {
               user.employeeId?.toString(),
               req,
             );
-            throw new UnauthorizedException('Your account is inactive. Please contact support for assistance.');
+            throw new UnauthorizedException(
+              'Your account is inactive. Please contact support for assistance.',
+            );
           case 'suspended':
             await this.systemLogsService.createLog(
               'Suspended Account Login Attempt',
@@ -113,7 +134,9 @@ export class AuthService {
               user.employeeId?.toString(),
               req,
             );
-            throw new UnauthorizedException('Your account has been suspended. Please contact support for more information.');
+            throw new UnauthorizedException(
+              'Your account has been suspended. Please contact support for more information.',
+            );
           case 'terminated':
             await this.systemLogsService.createLog(
               'Terminated Account Login Attempt',
@@ -122,7 +145,9 @@ export class AuthService {
               user.employeeId?.toString(),
               req,
             );
-            throw new UnauthorizedException('Your account has been terminated.');
+            throw new UnauthorizedException(
+              'Your account has been terminated.',
+            );
           default:
             await this.systemLogsService.createLog(
               'Unknown Status Login Attempt',
@@ -131,7 +156,9 @@ export class AuthService {
               user.employeeId?.toString(),
               req,
             );
-            throw new UnauthorizedException('Account status is not recognized. Please contact support.');
+            throw new UnauthorizedException(
+              'Account status is not recognized. Please contact support.',
+            );
         }
       }
 
@@ -155,9 +182,129 @@ export class AuthService {
       throw error;
     }
   }
+  async requestPasswordReset(
+    requestPasswordResetDto: RequestPasswordResetDto,
+    req?: Request,
+  ): Promise<{ message: string }> {
+    try {
+      const user = await this.userService.findByEmail(
+        requestPasswordResetDto.email,
+      );
+      if (!user) {
+        await this.systemLogsService.createLog(
+          'SRCC Password Reset Request Failed',
+          `Password reset attempt for non-existent email: ${requestPasswordResetDto.email}`,
+          LogSeverity.WARNING,
+          undefined,
+          req,
+        );
+        return {
+          message:
+            'SRCC: If your email is registered, you will receive a password reset PIN.',
+        };
+      }
+
+      const resetPin = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiryDate = new Date(Date.now() + 10 * 60 * 1000);
+
+      user.resetPin = resetPin;
+      user.resetPinExpires = expiryDate;
+      await (user as UserDocument).save();
+
+      const resetMessage = `Your SRCC password reset PIN is: ${resetPin}. This PIN will expire in 10 minutes. Please keep this PIN secure and do not share it with anyone.`;
+      await this.notificationService.sendRegistrationPin(
+        user.phoneNumber,
+        user.email,
+        resetMessage,
+      );
+
+      await this.systemLogsService.createLog(
+        'SRCC Password Reset Requested',
+        `Password reset PIN generated for user: ${user.firstName} ${user.lastName} (${user.email})`,
+        LogSeverity.INFO,
+        user.employeeId?.toString(),
+        req,
+      );
+
+      return {
+        message:
+          'SRCC: If your email is registered, you will receive a password reset PIN.',
+      };
+    } catch (error) {
+      await this.systemLogsService.createLog(
+        'SRCC Password Reset Request Error',
+        `Error during password reset request for ${requestPasswordResetDto.email}: ${error.message}`,
+        LogSeverity.ERROR,
+        undefined,
+        req,
+      );
+      throw new BadRequestException(
+        'SRCC: Could not process password reset request. Please try again later.',
+      );
+    }
+  }
+
+  async confirmPasswordReset(
+    confirmPasswordResetDto: ConfirmPasswordResetDto,
+    req?: Request,
+  ): Promise<{ message: string }> {
+    try {
+      const user = await this.userService.findByEmail(
+        confirmPasswordResetDto.email,
+      );
+
+      if (!user || !user.resetPin || !user.resetPinExpires) {
+        throw new BadRequestException(
+          'SRCC: Invalid or expired password reset PIN.',
+        );
+      }
+
+      if (user.resetPinExpires < new Date()) {
+        await this.systemLogsService.createLog(
+          'SRCC Password Reset PIN Expired',
+          `Expired PIN used for ${user.email}`,
+          LogSeverity.WARNING,
+          user.employeeId?.toString(),
+          req,
+        );
+        throw new BadRequestException('SRCC: Password reset PIN has expired.');
+      }
+
+      if (user.resetPin !== confirmPasswordResetDto.resetToken) {
+        throw new BadRequestException('SRCC: Invalid password reset PIN.');
+      }
+
+      user.password = confirmPasswordResetDto.newPassword;
+      user.resetPin = undefined;
+      user.resetPinExpires = undefined;
+      await (user as UserDocument).save();
+
+      await this.systemLogsService.createLog(
+        'SRCC Password Reset Confirmed',
+        `Password successfully reset for user: ${user.firstName} ${user.lastName} (${user.email})`,
+        LogSeverity.INFO,
+        user.employeeId?.toString(),
+        req,
+      );
+
+      return { message: 'SRCC: Your password has been successfully reset.' };
+    } catch (error) {
+      await this.systemLogsService.createLog(
+        'SRCC Password Reset Confirmation Failed',
+        `Error confirming password reset for ${confirmPasswordResetDto.email}: ${error.message}`,
+        LogSeverity.ERROR,
+        undefined,
+        req,
+      );
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException(
+        'SRCC: Could not reset password. Please try again.',
+      );
+    }
+  }
 
   async suspendUser(email: string): Promise<{ message: string }> {
-    const user = await this.userService.findByEmail(email) as UserDocument;
+    const user = (await this.userService.findByEmail(email)) as UserDocument;
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -171,12 +318,16 @@ export class AuthService {
       undefined,
     );
     // Notify user of suspension
-    await this.notificationService.sendRegistrationPin(user.phoneNumber, user.email, 'Your SRCC account has been suspended. Please contact support for more information.');
+    await this.notificationService.sendRegistrationPin(
+      user.phoneNumber,
+      user.email,
+      'Your SRCC account has been suspended. Please contact support for more information.',
+    );
     return { message: `User ${user.email} has been suspended.` };
   }
 
   async activateUser(email: string): Promise<{ message: string }> {
-    const user = await this.userService.findByEmail(email) as UserDocument;
+    const user = (await this.userService.findByEmail(email)) as UserDocument;
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -190,7 +341,11 @@ export class AuthService {
       undefined,
     );
     // Notify user of activation
-    await this.notificationService.sendRegistrationPin(user.phoneNumber, user.email, 'Your SRCC account has been reactivated. You may now log in.');
+    await this.notificationService.sendRegistrationPin(
+      user.phoneNumber,
+      user.email,
+      'Your SRCC account has been reactivated. You may now log in.',
+    );
     return { message: `User ${user.email} has been reactivated.` };
   }
 

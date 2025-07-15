@@ -10,12 +10,14 @@ import {
 } from 'class-validator';
 
 export class LoginUserDto {
-  @ApiProperty({ description: '4-digit registration PIN (for pending accounts)', required: false })
-  @IsOptional()
+  @ApiProperty({
+    description: 'Account password',
+    example: 'securePassword123',
+  })
   @IsString()
-  @MinLength(4)
-  @MaxLength(4)
-  pin?: string;
+  @IsNotEmpty()
+  password: string;
+
   @ApiProperty({
     description: 'Employee email address',
     example: 'jane.wanjiku@company.com',
@@ -55,7 +57,7 @@ export class ResetPasswordDto {
 
 export class UpdatePasswordDto {
   @ApiProperty({
-    description: 'Account password',  
+    description: 'Account password',
     example: 'securePassword123',
   })
   @IsString()

@@ -6,26 +6,42 @@ export type UserDocument = User & Document;
 
 // Skill Schema
 class Skill {
-  @ApiProperty({ description: 'Name of the skill', example: 'Project Management' })
+  @ApiProperty({
+    description: 'Name of the skill',
+    example: 'Project Management',
+  })
   @Prop({ required: true })
   name: string;
 
-  @ApiProperty({ description: 'Years of experience with this skill', example: 5 })
+  @ApiProperty({
+    description: 'Years of experience with this skill',
+    example: 5,
+  })
   @Prop({ required: true })
   yearsOfExperience: number;
 
-  @ApiProperty({ description: 'Proficiency level', example: 'Expert', enum: ['Beginner', 'Intermediate', 'Expert'] })
+  @ApiProperty({
+    description: 'Proficiency level',
+    example: 'Expert',
+    enum: ['Beginner', 'Intermediate', 'Expert'],
+  })
   @Prop({ required: true })
   proficiencyLevel: string;
 }
 
 // Education Background Schema
 class Education {
-  @ApiProperty({ description: 'Name of institution', example: 'University of Nairobi' })
+  @ApiProperty({
+    description: 'Name of institution',
+    example: 'University of Nairobi',
+  })
   @Prop({ required: true })
   institution: string;
 
-  @ApiProperty({ description: 'Qualification obtained', example: 'Bachelor of Science in Computer Science' })
+  @ApiProperty({
+    description: 'Qualification obtained',
+    example: 'Bachelor of Science in Computer Science',
+  })
   @Prop({ required: true })
   qualification: string;
 
@@ -52,18 +68,27 @@ class Certification {
   @Prop()
   expiryDate?: Date;
 
-  @ApiProperty({ description: 'Certification ID or number', example: 'PMP123456' })
+  @ApiProperty({
+    description: 'Certification ID or number',
+    example: 'PMP123456',
+  })
   @Prop()
   certificationId?: string;
 }
 
 // Academic Certificate Schema
 class AcademicCertificate {
-  @ApiProperty({ description: 'Name of the certificate', example: 'Bachelor of Science' })
+  @ApiProperty({
+    description: 'Name of the certificate',
+    example: 'Bachelor of Science',
+  })
   @Prop({ required: true })
   name: string;
 
-  @ApiProperty({ description: 'Institution that issued the certificate', example: 'University of Nairobi' })
+  @ApiProperty({
+    description: 'Institution that issued the certificate',
+    example: 'University of Nairobi',
+  })
   @Prop({ required: true })
   institution: string;
 
@@ -71,7 +96,10 @@ class AcademicCertificate {
   @Prop({ required: true })
   yearOfCompletion: string;
 
-  @ApiProperty({ description: 'URL to the certificate document', example: 'https://cloudinary.com/certificates/bsc.pdf' })
+  @ApiProperty({
+    description: 'URL to the certificate document',
+    example: 'https://cloudinary.com/certificates/bsc.pdf',
+  })
   @Prop({ required: true })
   documentUrl: string;
 }
@@ -193,7 +221,6 @@ export class User {
   @Prop()
   nssfNumber?: string;
 
-
   @ApiProperty({
     description: 'Status of the consultant account',
     example: 'pending',
@@ -206,11 +233,17 @@ export class User {
   @Prop({ required: true })
   dateOfBirth: string;
 
-  @ApiProperty({ description: 'Physical address', example: 'Westlands, Nairobi' })
+  @ApiProperty({
+    description: 'Physical address',
+    example: 'Westlands, Nairobi',
+  })
   @Prop({ required: true })
   physicalAddress: string;
 
-  @ApiProperty({ description: 'Postal address', example: 'P.O. Box 12345-00100' })
+  @ApiProperty({
+    description: 'Postal address',
+    example: 'P.O. Box 12345-00100',
+  })
   @Prop()
   postalAddress?: string;
 
@@ -241,27 +274,27 @@ export class User {
 
   @ApiProperty({
     description: 'CV/Resume URL',
-    example: 'https://cloudinary.com/cv/john-doe-cv.pdf'
+    example: 'https://cloudinary.com/cv/john-doe-cv.pdf',
   })
   @Prop()
   cvUrl?: string;
 
   @ApiProperty({
-    description: 'Academic certificates'
+    description: 'Academic certificates',
   })
   @Prop({ type: [AcademicCertificate] })
   academicCertificates?: AcademicCertificate[];
 
   @ApiProperty({
     description: 'Years of total work experience',
-    example: 8
+    example: 8,
   })
   @Prop({ required: true })
   yearsOfExperience: number;
 
   @ApiProperty({
     description: 'Consultant hourly rate in KES',
-    example: 5000
+    example: 5000,
   })
   @Prop()
   hourlyRate: number;
@@ -269,7 +302,7 @@ export class User {
   @ApiProperty({
     description: 'Availability status',
     example: 'available',
-    enum: ['available', 'partially_available', 'not_available']
+    enum: ['available', 'partially_available', 'not_available'],
   })
   @Prop({ type: String, default: 'available' })
   availability: string;
@@ -277,7 +310,7 @@ export class User {
   @ApiProperty({
     description: 'Preferred work type',
     example: ['remote', 'hybrid'],
-    enum: ['remote', 'onsite', 'hybrid']
+    enum: ['remote', 'onsite', 'hybrid'],
   })
   @Prop({ type: [String] })
   preferredWorkTypes: string[];
@@ -326,13 +359,39 @@ export class User {
   @Prop({ type: MpesaDetails })
   mpesaDetails?: MpesaDetails;
 
-  @ApiProperty({ description: '4-digit PIN for registration/activation', required: false })
+  @ApiProperty({
+    description: 'Password',
+    required: false,
+  })
+  @Prop({ required: false })
+  password?: string;
+
+  @ApiProperty({
+    description: '4-digit PIN for registration/activation',
+    required: false,
+  })
   @Prop({ required: false })
   registrationPin?: string;
 
-  @ApiProperty({ description: '4-digit PIN for password reset', required: false })
+  @ApiProperty({
+    description: '4-digit PIN for password reset',
+    required: false,
+  })
   @Prop({ required: false })
   resetPin?: string;
+
+  @ApiProperty({
+    description: 'Expiry date for password reset PIN',
+    required: false,
+  })
+  @Prop({ required: false })
+  resetPinExpires?: Date;
+
+  @Prop({ select: false })
+  passwordResetToken?: string;
+
+  @Prop({ select: false })
+  passwordResetExpires?: Date;
 }
 
 @Schema({ _id: false, timestamps: true })
