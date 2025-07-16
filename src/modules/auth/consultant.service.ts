@@ -36,8 +36,57 @@ export class ConsultantService {
   }): Promise<UserDocument> {
     const { email, phoneNumber, nationalId, password } = consultantData;
 
-    await this.validateUniqueFields({ email, phoneNumber, nationalId });
+    const existingUser = await this.userModel.findOne({
+      $or: [{ email }, { phoneNumber }, { nationalId }],
+    });
 
+    if (existingUser) {
+      // If user exists and has completed full registration, throw conflict
+      if (existingUser.registrationStatus === 'complete') {
+        throw new ConflictException(
+          'A user with these details already exists.',
+        );
+      }
+
+      // If user exists from a previous quick registration and is not fully verified
+      if (
+        existingUser.registrationStatus === 'quick' &&
+        (!existingUser.isEmailVerified || !existingUser.isPhoneVerified)
+      ) {
+        const salt = await bcrypt.genSalt();
+        existingUser.password = await bcrypt.hash(password, salt);
+        existingUser.phoneVerificationPin = this.generatePin();
+        existingUser.emailVerificationPin = this.generatePin();
+        const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        existingUser.phoneVerificationPinExpires = pinExpiry;
+        existingUser.emailVerificationPinExpires = pinExpiry;
+
+        await existingUser.save();
+
+        // Resend notifications
+        (async () => {
+          try {
+            const phoneMsg = `Your new SRCC verification PIN is: ${existingUser.phoneVerificationPin}.`;
+            await this.notificationService.sendSMS(
+              existingUser.phoneNumber,
+              phoneMsg,
+            );
+            const emailMsg = `Your new SRCC verification PIN is: ${existingUser.emailVerificationPin}.`;
+            await this.notificationService.sendEmail(
+              existingUser.email,
+              'SRCC Account Verification',
+              emailMsg,
+            );
+          } catch (err) {
+            console.error('Failed to resend verification PINs:', err);
+          }
+        })();
+
+        return existingUser;
+      }
+    }
+
+    // Standard new quick registration
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
