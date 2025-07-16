@@ -10,14 +10,14 @@ class Skill {
     description: 'Name of the skill',
     example: 'Project Management',
   })
-  @Prop({ required: true })
+  @Prop()
   name: string;
 
   @ApiProperty({
     description: 'Years of experience with this skill',
     example: 5,
   })
-  @Prop({ required: true })
+  @Prop()
   yearsOfExperience: number;
 
   @ApiProperty({
@@ -25,7 +25,7 @@ class Skill {
     example: 'Expert',
     enum: ['Beginner', 'Intermediate', 'Expert'],
   })
-  @Prop({ required: true })
+  @Prop()
   proficiencyLevel: string;
 }
 
@@ -35,33 +35,33 @@ class Education {
     description: 'Name of institution',
     example: 'University of Nairobi',
   })
-  @Prop({ required: true })
+  @Prop()
   institution: string;
 
   @ApiProperty({
     description: 'Qualification obtained',
     example: 'Bachelor of Science in Computer Science',
   })
-  @Prop({ required: true })
+  @Prop()
   qualification: string;
 
   @ApiProperty({ description: 'Year of completion', example: '2020' })
-  @Prop({ required: true })
+  @Prop()
   yearOfCompletion: string;
 }
 
 // Professional Certification Schema
 class Certification {
   @ApiProperty({ description: 'Name of certification', example: 'PMP' })
-  @Prop({ required: true })
+  @Prop()
   name: string;
 
   @ApiProperty({ description: 'Issuing organization', example: 'PMI' })
-  @Prop({ required: true })
+  @Prop()
   issuingOrganization: string;
 
   @ApiProperty({ description: 'Date of issuance' })
-  @Prop({ required: true })
+  @Prop()
   dateIssued: Date;
 
   @ApiProperty({ description: 'Expiry date if applicable' })
@@ -82,25 +82,25 @@ class AcademicCertificate {
     description: 'Name of the certificate',
     example: 'Bachelor of Science',
   })
-  @Prop({ required: true })
+  @Prop()
   name: string;
 
   @ApiProperty({
     description: 'Institution that issued the certificate',
     example: 'University of Nairobi',
   })
-  @Prop({ required: true })
+  @Prop()
   institution: string;
 
   @ApiProperty({ description: 'Year of completion', example: '2020' })
-  @Prop({ required: true })
+  @Prop()
   yearOfCompletion: string;
 
   @ApiProperty({
     description: 'URL to the certificate document',
     example: 'https://cloudinary.com/certificates/bsc.pdf',
   })
-  @Prop({ required: true })
+  @Prop()
   documentUrl: string;
 }
 
@@ -132,21 +132,21 @@ class MpesaDetails {
 // Emergency Contact Schema
 class EmergencyContact {
   @ApiProperty({ description: 'Name of the contact', example: 'John Doe' })
-  @Prop({ required: true })
+  @Prop()
   name: string;
 
   @ApiProperty({
     description: 'Relationship to the employee',
     example: 'Spouse',
   })
-  @Prop({ required: true })
+  @Prop()
   relationship: string;
 
   @ApiProperty({
     description: 'Primary phone number',
     example: '+254712345678',
   })
-  @Prop({ required: true })
+  @Prop()
   phoneNumber: string;
 
   @ApiProperty({
@@ -161,12 +161,12 @@ class EmergencyContact {
 @Schema({ timestamps: true })
 export class User {
   @ApiProperty({ description: 'Employee first name', example: 'Jane' })
-  @Prop({ required: true })
-  firstName: string;
+  @Prop({ required: false })
+  firstName?: string;
 
   @ApiProperty({ description: 'Employee last name', example: 'Wanjiku' })
-  @Prop({ required: true })
-  lastName: string;
+  @Prop({ required: false })
+  lastName?: string;
 
   @ApiProperty({ description: 'Employee middle name', example: 'Njeri' })
   @Prop()
@@ -204,8 +204,8 @@ export class User {
     description: 'KRA PIN number',
     example: 'A012345678B',
   })
-  @Prop({ required: true, unique: true })
-  kraPinNumber: string;
+  @Prop({ required: false, unique: true })
+  kraPinNumber?: string;
 
   @ApiProperty({
     description: 'NHIF number',
@@ -230,15 +230,15 @@ export class User {
   status: string;
 
   @ApiProperty({ description: 'Employee date of birth', example: '1990-01-15' })
-  @Prop({ required: true })
-  dateOfBirth: string;
+  @Prop({ required: false })
+  dateOfBirth?: string;
 
   @ApiProperty({
     description: 'Physical address',
     example: 'Westlands, Nairobi',
   })
-  @Prop({ required: true })
-  physicalAddress: string;
+  @Prop({ required: false })
+  physicalAddress?: string;
 
   @ApiProperty({
     description: 'Postal address',
@@ -248,22 +248,22 @@ export class User {
   postalAddress?: string;
 
   @ApiProperty({ description: 'County of residence', example: 'Nairobi' })
-  @Prop({ required: true })
-  county: string;
+  @Prop({ required: false })
+  county?: string;
 
   @ApiProperty({
     description: 'Consultant skills and expertise',
     type: [Skill],
   })
-  @Prop({ type: [Skill], required: true })
-  skills: Skill[];
+  @Prop({ type: [Skill], required: false })
+  skills?: Skill[];
 
   @ApiProperty({
     description: 'Educational background',
     type: [Education],
   })
-  @Prop({ type: [Education], required: true })
-  education: Education[];
+  @Prop({ type: [Education], required: false })
+  education?: Education[];
 
   @ApiProperty({
     description: 'Professional certifications',
@@ -289,7 +289,7 @@ export class User {
     description: 'Years of total work experience',
     example: 8,
   })
-  @Prop({ required: true })
+  @Prop()
   yearsOfExperience: number;
 
   @ApiProperty({
@@ -336,8 +336,8 @@ export class User {
     description: 'Primary expertise/department',
     example: 'Software Engineering',
   })
-  @Prop({ required: true })
-  department: string;
+  @Prop({ required: false })
+  department?: string;
 
   @ApiProperty({ description: 'Monthly NHIF deduction in KES', example: 1700 })
   @Prop({ type: Number })
@@ -348,8 +348,8 @@ export class User {
   nssfDeduction: number;
 
   @ApiProperty({ description: 'Emergency contact details' })
-  @Prop({ type: EmergencyContact })
-  emergencyContact: EmergencyContact;
+  @Prop({ type: EmergencyContact, required: false })
+  emergencyContact?: EmergencyContact;
 
   @ApiProperty({ description: 'Bank payment details' })
   @Prop({ type: BankDetails })
@@ -392,12 +392,38 @@ export class User {
 
   @Prop({ select: false })
   passwordResetExpires?: Date;
+
+  @ApiProperty({
+    description: 'Registration status',
+    example: 'quick',
+    enum: ['quick', 'complete'],
+  })
+  @Prop({ type: String, default: 'quick' })
+  registrationStatus: string;
+
+  @Prop({ default: false })
+  isPhoneVerified: boolean;
+
+  @Prop({ default: false })
+  isEmailVerified: boolean;
+
+  @Prop({ select: false })
+  phoneVerificationPin?: string;
+
+  @Prop({ select: false })
+  emailVerificationPin?: string;
+
+  @Prop({ select: false })
+  phoneVerificationPinExpires?: Date;
+
+  @Prop({ select: false })
+  emailVerificationPinExpires?: Date;
 }
 
 @Schema({ _id: false, timestamps: true })
 export class Counter {
-  @ApiProperty({ required: true })
-  @Prop({ required: true })
+  @ApiProperty()
+  @Prop()
   name: string;
 
   @ApiProperty({ required: true, default: 0 })
