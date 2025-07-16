@@ -359,13 +359,14 @@ export class AuthService {
       position: user.position,
       department: user.department,
       registrationStatus: user.registrationStatus,
+      phoneNumber: user.phoneNumber,
+      nationalId: user.nationalId,
+      employeeId: user.employeeId,
     };
-
     const token = this.jwtService.sign(payload);
-
     return {
       token,
-      expiresIn: 2 * 365 * 24 * 60 * 60,
+      expiresIn: 24 * 60 * 60, // 24 hours in seconds
     };
   }
 

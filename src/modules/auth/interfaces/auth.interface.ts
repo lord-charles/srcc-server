@@ -9,6 +9,9 @@ export interface JwtPayload {
   position?: string;
   department?: string;
   registrationStatus?: string;
+  phoneNumber?: string;
+  nationalId?: string;
+  employeeId?: string;
 }
 
 export interface AuthResponse {
