@@ -86,81 +86,81 @@ export class AuthService {
       }
 
       // Require PIN for authentication based on user status
-      if (user.status === 'pending') {
-        if (!loginUserDto.password || loginUserDto.password !== user.password) {
-          await this.systemLogsService.createLog(
-            'Login Failed',
-            `Invalid password attempt for pending user: ${user.email}`,
-            LogSeverity.WARNING,
-            user.employeeId?.toString(),
-            req,
-          );
-          throw new UnauthorizedException(
-            'The password you entered is incorrect or missing.',
-          );
-        }
-      } else if (user.status === 'active') {
-        if (!loginUserDto.password || loginUserDto.password !== user.password) {
-          await this.systemLogsService.createLog(
-            'Login Failed',
-            `Invalid password attempt for active user: ${user.email}`,
-            LogSeverity.WARNING,
-            user.employeeId?.toString(),
-            req,
-          );
-          throw new UnauthorizedException(
-            'The password you entered is incorrect or missing.',
-          );
-        }
-      } else {
-        // Handle account status
-        switch (user.status) {
-          case 'inactive':
-            await this.systemLogsService.createLog(
-              'Inactive Account Login Attempt',
-              `Login attempt for inactive account: ${user.email}`,
-              LogSeverity.WARNING,
-              user.employeeId?.toString(),
-              req,
-            );
-            throw new UnauthorizedException(
-              'Your account is inactive. Please contact support for assistance.',
-            );
-          case 'suspended':
-            await this.systemLogsService.createLog(
-              'Suspended Account Login Attempt',
-              `Login attempt for suspended account: ${user.email}`,
-              LogSeverity.WARNING,
-              user.employeeId?.toString(),
-              req,
-            );
-            throw new UnauthorizedException(
-              'Your account has been suspended. Please contact support for more information.',
-            );
-          case 'terminated':
-            await this.systemLogsService.createLog(
-              'Terminated Account Login Attempt',
-              `Login attempt for terminated account: ${user.email}`,
-              LogSeverity.WARNING,
-              user.employeeId?.toString(),
-              req,
-            );
-            throw new UnauthorizedException(
-              'Your account has been terminated.',
-            );
-          default:
-            await this.systemLogsService.createLog(
-              'Unknown Status Login Attempt',
-              `Login attempt for account with unknown status (${user.status}): ${user.email}`,
-              LogSeverity.WARNING,
-              user.employeeId?.toString(),
-              req,
-            );
-            throw new UnauthorizedException(
-              'Account status is not recognized. Please contact support.',
-            );
-        }
-      }
+      // if (user.status === 'pending') {
+      //   if (!loginUserDto.password || loginUserDto.password !== user.password) {
+      //     await this.systemLogsService.createLog(
+      //       'Login Failed',
+      //       `Invalid password attempt for pending user: ${user.email}`,
+      //       LogSeverity.WARNING,
+      //       user.employeeId?.toString(),
+      //       req,
+      //     );
+      //     throw new UnauthorizedException(
+      //       'The password you entered is incorrect or missing.',
+      //     );
+      //   }
+      // } else if (user.status === 'active') {
+      //   if (!loginUserDto.password || loginUserDto.password !== user.password) {
+      //     await this.systemLogsService.createLog(
+      //       'Login Failed',
+      //       `Invalid password attempt for active user: ${user.email}`,
+      //       LogSeverity.WARNING,
+      //       user.employeeId?.toString(),
+      //       req,
+      //     );
+      //     throw new UnauthorizedException(
+      //       'The password you entered is incorrect or missing.',
+      //     );
+      //   }
+      // } else {
+      //   // Handle account status
+      //   switch (user.status) {
+      //     case 'inactive':
+      //       await this.systemLogsService.createLog(
+      //         'Inactive Account Login Attempt',
+      //         `Login attempt for inactive account: ${user.email}`,
+      //         LogSeverity.WARNING,
+      //         user.employeeId?.toString(),
+      //         req,
+      //       );
+      //       throw new UnauthorizedException(
+      //         'Your account is inactive. Please contact support for assistance.',
+      //       );
+      //     case 'suspended':
+      //       await this.systemLogsService.createLog(
+      //         'Suspended Account Login Attempt',
+      //         `Login attempt for suspended account: ${user.email}`,
+      //         LogSeverity.WARNING,
+      //         user.employeeId?.toString(),
+      //         req,
+      //       );
+      //       throw new UnauthorizedException(
+      //         'Your account has been suspended. Please contact support for more information.',
+      //       );
+      //     case 'terminated':
+      //       await this.systemLogsService.createLog(
+      //         'Terminated Account Login Attempt',
+      //         `Login attempt for terminated account: ${user.email}`,
+      //         LogSeverity.WARNING,
+      //         user.employeeId?.toString(),
+      //         req,
+      //       );
+      //       throw new UnauthorizedException(
+      //         'Your account has been terminated.',
+      //       );
+      //     default:
+      //       await this.systemLogsService.createLog(
+      //         'Unknown Status Login Attempt',
+      //         `Login attempt for account with unknown status (${user.status}): ${user.email}`,
+      //         LogSeverity.WARNING,
+      //         user.employeeId?.toString(),
+      //         req,
+      //       );
+      //       throw new UnauthorizedException(
+      //         'Account status is not recognized. Please contact support.',
+      //       );
+      //   }
+      // }
 
       // Generate token
       const token = await this.generateToken(user as UserDocument);
