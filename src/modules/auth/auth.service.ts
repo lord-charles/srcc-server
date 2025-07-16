@@ -354,6 +354,11 @@ export class AuthService {
       sub: user._id.toString(),
       email: user.email,
       roles: user.roles,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      position: user.position,
+      department: user.department,
+      registrationStatus: user.registrationStatus,
     };
 
     const token = this.jwtService.sign(payload);

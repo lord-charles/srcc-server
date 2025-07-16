@@ -4,6 +4,11 @@ export interface JwtPayload {
   sub: string;
   email: string;
   roles: string[];
+  firstName?: string;
+  lastName?: string;
+  position?: string;
+  department?: string;
+  registrationStatus?: string;
 }
 
 export interface AuthResponse {

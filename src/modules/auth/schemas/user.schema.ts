@@ -333,6 +333,13 @@ export class User {
   employeeId?: string;
 
   @ApiProperty({
+    description: 'Job position or title',
+    example: 'Senior Consultant',
+  })
+  @Prop({ required: false })
+  position?: string;
+
+  @ApiProperty({
     description: 'Primary expertise/department',
     example: 'Software Engineering',
   })

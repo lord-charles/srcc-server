@@ -160,7 +160,9 @@ export class ConsultantService {
 
     if (existingUser && existingUser.registrationStatus === 'quick') {
       // This is a profile completion
-      Object.assign(existingUser, consultantData);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...updateData } = consultantData;
+      Object.assign(existingUser, updateData);
       existingUser.registrationStatus = 'complete';
       existingUser.status = 'pending'; // Reset status to pending for admin approval
 
