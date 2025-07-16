@@ -12,6 +12,7 @@ import {
   UseGuards,
   Get,
   Req,
+  Query,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
@@ -104,6 +105,40 @@ export class ConsultantController {
         throw error;
       }
       throw new BadRequestException(`Failed to verify OTP: ${error.message}`);
+    }
+  }
+
+  @Public()
+  @Get('verification-status')
+  @ApiOperation({
+    summary: 'Get user verification status',
+    description: `Retrieves the email and phone verification status for a user based on their email address.`,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification status retrieved successfully.',
+    schema: {
+      type: 'object',
+      properties: {
+        isEmailVerified: { type: 'boolean' },
+        isPhoneVerified: { type: 'boolean' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getVerificationStatus(@Query('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email query parameter is required');
+    }
+    try {
+      return this.consultantService.getVerificationStatus(email);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to get verification status: ${error.message}`,
+      );
     }
   }
 

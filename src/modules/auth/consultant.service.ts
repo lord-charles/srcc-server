@@ -26,7 +26,6 @@ export class ConsultantService {
     private organizationModel: Model<OrganizationDocument>,
     private readonly notificationService: NotificationService,
     private readonly systemLogService: SystemLogsService,
-    private readonly systemLogsService: SystemLogsService,
   ) {}
 
   async quickRegister(consultantData: {
@@ -84,6 +83,24 @@ export class ConsultantService {
     return savedUser;
   }
 
+  async getVerificationStatus(
+    email: string,
+  ): Promise<{ isPhoneVerified: boolean; isEmailVerified: boolean }> {
+    const user = await this.userModel
+      .findOne({ email })
+      .select('isPhoneVerified isEmailVerified')
+      .lean();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      isPhoneVerified: user.isPhoneVerified,
+      isEmailVerified: user.isEmailVerified,
+    };
+  }
+
   async register(consultantData: any, req?: Request): Promise<UserDocument> {
     const existingUser = await this.userModel.findOne({
       $or: [
@@ -108,7 +125,7 @@ export class ConsultantService {
           console.error('Failed to send registration notifications:', err);
         }
         try {
-          await this.systemLogsService.createLog(
+          await this.systemLogService.createLog(
             'User Registration Completion',
             `User completed registration: ${savedConsultant.firstName} ${savedConsultant.lastName} (${savedConsultant.email})`,
             LogSeverity.INFO,
@@ -152,7 +169,7 @@ export class ConsultantService {
         console.error('Failed to send registration notifications:', err);
       }
       try {
-        await this.systemLogsService.createLog(
+        await this.systemLogService.createLog(
           'User Registration',
           `New user registered: ${savedConsultant.firstName} ${savedConsultant.lastName} (${savedConsultant.email})`,
           LogSeverity.INFO,
@@ -193,7 +210,7 @@ export class ConsultantService {
     await this.sendApprovalNotifications(updatedConsultant);
 
     // Log successful approval
-    await this.systemLogsService.createLog(
+    await this.systemLogService.createLog(
       'User Approval',
       `User approved: ${updatedConsultant.firstName} ${updatedConsultant.lastName} (${updatedConsultant.email})`,
       LogSeverity.INFO,
@@ -741,7 +758,9 @@ SRCC Team
 
     const user = await this.userModel
       .findOne({ email })
-      .select('+phoneVerificationPin +emailVerificationPin +phoneVerificationPinExpires +emailVerificationPinExpires');
+      .select(
+        '+phoneVerificationPin +emailVerificationPin +phoneVerificationPinExpires +emailVerificationPinExpires',
+      );
 
     if (!user) {
       throw new NotFoundException('User not found');
