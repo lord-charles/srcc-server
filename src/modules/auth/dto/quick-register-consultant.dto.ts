@@ -3,6 +3,22 @@ import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class QuickRegisterConsultantDto {
   @ApiProperty({
+    description: 'First name of the employee',
+    example: 'Charles',
+  })
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @ApiProperty({
+    description: 'Last name of the employee',
+    example: 'mwaniki',
+  })
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
+  @ApiProperty({
     description: 'Employee email address',
     example: 'mwanikicharles226@gmail.com',
   })

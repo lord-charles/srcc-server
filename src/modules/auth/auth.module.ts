@@ -20,8 +20,12 @@ import {
 import { ConsultantController } from './consultant.controller';
 import { ConsultantService } from './consultant.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
-import { Organization, OrganizationSchema } from './schemas/organization.schema';
+import {
+  Organization,
+  OrganizationSchema,
+} from './schemas/organization.schema';
 import { SystemLogsModule } from '../system-logs/system-logs.module';
+import { OrganizationService } from './organization.service';
 
 @Module({
   imports: [
@@ -38,7 +42,7 @@ import { SystemLogsModule } from '../system-logs/system-logs.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: '24h', // Set a fixed 24 hour expiration
+          expiresIn: '24h',
         },
       }),
     }),
@@ -50,6 +54,7 @@ import { SystemLogsModule } from '../system-logs/system-logs.module';
     UserService,
     ConsultantService,
     NotificationService,
+    OrganizationService,
     SystemLogsService,
     JwtStrategy,
     {
@@ -63,4 +68,4 @@ import { SystemLogsModule } from '../system-logs/system-logs.module';
   ],
   exports: [AuthService, UserService, JwtModule],
 })
-export class AuthModule { }
+export class AuthModule {}

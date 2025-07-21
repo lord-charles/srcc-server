@@ -8,6 +8,7 @@ import {
   IsNotEmpty,
   IsMongoId,
 } from 'class-validator';
+import { LoginType } from '../types/auth.types';
 
 export class LoginUserDto {
   @ApiProperty({
@@ -25,6 +26,14 @@ export class LoginUserDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
+
+  @ApiProperty({
+    description: 'Login type',
+    example: 'user',
+  })
+  @IsString()
+  @IsNotEmpty()
+  type: LoginType;
 }
 
 export class EmailDto {

@@ -13,6 +13,10 @@ import {
   Get,
   Req,
   Query,
+  HttpStatus,
+  HttpException,
+  HttpCode,
+  ValidationPipe,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
@@ -22,6 +26,11 @@ import {
   ApiConsumes,
   ApiBody,
   ApiBearerAuth,
+  ApiParam,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiConflictResponse,
+  ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { RegisterConsultantDto } from './dto/register-consultant.dto';
 import { QuickRegisterConsultantDto } from './dto/quick-register-consultant.dto';
@@ -33,14 +42,32 @@ import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { Public } from './decorators/public.decorator';
 import { RegisterOrganizationDto } from './dto/register-organization.dto';
+import { VerifyCompanyOtpDto } from './dto/verify-company-otp.dto';
+import { QuickRegisterOrganizationDto } from './dto/quick-register-organization.dto';
+import { Organization } from './schemas/organization.schema';
 import { Request as ExpressRequest } from 'express';
+import {
+  ErrorResponseDto,
+  UpdateOrganizationDto,
+  UpdateOrganizationResponseDto,
+} from './dto/update-organization.dto';
+import { OrganizationService } from './organization.service';
+import {
+  UserDto,
+  UserResponseDto,
+  ValidationErrorResponseDto,
+} from './dto/update-consultant.dto';
+import { UserService } from './user.service';
 
 @ApiTags('consultants')
+@ApiBearerAuth()
 @Controller('consultants')
 export class ConsultantController {
   constructor(
     private readonly consultantService: ConsultantService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly organizationService: OrganizationService,
+    private readonly userService: UserService,
   ) {}
 
   @Public()
@@ -68,6 +95,50 @@ export class ConsultantController {
   async quickRegister(@Body() quickRegisterDto: QuickRegisterConsultantDto) {
     try {
       return this.consultantService.quickRegister(quickRegisterDto);
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to process quick registration: ${error.message}`,
+      );
+    }
+  }
+
+  @Public()
+  @Post('quick-company-register')
+  @ApiOperation({
+    summary: 'Quick register a new organization',
+    description: `Register a new organization with minimal details: business email, business phone, registration number, and password. 
+    This will create an organization with a 'quick' registration status. The organization will need to complete their profile later using the full registration endpoint. 
+    Verification PINs will be sent to the provided email and phone number.`,
+  })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Organization quick-registered successfully. Verification PINs sent.',
+    type: Organization,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Invalid input data.',
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Conflict - Organization with the same email, phone number, or registration number already exists.',
+  })
+  @ApiBody({ type: QuickRegisterOrganizationDto })
+  async quickCompanyRegister(
+    @Body() quickCompanyRegisterDto: QuickRegisterOrganizationDto,
+  ): Promise<Organization> {
+    try {
+      return this.consultantService.quickCompanyRegister(
+        quickCompanyRegisterDto,
+      );
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -132,6 +203,71 @@ export class ConsultantController {
     }
     try {
       return this.consultantService.getVerificationStatus(email);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to get verification status: ${error.message}`,
+      );
+    }
+  }
+
+  @Public()
+  @Post('company/verify-otp')
+  @ApiOperation({
+    summary: 'Verify OTP for company phone or email',
+    description: `Verifies the OTP sent to the company's phone or email during quick registration. If both are verified, the company's status will be updated to 'pending' and will be ready for admin approval upon profile completion.`,
+  })
+  @ApiResponse({ status: 200, description: 'OTP verified successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })
+  @ApiResponse({ status: 404, description: 'Organization not found' })
+  async verifyCompanyOtp(@Body() verifyOtpDto: VerifyCompanyOtpDto) {
+    try {
+      const org = await this.consultantService.verifyCompanyOtp(verifyOtpDto);
+      return {
+        message: `${verifyOtpDto.verificationType} verified successfully.`,
+        organization: org,
+      };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to verify OTP: ${error.message}`);
+    }
+  }
+
+  @Public()
+  @Get('company/verification-status')
+  @ApiOperation({
+    summary: 'Get company verification status',
+    description: `Retrieves the email and phone verification status for an organization based on its business email address.`,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification status retrieved successfully.',
+    schema: {
+      type: 'object',
+      properties: {
+        isEmailVerified: { type: 'boolean' },
+        isPhoneVerified: { type: 'boolean' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Organization not found' })
+  async getCompanyVerificationStatus(
+    @Query('businessEmail') businessEmail: string,
+  ) {
+    if (!businessEmail) {
+      throw new BadRequestException(
+        'Business email query parameter is required',
+      );
+    }
+    try {
+      return this.consultantService.getCompanyVerificationStatus(businessEmail);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -750,7 +886,6 @@ export class ConsultantController {
   @Get('pending')
   @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all pending consultant applications' })
   async getPendingConsultants() {
     return this.consultantService.getPendingConsultants();
@@ -759,7 +894,6 @@ export class ConsultantController {
   @Get('organizations')
   @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
-  @ApiBearerAuth()
   async getOrganizations() {
     return this.consultantService.getOrganizations();
   }
@@ -767,7 +901,6 @@ export class ConsultantController {
   @Get('organization/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
-  @ApiBearerAuth()
   async getOrganization(@Param('id') id: string) {
     return this.consultantService.getOrganization(id);
   }
@@ -775,7 +908,6 @@ export class ConsultantController {
   @Patch(':id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Approve a consultant application' })
   async approveConsultant(@Param('id') id: string) {
     return this.consultantService.approveConsultant(id);
@@ -784,7 +916,6 @@ export class ConsultantController {
   @Patch('organization/:id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
-  @ApiBearerAuth()
   async approveOrganization(@Param('id') id: string) {
     return this.consultantService.approveOrganization(id);
   }
@@ -792,7 +923,6 @@ export class ConsultantController {
   @Patch(':id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Reject a consultant application' })
   async rejectConsultant(
     @Param('id') id: string,
@@ -804,11 +934,294 @@ export class ConsultantController {
   @Patch('organization/:id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'hr')
-  @ApiBearerAuth()
   async rejectOrganization(
     @Param('id') id: string,
     @Body('reason') reason: string,
   ) {
     return this.consultantService.rejectOrganization(id, reason);
+  }
+
+  //update consultant
+  @Patch('organization/update/:id')
+  @ApiOperation({
+    summary: 'Update organization by MongoDB ID',
+    description:
+      'Update an existing organization using its MongoDB ObjectId. All fields are optional for partial updates.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'MongoDB ObjectId of the organization',
+    example: '507f1f77bcf86cd799439011',
+    type: 'string',
+  })
+  @ApiBody({
+    type: UpdateOrganizationDto,
+    description: 'Organization update data. All fields are optional.',
+    examples: {
+      'Basic Update': {
+        value: {
+          companyName: 'Updated Tech Solutions Ltd',
+          businessPhone: '0712345679',
+          website: 'https://updated-techsolutions.co.ke',
+        },
+      },
+      'Contact Person Update': {
+        value: {
+          contactPerson: {
+            name: 'Jane Smith',
+            position: 'Operations Manager',
+            email: 'jane.smith@company.com',
+          },
+        },
+      },
+      'Status Update': {
+        value: {
+          status: 'active',
+          isEmailVerified: true,
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Organization updated successfully',
+    type: UpdateOrganizationResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or organization ID format',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Organization not found',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Duplicate unique field (email, registration number, etc.)',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Internal server error',
+    type: ErrorResponseDto,
+  })
+  async updateById(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateOrganizationDto,
+  ): Promise<UpdateOrganizationResponseDto> {
+    try {
+      const updatedOrganization = await this.organizationService.updateById(
+        id,
+        updateDto,
+      );
+
+      const response: UpdateOrganizationResponseDto = {
+        success: true,
+        statusCode: HttpStatus.OK,
+        message: 'Organization updated successfully',
+        data: updatedOrganization,
+        timestamp: new Date().toISOString(),
+      };
+
+      return response;
+    } catch (error) {
+      // Re-throw HttpExceptions as-is (they have proper status codes)
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      // Handle unexpected errors
+      throw new HttpException(
+        {
+          success: false,
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'Internal server error occurred while updating organization',
+          timestamp: new Date().toISOString(),
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch('consultant/update/:id')
+  @HttpCode(HttpStatus.OK)
+  @Roles('consultant')
+  @ApiOperation({
+    summary: 'Update user by ID',
+    description:
+      'Updates a user profile with the provided data. Only fields provided in the request body will be updated. All validation rules will be applied.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'User ID (MongoDB ObjectId)',
+    example: '64f123abc123def456789012',
+    type: 'string',
+  })
+  @ApiBody({
+    type: UserDto,
+    description:
+      'User data to update. All fields are optional - only provided fields will be updated.',
+    examples: {
+      'basic-update': {
+        summary: 'Basic profile update',
+        description: 'Update basic user information',
+        value: {
+          firstName: 'Jane',
+          lastName: 'Wanjiku',
+          phoneNumber: '+254712345678',
+          physicalAddress: 'Westlands, Nairobi',
+          county: 'Nairobi',
+        },
+      },
+      'professional-update': {
+        summary: 'Professional information update',
+        description: 'Update professional details and skills',
+        value: {
+          position: 'Senior Software Engineer',
+          department: 'Technology',
+          hourlyRate: 6000,
+          availability: 'available',
+          preferredWorkTypes: ['remote', 'hybrid'],
+          skills: [
+            {
+              name: 'JavaScript',
+              yearsOfExperience: 5,
+              proficiencyLevel: 'Expert',
+            },
+            {
+              name: 'React',
+              yearsOfExperience: 4,
+              proficiencyLevel: 'Expert',
+            },
+          ],
+        },
+      },
+      'status-update': {
+        summary: 'Status update',
+        description: 'Update user status and availability',
+        value: {
+          status: 'active',
+          availability: 'partially_available',
+          registrationStatus: 'complete',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User successfully updated',
+    type: UserResponseDto,
+    example: {
+      _id: '64f123abc123def456789012',
+      firstName: 'Jane',
+      lastName: 'Wanjiku',
+      email: 'jane.wanjiku@company.com',
+      phoneNumber: '+254712345678',
+      nationalId: '23456789',
+      employeeId: 'CON-001',
+      status: 'active',
+      registrationStatus: 'complete',
+      availability: 'available',
+      createdAt: '2024-01-15T10:30:00.000Z',
+      updatedAt: '2024-01-20T14:45:00.000Z',
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid request data or user ID format',
+    type: ValidationErrorResponseDto,
+    examples: {
+      'invalid-id': {
+        summary: 'Invalid user ID format',
+        value: {
+          statusCode: 400,
+          message: 'Invalid user ID format',
+          error: 'Bad Request',
+          timestamp: '2024-01-20T14:45:00.000Z',
+          path: '/users/invalid-id',
+        },
+      },
+      'validation-error': {
+        summary: 'Validation error',
+        value: {
+          statusCode: 400,
+          message: [
+            'email must be a valid email',
+            'phoneNumber must be a valid phone number',
+            'Hourly rate cannot be negative',
+          ],
+          error: 'Bad Request',
+          timestamp: '2024-01-20T14:45:00.000Z',
+          path: '/users/64f123abc123def456789012',
+        },
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ErrorResponseDto,
+    example: {
+      statusCode: 404,
+      message: 'User with ID 64f123abc123def456789012 not found',
+      error: 'Not Found',
+      timestamp: '2024-01-20T14:45:00.000Z',
+      path: '/users/64f123abc123def456789012',
+    },
+  })
+  @ApiConflictResponse({
+    description:
+      'Unique constraint violation (email, phone, or national ID already exists)',
+    type: ErrorResponseDto,
+    example: {
+      statusCode: 409,
+      message: 'The following fields already exist: email, phoneNumber',
+      error: 'Conflict',
+      timestamp: '2024-01-20T14:45:00.000Z',
+      path: '/users/64f123abc123def456789012',
+    },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+    type: ErrorResponseDto,
+    example: {
+      statusCode: 500,
+      message: 'An unexpected error occurred while updating user',
+      error: 'Internal Server Error',
+      timestamp: '2024-01-20T14:45:00.000Z',
+      path: '/users/64f123abc123def456789012',
+    },
+  })
+  async updateUserById(
+    @Param('id') id: string,
+    @Body(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        skipMissingProperties: true,
+        validationError: {
+          target: false,
+          value: false,
+        },
+      }),
+    )
+    updateUserDto: Partial<UserDto>,
+  ): Promise<UserResponseDto> {
+    // Log the fields being updated (excluding sensitive data)
+    const fieldsToUpdate = Object.keys(updateUserDto).filter(
+      (key) => !['password', 'registrationPin', 'resetPin'].includes(key),
+    );
+
+    try {
+      const updatedUser = await this.userService.updateUserById(
+        id,
+        updateUserDto,
+      );
+
+      return updatedUser.toObject() as UserResponseDto;
+    } catch (error) {
+      throw error;
+    }
   }
 }

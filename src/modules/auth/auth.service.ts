@@ -3,25 +3,20 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
-  Inject,
-  forwardRef,
-  HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { NotificationService } from '../notifications/services/notification.service';
-import { ForgotPasswordDto, ResetPasswordDto } from './dto/forgot-password.dto';
 import * as bcrypt from 'bcrypt';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/user.dto';
+import { JwtPayload, TokenPayload } from './interfaces/auth.interface';
 import { LoginUserDto } from './dto/login.dto';
-import {
-  JwtPayload,
-  AuthResponse,
-  TokenPayload,
-} from './interfaces/auth.interface';
+import { LoginOrganizationDto } from './dto/login-organization.dto';
+import { LoginType, LoginResponse } from './types/auth.types';
 import { User, UserDocument } from './schemas/user.schema';
+import {
+  Organization,
+  OrganizationDocument,
+} from './schemas/organization.schema';
 import { SystemLogsService } from '../system-logs/services/system-logs.service';
 import { LogSeverity } from '../system-logs/schemas/system-log.schema';
 import { Request } from 'express';
@@ -29,6 +24,8 @@ import {
   ConfirmPasswordResetDto,
   RequestPasswordResetDto,
 } from './dto/reset-password.dto';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class AuthService {
@@ -37,163 +34,199 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly systemLogsService: SystemLogsService,
     private readonly notificationService: NotificationService,
+    @InjectModel(Organization.name)
+    private organizationModel: Model<OrganizationDocument>,
   ) {}
 
-  private generatePin(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
-  }
-
-  // async requestPasswordReset(
-  //   dto: ForgotPasswordDto,
-  // ): Promise<{ message: string }> {
-  //   const user = (await this.userService.findByEmail(
-  //     dto.email,
-  //   )) as UserDocument;
-  //   if (!user) throw new BadRequestException('User not found');
-  //   const pin = this.generatePin();
-  //   user.resetPin = pin;
-  //   await user.save();
-  //   const msg = `Your new SRCC registration PIN is: ${pin}`;
-  //   await this.notificationService.sendRegistrationPin(
-  //     user.phoneNumber,
-  //     user.email,
-  //     msg,
-  //   );
-  //   return {
-  //     message: 'A new registration PIN has been sent to your email and phone.',
-  //   };
-  // }
-
   async login(
-    loginUserDto: LoginUserDto,
+    loginDto: LoginUserDto | LoginOrganizationDto,
     req?: Request,
-  ): Promise<AuthResponse> {
+  ): Promise<LoginResponse> {
     try {
-      // Find user by email
-      const user = await this.userService.findByEmail(loginUserDto.email);
-
-      if (!user) {
-        await this.systemLogsService.createLog(
-          'Login Failed',
-          `Failed login attempt with email: ${loginUserDto.email}`,
-          LogSeverity.WARNING,
-          undefined,
+      if (loginDto.type === 'user') {
+        if (!('email' in loginDto) || !('password' in loginDto)) {
+          throw new UnauthorizedException('Invalid user login payload.');
+        }
+        return await this.loginUserFlow(loginDto as LoginUserDto, req);
+      } else if (loginDto.type === 'organization') {
+        if (!('email' in loginDto) || !('password' in loginDto)) {
+          throw new UnauthorizedException(
+            'Invalid organization login payload.',
+          );
+        }
+        return await this.loginOrganizationFlow(
+          loginDto as LoginOrganizationDto,
           req,
         );
-        throw new UnauthorizedException(
-          'No account found with the provided email address.',
-        );
+      } else {
+        throw new UnauthorizedException('Invalid login type.');
       }
-
-      // Require PIN for authentication based on user status
-      // if (user.status === 'pending') {
-      //   if (!loginUserDto.password || loginUserDto.password !== user.password) {
-      //     await this.systemLogsService.createLog(
-      //       'Login Failed',
-      //       `Invalid password attempt for pending user: ${user.email}`,
-      //       LogSeverity.WARNING,
-      //       user.employeeId?.toString(),
-      //       req,
-      //     );
-      //     throw new UnauthorizedException(
-      //       'The password you entered is incorrect or missing.',
-      //     );
-      //   }
-      // } else if (user.status === 'active') {
-      //   if (!loginUserDto.password || loginUserDto.password !== user.password) {
-      //     await this.systemLogsService.createLog(
-      //       'Login Failed',
-      //       `Invalid password attempt for active user: ${user.email}`,
-      //       LogSeverity.WARNING,
-      //       user.employeeId?.toString(),
-      //       req,
-      //     );
-      //     throw new UnauthorizedException(
-      //       'The password you entered is incorrect or missing.',
-      //     );
-      //   }
-      // } else {
-      //   // Handle account status
-      //   switch (user.status) {
-      //     case 'inactive':
-      //       await this.systemLogsService.createLog(
-      //         'Inactive Account Login Attempt',
-      //         `Login attempt for inactive account: ${user.email}`,
-      //         LogSeverity.WARNING,
-      //         user.employeeId?.toString(),
-      //         req,
-      //       );
-      //       throw new UnauthorizedException(
-      //         'Your account is inactive. Please contact support for assistance.',
-      //       );
-      //     case 'suspended':
-      //       await this.systemLogsService.createLog(
-      //         'Suspended Account Login Attempt',
-      //         `Login attempt for suspended account: ${user.email}`,
-      //         LogSeverity.WARNING,
-      //         user.employeeId?.toString(),
-      //         req,
-      //       );
-      //       throw new UnauthorizedException(
-      //         'Your account has been suspended. Please contact support for more information.',
-      //       );
-      //     case 'terminated':
-      //       await this.systemLogsService.createLog(
-      //         'Terminated Account Login Attempt',
-      //         `Login attempt for terminated account: ${user.email}`,
-      //         LogSeverity.WARNING,
-      //         user.employeeId?.toString(),
-      //         req,
-      //       );
-      //       throw new UnauthorizedException(
-      //         'Your account has been terminated.',
-      //       );
-      //     default:
-      //       await this.systemLogsService.createLog(
-      //         'Unknown Status Login Attempt',
-      //         `Login attempt for account with unknown status (${user.status}): ${user.email}`,
-      //         LogSeverity.WARNING,
-      //         user.employeeId?.toString(),
-      //         req,
-      //       );
-      //       throw new UnauthorizedException(
-      //         'Account status is not recognized. Please contact support.',
-      //       );
-      //   }
-      // }
-
-      // Generate token
-      const token = await this.generateToken(user as UserDocument);
-
-      // Log successful login
-      await this.systemLogsService.createLog(
-        'Login Success',
-        `User logged in successfully: ${user.email}`,
-        LogSeverity.INFO,
-        user.employeeId?.toString(),
-        req,
-      );
-
-      return {
-        user: this.sanitizeUser(user as UserDocument),
-        token: token.token,
-      };
     } catch (error) {
       throw error;
     }
   }
+
+  private async loginUserFlow(
+    loginDto: LoginUserDto,
+    req?: Request,
+  ): Promise<LoginResponse> {
+    const user = await this.userService.findByEmail(loginDto.email);
+    if (!user) {
+      await this.systemLogsService.createLog(
+        'Login Failed',
+        `Failed login attempt: No account found with the provided email address.`,
+        LogSeverity.WARNING,
+        undefined,
+        req,
+      );
+      throw new UnauthorizedException(
+        'No account found with the provided email address.',
+      );
+    }
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      await this.systemLogsService.createLog(
+        'Login Failed',
+        `Failed login attempt: Incorrect password for user ${user.email}`,
+        LogSeverity.WARNING,
+        user.employeeId?.toString(),
+        req,
+      );
+      throw new UnauthorizedException('The password you entered is incorrect.');
+    }
+    // if (user.status !== 'active') {
+    //   await this.systemLogsService.createLog(
+    //     'Login Failed',
+    //     `Failed login attempt: Account status is ${user.status} for user ${user.email}`,
+    //     LogSeverity.WARNING,
+    //     user.employeeId?.toString(),
+    //     req,
+    //   );
+    //   throw new UnauthorizedException(
+    //     `Your account is ${user.status}. Please contact support for assistance.`,
+    //   );
+    // }
+    const token = await this.generateToken(user as UserDocument);
+    await this.systemLogsService.createLog(
+      'Login Success',
+      `User logged in successfully: ${user.email}`,
+      LogSeverity.INFO,
+      user.employeeId?.toString(),
+      req,
+    );
+    return {
+      user: this.sanitizeUser(user as UserDocument),
+      token: token.token,
+      type: 'user',
+    };
+  }
+
+  private async loginOrganizationFlow(
+    loginDto: LoginOrganizationDto,
+    req?: Request,
+  ): Promise<LoginResponse> {
+    const organization = await this.organizationModel
+      .findOne({ businessEmail: loginDto.email })
+      .select('+password')
+      .exec();
+    if (!organization) {
+      await this.systemLogsService.createLog(
+        'Login Failed',
+        `Failed login attempt: No organization found with the provided email address.`,
+        LogSeverity.WARNING,
+        undefined,
+        req,
+      );
+      throw new UnauthorizedException(
+        'No organization found with the provided email address.',
+      );
+    }
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      organization.password,
+    );
+    if (!isPasswordValid) {
+      await this.systemLogsService.createLog(
+        'Login Failed',
+        `Failed login attempt: Incorrect password for organization ${organization.businessEmail}`,
+        LogSeverity.WARNING,
+        organization.organizationId,
+        req,
+      );
+      throw new UnauthorizedException('The password you entered is incorrect.');
+    }
+    // if (organization.status !== 'active') {
+    //   await this.systemLogsService.createLog(
+    //     'Login Failed',
+    //     `Failed login attempt: Account status is ${organization.status} for organization ${organization.businessEmail}`,
+    //     LogSeverity.WARNING,
+    //     organization.organizationId,
+    //     req,
+    //   );
+    //   throw new UnauthorizedException(
+    //     `Your organization account is ${organization.status}. Please contact support for assistance.`,
+    //   );
+    // }
+    const token = await this.generateOrganizationToken(
+      organization as OrganizationDocument,
+    );
+    await this.systemLogsService.createLog(
+      'Login Success',
+      `Organization logged in successfully: ${organization.businessEmail}`,
+      LogSeverity.INFO,
+      organization.organizationId,
+      req,
+    );
+    const { password, ...orgData } = organization.toObject();
+    return {
+      user: orgData,
+      token: token.token,
+      type: 'organization',
+    };
+  }
+
+  private async generateOrganizationToken(
+    organization: OrganizationDocument,
+  ): Promise<TokenPayload> {
+    const payload = {
+      sub: organization._id.toString(),
+      businessEmail: organization.businessEmail,
+      isEmailVerified: organization.isEmailVerified,
+      isPhoneVerified: organization.isPhoneVerified,
+      companyName: organization.companyName,
+      status: organization.status,
+    };
+    const token = this.jwtService.sign(payload);
+    return {
+      token,
+      expiresIn: 24 * 60 * 60,
+    };
+  }
+
   async requestPasswordReset(
     requestPasswordResetDto: RequestPasswordResetDto,
     req?: Request,
   ): Promise<{ message: string }> {
+    const { email, type } = requestPasswordResetDto;
     try {
-      const user = await this.userService.findByEmail(
-        requestPasswordResetDto.email,
-      );
-      if (!user) {
+      let account: any = null;
+      let identifier: string | undefined = undefined;
+      if (type === 'user') {
+        account = await this.userService.findByEmail(email);
+        identifier = account?.employeeId?.toString();
+      } else if (type === 'organization') {
+        account = await this.organizationModel.findOne({
+          businessEmail: email,
+        });
+        identifier = account?.organizationId;
+      }
+      if (!account) {
         await this.systemLogsService.createLog(
           'SRCC Password Reset Request Failed',
-          `Password reset attempt for non-existent email: ${requestPasswordResetDto.email}`,
+          `Password reset attempt for non-existent email: ${email}`,
           LogSeverity.WARNING,
           undefined,
           req,
@@ -207,22 +240,27 @@ export class AuthService {
       const resetPin = Math.floor(100000 + Math.random() * 900000).toString();
       const expiryDate = new Date(Date.now() + 10 * 60 * 1000);
 
-      user.resetPin = resetPin;
-      user.resetPinExpires = expiryDate;
-      await (user as UserDocument).save();
+      account.resetPin = resetPin;
+      account.resetPinExpires = expiryDate;
+      await account.save();
 
       const resetMessage = `Your SRCC password reset PIN is: ${resetPin}. This PIN will expire in 10 minutes. Please keep this PIN secure and do not share it with anyone.`;
+      // Send to phone/email for user, businessPhone/businessEmail for org
+      const phone =
+        type === 'user' ? account.phoneNumber : account.businessPhone;
+      const targetEmail =
+        type === 'user' ? account.email : account.businessEmail;
       await this.notificationService.sendRegistrationPin(
-        user.phoneNumber,
-        user.email,
+        phone,
+        targetEmail,
         resetMessage,
       );
 
       await this.systemLogsService.createLog(
         'SRCC Password Reset Requested',
-        `Password reset PIN generated for user: ${user.firstName} ${user.lastName} (${user.email})`,
+        `Password reset PIN generated for ${type}: ${targetEmail}`,
         LogSeverity.INFO,
-        user.employeeId?.toString(),
+        identifier,
         req,
       );
 
@@ -233,7 +271,7 @@ export class AuthService {
     } catch (error) {
       await this.systemLogsService.createLog(
         'SRCC Password Reset Request Error',
-        `Error during password reset request for ${requestPasswordResetDto.email}: ${error.message}`,
+        `Error during password reset request for ${email}: ${error.message}`,
         LogSeverity.ERROR,
         undefined,
         req,
@@ -248,42 +286,57 @@ export class AuthService {
     confirmPasswordResetDto: ConfirmPasswordResetDto,
     req?: Request,
   ): Promise<{ message: string }> {
+    const { email, resetToken, newPassword, type } = confirmPasswordResetDto;
     try {
-      const user = await this.userService.findByEmail(
-        confirmPasswordResetDto.email,
-      );
+      let account: any = null;
+      let identifier: string | undefined = undefined;
+      let displayName = '';
+      let targetEmail = email;
+      if (type === 'user') {
+        account = await this.userService.findByEmail(email);
+        identifier = account?.employeeId?.toString();
+        displayName = `${account?.firstName ?? ''} ${account?.lastName ?? ''} (${account?.email ?? ''})`;
+      } else if (type === 'organization') {
+        account = await this.organizationModel.findOne({
+          businessEmail: email,
+        });
+        identifier = account?.organizationId;
+        displayName = `${account?.companyName ?? ''} (${account?.businessEmail ?? ''})`;
+        targetEmail = account?.businessEmail;
+      }
 
-      if (!user || !user.resetPin || !user.resetPinExpires) {
+      if (!account || !account.resetPin || !account.resetPinExpires) {
         throw new BadRequestException(
           'SRCC: Invalid or expired password reset PIN.',
         );
       }
 
-      if (user.resetPinExpires < new Date()) {
+      if (account.resetPinExpires < new Date()) {
         await this.systemLogsService.createLog(
           'SRCC Password Reset PIN Expired',
-          `Expired PIN used for ${user.email}`,
+          `Expired PIN used for ${targetEmail}`,
           LogSeverity.WARNING,
-          user.employeeId?.toString(),
+          identifier,
           req,
         );
         throw new BadRequestException('SRCC: Password reset PIN has expired.');
       }
 
-      if (user.resetPin !== confirmPasswordResetDto.resetToken) {
+      if (account.resetPin !== resetToken) {
         throw new BadRequestException('SRCC: Invalid password reset PIN.');
       }
 
-      user.password = confirmPasswordResetDto.newPassword;
-      user.resetPin = undefined;
-      user.resetPinExpires = undefined;
-      await (user as UserDocument).save();
+      // Hash
+      account.password = await bcrypt.hash(newPassword, 10);
+      account.resetPin = undefined;
+      account.resetPinExpires = undefined;
+      await account.save();
 
       await this.systemLogsService.createLog(
         'SRCC Password Reset Confirmed',
-        `Password successfully reset for user: ${user.firstName} ${user.lastName} (${user.email})`,
+        `Password successfully reset for ${type}: ${displayName}`,
         LogSeverity.INFO,
-        user.employeeId?.toString(),
+        identifier,
         req,
       );
 
@@ -291,7 +344,7 @@ export class AuthService {
     } catch (error) {
       await this.systemLogsService.createLog(
         'SRCC Password Reset Confirmation Failed',
-        `Error confirming password reset for ${confirmPasswordResetDto.email}: ${error.message}`,
+        `Error confirming password reset for ${email}: ${error.message}`,
         LogSeverity.ERROR,
         undefined,
         req,
@@ -303,50 +356,110 @@ export class AuthService {
     }
   }
 
-  async suspendUser(email: string): Promise<{ message: string }> {
-    const user = (await this.userService.findByEmail(email)) as UserDocument;
-    if (!user) {
-      throw new NotFoundException('User not found');
+  async suspendUser(
+    email: string,
+    type: LoginType,
+  ): Promise<{ message: string }> {
+    let account = null;
+    let identifier: string | undefined;
+    let targetEmail: string;
+    let targetPhone: string;
+
+    if (type === 'user') {
+      account = await this.userService.findByEmail(email);
+      if (account) {
+        identifier = account.employeeId?.toString();
+        targetEmail = account.email;
+        targetPhone = account.phoneNumber;
+      }
+    } else if (type === 'organization') {
+      account = await this.organizationModel.findOne({ businessEmail: email });
+      if (account) {
+        identifier = account.organizationId;
+        targetEmail = account.businessEmail;
+        targetPhone = account.businessPhone;
+      }
     }
-    user.status = 'suspended';
-    await user.save();
+
+    if (!account) {
+      throw new NotFoundException(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} not found`,
+      );
+    }
+
+    account.status = 'suspended';
+    await account.save();
+
     await this.systemLogsService.createLog(
       'Account Suspended',
-      `User account suspended: ${user.email}`,
+      `${type.charAt(0).toUpperCase() + type.slice(1)} account suspended: ${targetEmail}`,
       LogSeverity.WARNING,
-      user.employeeId?.toString(),
+      identifier,
       undefined,
     );
-    // Notify user of suspension
-    await this.notificationService.sendRegistrationPin(
-      user.phoneNumber,
-      user.email,
+
+    await this.notificationService.sendEmail(
+      targetEmail,
+      'Account Suspended',
       'Your SRCC account has been suspended. Please contact support for more information.',
     );
-    return { message: `User ${user.email} has been suspended.` };
+
+    return {
+      message: `${type.charAt(0).toUpperCase() + type.slice(1)} ${targetEmail} has been suspended.`,
+    };
   }
 
-  async activateUser(email: string): Promise<{ message: string }> {
-    const user = (await this.userService.findByEmail(email)) as UserDocument;
-    if (!user) {
-      throw new NotFoundException('User not found');
+  async activateUser(
+    email: string,
+    type: LoginType,
+  ): Promise<{ message: string }> {
+    let account = null;
+    let identifier: string | undefined;
+    let targetEmail: string;
+    let targetPhone: string;
+
+    if (type === 'user') {
+      account = await this.userService.findByEmail(email);
+      if (account) {
+        identifier = account.employeeId?.toString();
+        targetEmail = account.email;
+        targetPhone = account.phoneNumber;
+      }
+    } else if (type === 'organization') {
+      account = await this.organizationModel.findOne({ businessEmail: email });
+      if (account) {
+        identifier = account.organizationId;
+        targetEmail = account.businessEmail;
+        targetPhone = account.businessPhone;
+      }
     }
-    user.status = 'active';
-    await user.save();
+
+    if (!account) {
+      throw new NotFoundException(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} not found`,
+      );
+    }
+
+    account.status = 'active';
+    await account.save();
+
     await this.systemLogsService.createLog(
       'Account Activated',
-      `User account activated: ${user.email}`,
+      `${type.charAt(0).toUpperCase() + type.slice(1)} account activated: ${targetEmail}`,
       LogSeverity.INFO,
-      user.employeeId?.toString(),
+      identifier,
       undefined,
     );
-    // Notify user of activation
-    await this.notificationService.sendRegistrationPin(
-      user.phoneNumber,
-      user.email,
+
+    await this.notificationService.sendEmail(
+      targetEmail,
+      'Account Activated',
       'Your SRCC account has been reactivated. You may now log in.',
     );
-    return { message: `User ${user.email} has been reactivated.` };
+
+    return {
+      message: `${type.charAt(0).toUpperCase() + type.slice(1)} ${targetEmail} has been reactivated.`,
+    };
   }
 
   private async generateToken(user: UserDocument): Promise<TokenPayload> {
@@ -370,9 +483,20 @@ export class AuthService {
     };
   }
 
-  sanitizeUser(user: UserDocument): Partial<User> {
+  sanitizeUser(user: UserDocument): any {
     const { password, ...userWithoutPassword } = user.toObject();
-    return userWithoutPassword;
+    return {
+      ...userWithoutPassword,
+      _id: user._id,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      status: user.status,
+      registrationStatus: user.registrationStatus || 'complete',
+      isPhoneVerified: user.isPhoneVerified || false,
+      isEmailVerified: user.isEmailVerified || false,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
   }
 
   async getUserProfile(userId: string): Promise<Partial<User>> {

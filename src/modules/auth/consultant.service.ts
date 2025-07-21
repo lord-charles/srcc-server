@@ -5,6 +5,7 @@ import {
   ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { QuickRegisterOrganizationDto } from './dto/quick-register-organization.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
@@ -29,12 +30,15 @@ export class ConsultantService {
   ) {}
 
   async quickRegister(consultantData: {
-    email;
-    phoneNumber;
-    nationalId;
-    password;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    nationalId: string;
+    password: string;
   }): Promise<UserDocument> {
-    const { email, phoneNumber, nationalId, password } = consultantData;
+    const { email, firstName, lastName, phoneNumber, nationalId, password } =
+      consultantData;
 
     const existingUser = await this.userModel.findOne({
       $or: [{ email }, { phoneNumber }, { nationalId }],
@@ -55,6 +59,10 @@ export class ConsultantService {
       ) {
         const salt = await bcrypt.genSalt();
         existingUser.password = await bcrypt.hash(password, salt);
+        existingUser.firstName = firstName;
+        existingUser.lastName = lastName;
+        existingUser.phoneNumber = phoneNumber;
+        existingUser.nationalId = nationalId;
         existingUser.phoneVerificationPin = this.generatePin();
         existingUser.emailVerificationPin = this.generatePin();
         const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -92,10 +100,12 @@ export class ConsultantService {
 
     const phoneVerificationPin = this.generatePin();
     const emailVerificationPin = this.generatePin();
-    const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+    const pinExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
     const newUser = new this.userModel({
       email,
+      firstName,
+      lastName,
       phoneNumber,
       nationalId,
       password: hashedPassword,
@@ -132,6 +142,114 @@ export class ConsultantService {
     return savedUser;
   }
 
+  async quickCompanyRegister(companyData: QuickRegisterOrganizationDto): Promise<OrganizationDocument> {
+    const {
+      businessEmail,
+      businessPhone,
+      registrationNumber,
+      kraPin,
+      password,
+    } = companyData;
+
+    const existingOrg = await this.organizationModel.findOne({
+      $or: [{ businessEmail }, { registrationNumber }, { kraPin }],
+    });
+
+    if (existingOrg) {
+      if (existingOrg.registrationStatus === 'complete') {
+        throw new ConflictException(
+          'An organization with these details already exists.',
+        );
+      }
+
+      if (
+        existingOrg.registrationStatus === 'quick' &&
+        (!existingOrg.isEmailVerified || !existingOrg.isPhoneVerified)
+      ) {
+        const salt = await bcrypt.genSalt();
+        existingOrg.password = await bcrypt.hash(password, salt);
+        existingOrg.phoneVerificationPin = this.generatePin();
+        existingOrg.emailVerificationPin = this.generatePin();
+        const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        existingOrg.phoneVerificationPinExpires = pinExpiry;
+        existingOrg.emailVerificationPinExpires = pinExpiry;
+
+        await existingOrg.save();
+
+        // Resend notifications
+        (async () => {
+          try {
+            const phoneMsg = `Your new SRCC verification PIN is: ${existingOrg.phoneVerificationPin}.`;
+            await this.notificationService.sendSMS(
+              existingOrg.businessPhone,
+              phoneMsg,
+            );
+            const emailMsg = `Your new SRCC verification PIN is: ${existingOrg.emailVerificationPin}.`;
+            await this.notificationService.sendEmail(
+              existingOrg.businessEmail,
+              'SRCC Account Verification',
+              emailMsg,
+            );
+          } catch (err) {
+            console.error(
+              'Failed to resend verification PINs for company:',
+              err,
+            );
+          }
+        })();
+
+        return existingOrg;
+      }
+    }
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const phoneVerificationPin = this.generatePin();
+    const emailVerificationPin = this.generatePin();
+    const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+
+    const newOrg = new this.organizationModel({
+      businessEmail,
+      businessPhone,
+      registrationNumber,
+      kraPin,
+      password: hashedPassword,
+      status: 'pending_verification',
+      registrationStatus: 'quick',
+      isPhoneVerified: false,
+      isEmailVerified: false,
+      phoneVerificationPin,
+      emailVerificationPin,
+      phoneVerificationPinExpires: pinExpiry,
+      emailVerificationPinExpires: pinExpiry,
+    });
+
+    const savedOrg = await newOrg.save();
+
+    // Fire-and-forget notifications
+    (async () => {
+      try {
+        const phoneMsg = `Your SRCC verification PIN is: ${phoneVerificationPin}.`;
+        await this.notificationService.sendSMS(
+          savedOrg.businessPhone,
+          phoneMsg,
+        );
+
+        const emailMsg = `Your SRCC verification PIN is: ${emailVerificationPin}.`;
+        await this.notificationService.sendEmail(
+          savedOrg.businessEmail,
+          'SRCC Account Verification',
+          emailMsg,
+        );
+      } catch (err) {
+        console.error('Failed to send verification PINs for company:', err);
+      }
+    })();
+
+    return savedOrg;
+  }
+
   async getVerificationStatus(
     email: string,
   ): Promise<{ isPhoneVerified: boolean; isEmailVerified: boolean }> {
@@ -147,6 +265,24 @@ export class ConsultantService {
     return {
       isPhoneVerified: user.isPhoneVerified,
       isEmailVerified: user.isEmailVerified,
+    };
+  }
+
+  async getCompanyVerificationStatus(
+    businessEmail: string,
+  ): Promise<{ isPhoneVerified: boolean; isEmailVerified: boolean }> {
+    const org = await this.organizationModel
+      .findOne({ businessEmail })
+      .select('isPhoneVerified isEmailVerified')
+      .lean();
+
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    return {
+      isPhoneVerified: org.isPhoneVerified,
+      isEmailVerified: org.isEmailVerified,
     };
   }
 
@@ -798,6 +934,58 @@ SRCC Team
     const smsBody = `Dear ${organization.companyName}, your SRCC registration has been rejected. Please check your email for details or contact our support team for assistance.`;
 
     await this.notificationService.sendSMS(organization.businessPhone, smsBody);
+  }
+
+  async verifyCompanyOtp(verifyOtpDto: {
+    businessEmail: string;
+    pin: string;
+    verificationType: 'phone' | 'email';
+  }): Promise<OrganizationDocument> {
+    const { businessEmail, pin, verificationType } = verifyOtpDto;
+
+    const org = await this.organizationModel
+      .findOne({ businessEmail })
+      .select(
+        '+phoneVerificationPin +emailVerificationPin +phoneVerificationPinExpires +emailVerificationPinExpires',
+      );
+
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    const isPhoneVerification = verificationType === 'phone';
+    const pinField = isPhoneVerification
+      ? 'phoneVerificationPin'
+      : 'emailVerificationPin';
+    const pinExpiresField = isPhoneVerification
+      ? 'phoneVerificationPinExpires'
+      : 'emailVerificationPinExpires';
+    const isVerifiedField = isPhoneVerification
+      ? 'isPhoneVerified'
+      : 'isEmailVerified';
+
+    if (org[isVerifiedField]) {
+      throw new BadRequestException(
+        `This ${verificationType} is already verified.`,
+      );
+    }
+
+    if (org[pinField] !== pin) {
+      throw new BadRequestException('Invalid verification PIN');
+    }
+
+    if (org[pinExpiresField] < new Date()) {
+      throw new BadRequestException('Verification PIN has expired');
+    }
+
+    org[isVerifiedField] = true;
+
+    // Check if both are verified, then update status
+    if (org.isEmailVerified && org.isPhoneVerified) {
+      org.status = 'pending';
+    }
+
+    return org.save();
   }
 
   async verifyOtp(verifyOtpDto: {

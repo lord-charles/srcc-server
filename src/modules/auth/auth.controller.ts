@@ -8,6 +8,7 @@ import {
   Get,
   Req,
   Request as NestRequest,
+  Param,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,8 +19,6 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dto/login.dto';
-import { AuthResponse } from './interfaces/auth.interface';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Request as ExpressRequest } from 'express';
@@ -30,13 +29,14 @@ import {
   ConfirmPasswordResetDto,
   RequestPasswordResetDto,
 } from './dto/reset-password.dto';
+import { LoginType } from './types/auth.types';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('/suspend')
+  @Post('/suspend/:type')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Suspend user account',
@@ -85,11 +85,14 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  async suspendUser(@Body('email') email: string) {
-    return this.authService.suspendUser(email);
+  async suspendUser(
+    @Param('type') type: LoginType,
+    @Body('email') email: string,
+  ) {
+    return this.authService.suspendUser(email, type);
   }
 
-  @Post('/activate')
+  @Post('/activate/:type')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Activate user account',
@@ -138,8 +141,12 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  async activateUser(@Body('email') email: string) {
-    return this.authService.activateUser(email);
+  async activateUser(
+    @Param('type') type: LoginType,
+    @Body('email') email: string,
+  ) {
+    console.log(email, type);
+    return this.authService.activateUser(email, type);
   }
 
   @Public()
@@ -172,10 +179,7 @@ export class AuthController {
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid credentials or inactive account',
   })
-  async login(
-    @Body() loginUserDto: LoginUserDto,
-    @Req() req: ExpressRequest,
-  ): Promise<AuthResponse> {
+  async login(@Body() loginUserDto: LoginUserDto, @Req() req: ExpressRequest) {
     return this.authService.login(loginUserDto, req);
   }
 

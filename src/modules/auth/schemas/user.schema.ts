@@ -3,7 +3,6 @@ import { Document, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 export type UserDocument = User & Document;
-
 // Skill Schema
 class Skill {
   @ApiProperty({
@@ -204,7 +203,7 @@ export class User {
     description: 'KRA PIN number',
     example: 'A012345678B',
   })
-  @Prop({ required: false, unique: true })
+  @Prop({ required: false })
   kraPinNumber?: string;
 
   @ApiProperty({

@@ -7,143 +7,167 @@ export type OrganizationDocument = Organization & Document;
 // Organization Contact Person Schema
 class ContactPerson {
   @ApiProperty({ description: 'Name of contact person', example: 'John Doe' })
-  @Prop({ required: true })
+  @Prop()
   name: string;
 
-  @ApiProperty({ description: 'Position in the organization', example: 'HR Manager' })
-  @Prop({ required: true })
+  @ApiProperty({
+    description: 'Position in the organization',
+    example: 'HR Manager',
+  })
+  @Prop()
   position: string;
 
-  @ApiProperty({ description: 'Contact email', example: 'john.doe@company.com' })
-  @Prop({ required: true })
+  @ApiProperty({
+    description: 'Contact email',
+    example: 'john.doe@company.com',
+  })
+  @Prop()
   email: string;
 
   @ApiProperty({ description: 'Contact phone number', example: '0712345678' })
-  @Prop({ required: true })
+  @Prop()
   phoneNumber: string;
 }
 
 // Bank Details Schema
 class BankDetails {
   @ApiProperty({ description: 'Name of the bank', example: 'Equity Bank' })
-  @Prop({ required: true })
+  @Prop()
   bankName: string;
 
   @ApiProperty({ description: 'Bank account number', example: '1234567890' })
-  @Prop({ required: true })
+  @Prop()
   accountNumber: string;
 
   @ApiProperty({ description: 'Branch code of the bank', example: '123' })
-  @Prop({ required: true })
+  @Prop()
   branchCode: string;
 }
 
 @Schema({ timestamps: true })
 export class Organization {
   @ApiProperty({ description: 'Company name', example: 'Tech Solutions Ltd' })
-  @Prop({ required: true })
+  @Prop()
   companyName: string;
 
-  @ApiProperty({ description: 'Company registration number', example: 'PVT-1234567X' })
-  @Prop({ required: true, unique: true })
+  @ApiProperty({
+    description: 'Company registration number',
+    example: 'PVT-1234567X',
+  })
+  @Prop({ unique: true })
   registrationNumber: string;
 
   @ApiProperty({ description: 'KRA PIN number', example: 'P051234567Q' })
-  @Prop({ required: true, unique: true })
+  @Prop({ unique: true })
   kraPin: string;
 
-  @ApiProperty({ description: 'Physical business address', example: 'Westlands Business Park, Block A' })
-  @Prop({ required: true })
+  @ApiProperty({
+    description: 'Physical business address',
+    example: 'Westlands Business Park, Block A',
+  })
+  @Prop()
   businessAddress: string;
 
-  @ApiProperty({ description: 'Postal business address', example: 'P.O. Box 12345-00100' })
+  @ApiProperty({
+    description: 'Postal business address',
+    example: 'P.O. Box 12345-00100',
+  })
   @Prop()
   postalAddress?: string;
 
   @ApiProperty({ description: 'County of operation', example: 'Nairobi' })
-  @Prop({ required: true })
+  @Prop()
   county: string;
 
   @ApiProperty({ description: 'Business phone number', example: '0712345678' })
-  @Prop({ required: true })
+  @Prop()
   businessPhone: string;
 
-  @ApiProperty({ description: 'Business email', example: 'info@techsolutions.co.ke' })
-  @Prop({ required: true, unique: true })
+  @ApiProperty({
+    description: 'Business email',
+    example: 'info@techsolutions.co.ke',
+  })
+  @Prop({ unique: true })
   businessEmail: string;
 
-  @ApiProperty({ description: 'Company website', example: 'https://techsolutions.co.ke' })
+  @ApiProperty({
+    description: 'Company website',
+    example: 'https://techsolutions.co.ke',
+  })
   @Prop()
   website?: string;
 
-  @ApiProperty({ description: 'Primary expertise/department', example: 'Software Development' })
+  @ApiProperty({
+    description: 'Primary expertise/department',
+    example: 'Software Development',
+  })
   @Prop()
   department: string;
 
   @ApiProperty({ description: 'Years of operation', example: 5 })
-  @Prop({ required: true })
+  @Prop()
   yearsOfOperation: number;
 
   @ApiProperty({ description: 'Hourly rate in KES', example: 10000 })
-  @Prop({ required: true })
+  @Prop()
   hourlyRate: number;
 
   @ApiProperty({
     description: 'Services offered by the organization',
     example: ['Software Development', 'IT Consulting', 'Cloud Solutions'],
-    type: [String]
+    type: [String],
   })
-  @Prop({ type: [String], required: true })
+  @Prop({ type: [String] })
   servicesOffered: string[];
 
   @ApiProperty({
     description: 'Industries the organization operates in',
     example: ['Technology', 'Finance', 'Healthcare'],
-    type: [String]
+    type: [String],
   })
-  @Prop({ type: [String], required: true })
+  @Prop({ type: [String] })
   industries: string[];
 
   @ApiProperty({
     description: 'Preferred work type',
     example: ['remote', 'hybrid'],
-    enum: ['remote', 'onsite', 'hybrid']
+    enum: ['remote', 'onsite', 'hybrid'],
   })
-  @Prop({ type: [String], required: true })
+  @Prop({ type: [String] })
   preferredWorkTypes: string[];
 
   @ApiProperty({ description: 'Contact person details' })
-  @Prop({ type: ContactPerson, required: true })
+  @Prop({ type: ContactPerson })
   contactPerson: ContactPerson;
 
   @ApiProperty({ description: 'Bank payment details' })
-  @Prop({ type: BankDetails, required: true })
+  @Prop({ type: BankDetails })
   bankDetails: BankDetails;
 
   @ApiProperty({ description: 'Certificate of registration document URL' })
-  @Prop({ required: true })
+  @Prop()
   registrationCertificateUrl: string;
 
   @ApiProperty({ description: 'KRA certificate document URL' })
-  @Prop({ required: true })
+  @Prop()
   kraCertificateUrl: string;
 
   @ApiProperty({ description: 'Tax compliance certificate URL' })
-  @Prop({ required: true })
+  @Prop()
   taxComplianceCertificateUrl: string;
 
   @ApiProperty({ description: 'CR12 document URL' })
-  @Prop({ required: true })
+  @Prop()
   cr12Url: string;
 
   @ApiProperty({ description: 'Tax compliance certificate expiry date' })
-  @Prop({ required: true })
+  @Prop()
   taxComplianceExpiryDate: string;
 
   @ApiProperty({
     description: 'Organization profile status',
     example: 'pending',
-    enum: ['pending', 'active', 'inactive', 'suspended']
+    enum: ['pending', 'active', 'inactive', 'suspended'],
   })
   @Prop({ type: String, default: 'pending' })
   status: string;
@@ -151,14 +175,64 @@ export class Organization {
   @ApiProperty({ description: 'Organization ID', example: 'ORG-001' })
   @Prop({ required: false, unique: true })
   organizationId?: string;
+
+  @ApiProperty({ description: 'Hashed password for the organization account' })
+  @Prop({ required: false, select: false })
+  password?: string;
+
+  @ApiProperty({
+    description: 'Registration status',
+    example: 'quick',
+    enum: ['quick', 'complete'],
+  })
+  @Prop({ default: 'complete' })
+  registrationStatus: string;
+
+  @ApiProperty({ description: 'Email verification status' })
+  @Prop({ default: false })
+  isEmailVerified: boolean;
+
+  @ApiProperty({ description: 'Phone verification status' })
+  @Prop({ default: false })
+  isPhoneVerified: boolean;
+
+  @ApiProperty({ description: 'Email verification PIN' })
+  @Prop({ select: false })
+  emailVerificationPin?: string;
+
+  @ApiProperty({ description: 'Expiry date for email verification PIN' })
+  @Prop({ select: false })
+  emailVerificationPinExpires?: Date;
+
+  @ApiProperty({ description: 'Phone verification PIN' })
+  @Prop({ select: false })
+  phoneVerificationPin?: string;
+
+  @ApiProperty({ description: 'Expiry date for phone verification PIN' })
+  @Prop({ select: false })
+  phoneVerificationPinExpires?: Date;
+
+  @ApiProperty({
+    description: '4-digit PIN for password reset',
+    required: false,
+  })
+  @Prop({ required: false })
+  resetPin?: string;
+
+  @ApiProperty({
+    description: 'Expiry date for password reset PIN',
+    required: false,
+  })
+  @Prop({ required: false })
+  resetPinExpires?: Date;
 }
 
 @Schema({ _id: false })
 export class OrgCounter {
-  @Prop({ required: true })
+  @Prop()
   name: string;
 
-  @Prop({ required: true, default: 0 })
+  @Prop({ default: 0 })
   sequenceValue: number;
 }
 
