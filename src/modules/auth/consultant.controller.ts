@@ -1047,7 +1047,8 @@ export class ConsultantController {
 
   @Patch('consultant/update/:id')
   @HttpCode(HttpStatus.OK)
-  @Roles('consultant')
+  // @Roles('consultant')
+  @Public()
   @ApiOperation({
     summary: 'Update user by ID',
     description:
