@@ -18,6 +18,8 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { ConsultantService } from './consultant.service';
+import { ResendOtpDto } from './dto/resend-otp.dto';
 import { LoginUserDto } from './dto/login.dto';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -34,7 +36,10 @@ import { LoginType } from './types/auth.types';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly consultantService: ConsultantService,
+  ) {}
 
   @Post('/suspend/:type')
   @HttpCode(HttpStatus.OK)
@@ -90,6 +95,19 @@ export class AuthController {
     @Body('email') email: string,
   ) {
     return this.authService.suspendUser(email, type);
+  }
+
+  @Public()
+  @Post('resend-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend OTP' })
+  @ApiResponse({ status: 200, description: 'OTP has been resent.' })
+  async resendOtp(@Body() resendOtpDto: ResendOtpDto) {
+    await this.consultantService.resendOtp(
+      resendOtpDto.email,
+      resendOtpDto.type,
+    );
+    return { message: 'A new OTP has been sent.' };
   }
 
   @Post('/activate/:type')

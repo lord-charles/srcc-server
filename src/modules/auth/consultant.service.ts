@@ -142,6 +142,50 @@ export class ConsultantService {
     return savedUser;
   }
 
+  async resendVerificationPins(email: string): Promise<UserDocument> {
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    if (!user.isEmailVerified) {
+      user.emailVerificationPin = this.generatePin();
+      user.emailVerificationPinExpires = pinExpiry;
+    }
+
+    if (!user.isPhoneVerified) {
+      user.phoneVerificationPin = this.generatePin();
+      user.phoneVerificationPinExpires = pinExpiry;
+    }
+
+    await user.save();
+
+    // Fire-and-forget notifications
+    (async () => {
+      try {
+        if (!user.isPhoneVerified) {
+          const phoneMsg = `Your new SRCC verification PIN is: ${user.phoneVerificationPin}.`;
+          await this.notificationService.sendSMS(user.phoneNumber, phoneMsg);
+        }
+        if (!user.isEmailVerified) {
+          const emailMsg = `Your new SRCC verification PIN is: ${user.emailVerificationPin}.`;
+          await this.notificationService.sendEmail(
+            user.email,
+            'SRCC Account Verification',
+            emailMsg,
+          );
+        }
+      } catch (err) {
+        console.error('Failed to resend verification PINs:', err);
+      }
+    })();
+
+    return user;
+  }
+
   async quickCompanyRegister(companyData: QuickRegisterOrganizationDto): Promise<OrganizationDocument> {
     const {
       businessEmail,
@@ -248,6 +292,65 @@ export class ConsultantService {
     })();
 
     return savedOrg;
+  }
+
+  async resendCompanyVerificationPins(
+    businessEmail: string,
+  ): Promise<OrganizationDocument> {
+    const organization = await this.organizationModel.findOne({ businessEmail });
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found.');
+    }
+
+    const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    if (!organization.isEmailVerified) {
+      organization.emailVerificationPin = this.generatePin();
+      organization.emailVerificationPinExpires = pinExpiry;
+    }
+
+    if (!organization.isPhoneVerified) {
+      organization.phoneVerificationPin = this.generatePin();
+      organization.phoneVerificationPinExpires = pinExpiry;
+    }
+
+    await organization.save();
+
+    // Fire-and-forget notifications
+    (async () => {
+      try {
+        if (!organization.isPhoneVerified) {
+          const phoneMsg = `Your new SRCC verification PIN is: ${organization.phoneVerificationPin}.`;
+          await this.notificationService.sendSMS(
+            organization.businessPhone,
+            phoneMsg,
+          );
+        }
+        if (!organization.isEmailVerified) {
+          const emailMsg = `Your new SRCC verification PIN is: ${organization.emailVerificationPin}.`;
+          await this.notificationService.sendEmail(
+            organization.businessEmail,
+            'SRCC Account Verification',
+            emailMsg,
+          );
+        }
+      } catch (err) {
+        console.error('Failed to resend company verification PINs:', err);
+      }
+    })();
+
+    return organization;
+  }
+
+  async resendOtp(email: string, type: 'user' | 'organization'): Promise<void> {
+    if (type === 'user') {
+      await this.resendVerificationPins(email);
+    } else if (type === 'organization') {
+      await this.resendCompanyVerificationPins(email);
+    } else {
+      throw new BadRequestException('Invalid user type for OTP resend.');
+    }
   }
 
   async getVerificationStatus(

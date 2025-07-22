@@ -54,11 +54,11 @@ export class Organization {
     description: 'Company registration number',
     example: 'PVT-1234567X',
   })
-  @Prop({ unique: true })
+  @Prop()
   registrationNumber: string;
 
   @ApiProperty({ description: 'KRA PIN number', example: 'P051234567Q' })
-  @Prop({ unique: true })
+  @Prop()
   kraPin: string;
 
   @ApiProperty({

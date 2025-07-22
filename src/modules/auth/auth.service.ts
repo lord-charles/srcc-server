@@ -3,7 +3,10 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
+import { ConsultantService } from './consultant.service';
 import { JwtService } from '@nestjs/jwt';
 import { NotificationService } from '../notifications/services/notification.service';
 import * as bcrypt from 'bcrypt';
@@ -34,6 +37,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly systemLogsService: SystemLogsService,
     private readonly notificationService: NotificationService,
+    private readonly consultantService: ConsultantService,
     @InjectModel(Organization.name)
     private organizationModel: Model<OrganizationDocument>,
   ) {}
@@ -81,6 +85,17 @@ export class AuthService {
       );
       throw new UnauthorizedException(
         'No account found with the provided email address.',
+      );
+    }
+
+    if (!user.isEmailVerified || !user.isPhoneVerified) {
+      await this.consultantService.resendVerificationPins(user.email);
+      throw new HttpException(
+        {
+          message: 'Verification required',
+          code: 'VERIFICATION_REQUIRED',
+        },
+        HttpStatus.PRECONDITION_REQUIRED, // 428
       );
     }
     const isPasswordValid = await bcrypt.compare(
@@ -144,6 +159,19 @@ export class AuthService {
         'No organization found with the provided email address.',
       );
     }
+
+    if (!organization.isEmailVerified || !organization.isPhoneVerified) {
+      await this.consultantService.resendCompanyVerificationPins(
+        organization.businessEmail,
+      );
+      throw new HttpException(
+        {
+          message: 'Verification required',
+          code: 'VERIFICATION_REQUIRED',
+        },
+        HttpStatus.PRECONDITION_REQUIRED, // 428
+      );
+    }
     const isPasswordValid = await bcrypt.compare(
       loginDto.password,
       organization.password,
@@ -197,6 +225,7 @@ export class AuthService {
       isEmailVerified: organization.isEmailVerified,
       isPhoneVerified: organization.isPhoneVerified,
       companyName: organization.companyName,
+      registrationStatus: organization.registrationStatus,
       status: organization.status,
     };
     const token = this.jwtService.sign(payload);
