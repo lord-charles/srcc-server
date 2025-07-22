@@ -892,8 +892,9 @@ export class ConsultantController {
   }
 
   @Get('organizations')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  // @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
+  @Public()
   async getOrganizations() {
     return this.consultantService.getOrganizations();
   }
