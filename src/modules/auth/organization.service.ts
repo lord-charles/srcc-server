@@ -195,6 +195,67 @@ export class OrganizationService {
   }
 
   /**
+   * Update organization by organization ID
+   */
+  async organizationCompleteRegistration(
+    organizationId: string,
+    data: any,
+  ): Promise<Organization> {
+    try {
+      // Perform the update
+      const updatedOrganization = await this.organizationModel
+        .findOneAndUpdate(
+          { organizationId },
+          {
+            $set: {
+              ...data,
+              updatedAt: new Date(),
+            },
+          },
+          {
+            new: true,
+            runValidators: true,
+            context: 'query',
+          },
+        )
+        .select(
+          '-password -emailVerificationPin -phoneVerificationPin -resetPin -emailVerificationPinExpires -phoneVerificationPinExpires -resetPinExpires',
+        )
+        .lean()
+        .exec();
+
+      if (!updatedOrganization) {
+        throw new BadRequestException('Failed to update organization');
+      }
+
+      this.logger.log(
+        `Successfully updated organization: ${updatedOrganization.companyName}`,
+      );
+      return updatedOrganization;
+    } catch (error) {
+      this.logger.error(
+        `Error updating organization ${organizationId}: ${error.message}`,
+        error.stack,
+      );
+
+      if (error.name === 'ValidationError') {
+        const validationErrors = Object.values(error.errors).map(
+          (err: any) => err.message,
+        );
+        throw new BadRequestException(
+          `Validation failed: ${validationErrors.join(', ')}`,
+        );
+      }
+
+      if (error.code === 11000) {
+        throw new ConflictException(this.handleDuplicateKeyError(error));
+      }
+
+      throw error;
+    }
+  }
+
+  /**
    * Validate unique fields to prevent conflicts
    */
   private async validateUniqueFields(

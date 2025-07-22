@@ -1220,4 +1220,63 @@ export class ConsultantController {
       throw error;
     }
   }
+
+  @Public()
+  @Patch(':id/complete-registration')
+  @ApiOperation({ summary: 'Mark consultant registration as complete' })
+  @ApiResponse({
+    status: 200,
+    description: 'Registration completed successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'Consultant not found.' })
+  @ApiParam({ name: 'id', description: 'Consultant ID' })
+  async completeConsultantRegistration(@Param('id') id: string) {
+    try {
+      const updatedUser = await this.userService.updateUserById(id, {
+        registrationStatus: 'complete',
+      });
+      return {
+        message: 'Consultant registration completed successfully.',
+        user: updatedUser,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Consultant not found.');
+      }
+      throw new HttpException(
+        'An unexpected error occurred.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Public()
+  @Patch('organization/:id/complete-registration')
+  @ApiOperation({ summary: 'Mark organization registration as complete' })
+  @ApiResponse({
+    status: 200,
+    description: 'Registration completed successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  @ApiParam({ name: 'id', description: 'Organization ID' })
+  async completeOrganizationRegistration(@Param('id') id: string) {
+    try {
+      const updatedOrg =
+        await this.organizationService.organizationCompleteRegistration(id, {
+          registrationStatus: 'complete',
+        });
+      return {
+        message: 'Organization registration completed successfully.',
+        organization: updatedOrg,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Organization not found.');
+      }
+      throw new HttpException(
+        'An unexpected error occurred.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
