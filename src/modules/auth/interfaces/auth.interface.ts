@@ -12,6 +12,7 @@ export interface JwtPayload {
   phoneNumber?: string;
   nationalId?: string;
   employeeId?: string;
+  status?: string;
 }
 
 export interface AuthResponse {
