@@ -899,8 +899,7 @@ export class ConsultantController {
   }
 
   @Get('organization/:id')
-  @Public()
-  // @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
   async getOrganization(@Param('id') id: string) {
     return this.consultantService.getOrganization(id);
@@ -944,7 +943,6 @@ export class ConsultantController {
 
   //update consultant
   @Patch('organization/update/:id')
-  @Public()
   @ApiOperation({
     summary: 'Update organization by MongoDB ID',
     description:
@@ -1048,7 +1046,6 @@ export class ConsultantController {
   }
 
   @Patch('consultant/update/:id')
-  @Public()
   @HttpCode(HttpStatus.OK)
   @Roles('consultant')
   @ApiOperation({

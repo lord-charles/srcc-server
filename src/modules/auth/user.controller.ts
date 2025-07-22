@@ -63,7 +63,7 @@ export class UserController {
 
   // Get user by ID - Returns detailed user information
   @Get('/user/:id')
-  @UseGuards(JwtAuthGuard)
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get employee by ID',
@@ -109,7 +109,6 @@ export class UserController {
   // Update user details
   // @Roles('admin', 'hr')
   @Patch('/user/:id')
-  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update employee details',
