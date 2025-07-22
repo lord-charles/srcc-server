@@ -204,8 +204,8 @@ export class OrganizationService {
     try {
       // Perform the update
       const updatedOrganization = await this.organizationModel
-        .findOneAndUpdate(
-          { organizationId },
+        .findByIdAndUpdate(
+          organizationId,
           {
             $set: {
               ...data,

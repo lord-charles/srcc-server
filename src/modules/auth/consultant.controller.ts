@@ -1223,8 +1223,8 @@ export class ConsultantController {
     }
   }
 
-  @Public()
   @Patch(':id/complete-registration')
+  @Public()
   @ApiOperation({ summary: 'Mark consultant registration as complete' })
   @ApiResponse({
     status: 200,
@@ -1252,8 +1252,8 @@ export class ConsultantController {
     }
   }
 
-  @Public()
   @Patch('organization/:id/complete-registration')
+  @Public()
   @ApiOperation({ summary: 'Mark organization registration as complete' })
   @ApiResponse({
     status: 200,
