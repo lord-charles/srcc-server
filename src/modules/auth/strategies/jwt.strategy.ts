@@ -8,14 +8,13 @@ import { AuthService } from '../auth.service';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
-    private userService: UserService,
-    private authService: AuthService,
+    private readonly userService: UserService,
+    secretOrKey: string,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey,
     });
   }
 
@@ -27,6 +26,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (user.status !== 'active') {
       throw new UnauthorizedException('User account is not active');
     }
-    return user;
+
+    // After validating the user exists and is active, we return the
+    // original payload. The payload contains all the necessary user
+    // information (including roles) for the request lifecycle.
+    return payload;
   }
 }

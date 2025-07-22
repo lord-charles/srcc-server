@@ -56,7 +56,16 @@ import { OrganizationService } from './organization.service';
     NotificationService,
     OrganizationService,
     SystemLogsService,
-    JwtStrategy,
+    {
+      provide: JwtStrategy,
+      useFactory: (configService: ConfigService, userService: UserService) => {
+        return new JwtStrategy(
+          userService,
+          configService.get<string>('JWT_SECRET'),
+        );
+      },
+      inject: [ConfigService, UserService],
+    },
     {
       provide: 'APP_GUARD',
       useClass: JwtAuthGuard,

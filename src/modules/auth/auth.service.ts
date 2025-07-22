@@ -502,8 +502,7 @@ export class AuthService {
       department: user.department,
       registrationStatus: user.registrationStatus,
       phoneNumber: user.phoneNumber,
-      nationalId: user.nationalId,
-      employeeId: user.employeeId,
+      status: user.status,
     };
     const token = this.jwtService.sign(payload);
     return {

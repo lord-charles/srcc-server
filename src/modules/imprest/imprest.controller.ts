@@ -11,10 +11,23 @@ import {
   UseInterceptors,
   UploadedFiles,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { ImprestService } from './imprest.service';
 import { CreateImprestDto } from './dto/create-imprest.dto';
-import { ImprestApprovalDto, ImprestRejectionDto, ImprestAccountingDto, ReceiptDto, ImprestDisbursementDto } from './dto/imprest-approval.dto';
+import {
+  ImprestApprovalDto,
+  ImprestRejectionDto,
+  ImprestAccountingDto,
+  ReceiptDto,
+  ImprestDisbursementDto,
+} from './dto/imprest-approval.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -38,13 +51,16 @@ export class ImprestController {
     schema: {
       type: 'object',
       properties: {
-        paymentReason: { type: 'string', example: 'TOTEMK Google Cloud Payment' },
+        paymentReason: {
+          type: 'string',
+          example: 'TOTEMK Google Cloud Payment',
+        },
         currency: { type: 'string', example: 'USD' },
         amount: { type: 'number', example: 1048.59 },
-        paymentType: { 
-          type: 'string', 
+        paymentType: {
+          type: 'string',
           enum: ['Contingency Cash', 'Travel Cash', 'Purchase Cash', 'Others'],
-          example: 'Contingency Cash'
+          example: 'Contingency Cash',
         },
         explanation: { type: 'string', example: 'January 2024 - January 2025' },
         attachments: {
@@ -55,29 +71,36 @@ export class ImprestController {
           },
         },
       },
-      required: ['paymentReason', 'currency', 'amount', 'paymentType', 'explanation'],
+      required: [
+        'paymentReason',
+        'currency',
+        'amount',
+        'paymentType',
+        'explanation',
+      ],
     },
   })
-  @ApiResponse({ status: 201, description: 'Imprest request created successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Imprest request created successfully.',
+  })
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'attachments', maxCount: 15 },
-    ]),
+    FileFieldsInterceptor([{ name: 'attachments', maxCount: 15 }]),
   )
   async create(
-    @Body() createImprestDto: CreateImprestDto, 
+    @Body() createImprestDto: CreateImprestDto,
     @Req() req: any,
-    @UploadedFiles() files: { attachments?: Express.Multer.File[] }
+    @UploadedFiles() files: { attachments?: Express.Multer.File[] },
   ) {
     const attachments = [];
-    
+
     if (files?.attachments?.length) {
-      const uploadPromises = files.attachments.map(file => 
-        this.cloudinaryService.uploadFile(file, 'imprest-attachments')
+      const uploadPromises = files.attachments.map((file) =>
+        this.cloudinaryService.uploadFile(file, 'imprest-attachments'),
       );
-      
+
       const uploadResults = await Promise.all(uploadPromises);
-      
+
       for (let i = 0; i < uploadResults.length; i++) {
         attachments.push({
           fileName: files.attachments[i].originalname,
@@ -86,15 +109,19 @@ export class ImprestController {
         });
       }
     }
-    
-    return this.imprestService.create(createImprestDto, req.user.id, attachments);
+
+    return this.imprestService.create(
+      createImprestDto,
+      req.user.id,
+      attachments,
+    );
   }
 
   @Get()
+  // @Roles('admin', 'hod', 'accountant')
   @ApiOperation({ summary: 'Get all imprest requests with optional filters' })
   @ApiResponse({ status: 200, description: 'Returns all imprest requests.' })
-  async findAll(
-  ) { 
+  async findAll() {
     const filters = {};
     // if (status) filters['status'] = status;
     // if (department) filters['department'] = department;
@@ -105,7 +132,10 @@ export class ImprestController {
 
   @Get('my-imprest')
   @ApiOperation({ summary: 'Get all imprest requests created by the user' })
-  @ApiResponse({ status: 200, description: 'Returns all imprest requests created by the user.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all imprest requests created by the user.',
+  })
   async findMyImprests(@Req() req: any) {
     return this.imprestService.findMyImprests(req.user.id);
   }
@@ -124,7 +154,7 @@ export class ImprestController {
   @ApiResponse({ status: 200, description: 'Imprest request approved by HOD.' })
   async approveByHod(
     @Param('id') id: string,
-     @Req() req: any,
+    @Req() req: any,
     @Body() approvalDto: ImprestApprovalDto,
   ) {
     return this.imprestService.approveByHod(id, req.user.id, approvalDto);
@@ -133,13 +163,20 @@ export class ImprestController {
   @Post(':id/approve/accountant')
   // @Roles('accountant')
   @ApiOperation({ summary: 'Approve imprest request by accountant' })
-  @ApiResponse({ status: 200, description: 'Imprest request approved by accountant.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Imprest request approved by accountant.',
+  })
   async approveByAccountant(
     @Param('id') id: string,
-     @Req() req: any,
+    @Req() req: any,
     @Body() approvalDto: ImprestApprovalDto,
   ) {
-    return this.imprestService.approveByAccountant(id, req.user.id, approvalDto);
+    return this.imprestService.approveByAccountant(
+      id,
+      req.user.id,
+      approvalDto,
+    );
   }
 
   @Post(':id/reject')
@@ -148,7 +185,7 @@ export class ImprestController {
   @ApiResponse({ status: 200, description: 'Imprest request rejected.' })
   async reject(
     @Param('id') id: string,
-     @Req() req: any,
+    @Req() req: any,
     @Body() rejectionDto: ImprestRejectionDto,
   ) {
     return this.imprestService.reject(id, req.user.id, rejectionDto);
@@ -166,7 +203,11 @@ export class ImprestController {
     if (!disbursementDto.amount || disbursementDto.amount <= 0) {
       throw new BadRequestException('Valid disbursement amount is required');
     }
-    return this.imprestService.recordDisbursement(id, req.user.id, disbursementDto);
+    return this.imprestService.recordDisbursement(
+      id,
+      req.user.id,
+      disbursementDto,
+    );
   }
 
   @Post(':id/account')
@@ -200,15 +241,13 @@ export class ImprestController {
   })
   @ApiResponse({ status: 200, description: 'Imprest accounting submitted.' })
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'receiptFiles', maxCount: 10 },
-    ]),
+    FileFieldsInterceptor([{ name: 'receiptFiles', maxCount: 10 }]),
   )
   async submitAccounting(
     @Param('id') id: string,
     @Req() req: any,
     @Body() accountingDto: any,
-    @UploadedFiles() files: { receiptFiles?: Express.Multer.File[] }
+    @UploadedFiles() files: { receiptFiles?: Express.Multer.File[] },
   ) {
     if (!files?.receiptFiles?.length) {
       throw new BadRequestException('Receipt files are required');
@@ -218,31 +257,36 @@ export class ImprestController {
     let receipts: ReceiptDto[];
     try {
       // Check if receipts is already an array or needs to be parsed
-      receipts = typeof accountingDto.receipts === 'string' 
-        ? JSON.parse(accountingDto.receipts) 
-        : accountingDto.receipts;
-        
+      receipts =
+        typeof accountingDto.receipts === 'string'
+          ? JSON.parse(accountingDto.receipts)
+          : accountingDto.receipts;
+
       if (!Array.isArray(receipts) || receipts.length === 0) {
         throw new BadRequestException('Valid receipts data is required');
       }
-      
+
       if (receipts.length !== files.receiptFiles.length) {
-        throw new BadRequestException('Number of receipt files must match number of receipt entries');
+        throw new BadRequestException(
+          'Number of receipt files must match number of receipt entries',
+        );
       }
     } catch (error) {
-
       throw new BadRequestException(error.message);
     }
 
     // Upload receipt files
     const processedReceipts = [];
-    
+
     for (let i = 0; i < files.receiptFiles.length; i++) {
       const file = files.receiptFiles[i];
       const receipt = receipts[i];
-      
-      const uploadResult = await this.cloudinaryService.uploadFile(file, 'imprest-receipts');
-      
+
+      const uploadResult = await this.cloudinaryService.uploadFile(
+        file,
+        'imprest-receipts',
+      );
+
       processedReceipts.push({
         description: receipt.description,
         amount: receipt.amount,
@@ -252,10 +296,10 @@ export class ImprestController {
     }
 
     return this.imprestService.submitAccounting(
-      id, 
-      req.user.id, 
-      { receipts, comments: accountingDto.comments }, 
-      processedReceipts
+      id,
+      req.user.id,
+      { receipts, comments: accountingDto.comments },
+      processedReceipts,
     );
   }
 
@@ -266,16 +310,23 @@ export class ImprestController {
     schema: {
       type: 'object',
       properties: {
-        comments: { type: 'string', example: 'All receipts verified, OK for closure.' }
-      }
-    }
+        comments: {
+          type: 'string',
+          example: 'All receipts verified, OK for closure.',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 200, description: 'Imprest accounting approved.' })
   async approveAccounting(
     @Param('id') id: string,
     @Req() req: any,
-    @Body() body: { comments?: string }
+    @Body() body: { comments?: string },
   ) {
-    return this.imprestService.approveAccounting(id, req.user.id, body.comments);
+    return this.imprestService.approveAccounting(
+      id,
+      req.user.id,
+      body.comments,
+    );
   }
 }
