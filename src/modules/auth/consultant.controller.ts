@@ -1209,11 +1209,6 @@ export class ConsultantController {
     )
     updateUserDto: Partial<UserDto>,
   ): Promise<UserResponseDto> {
-    // Log the fields being updated (excluding sensitive data)
-    const fieldsToUpdate = Object.keys(updateUserDto).filter(
-      (key) => !['password', 'registrationPin', 'resetPin'].includes(key),
-    );
-
     try {
       const updatedUser = await this.userService.updateUserById(
         id,

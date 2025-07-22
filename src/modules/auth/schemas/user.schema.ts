@@ -175,14 +175,14 @@ export class User {
     description: 'Employee email address',
     example: 'jane.wanjiku@company.com',
   })
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ unique: true, index: true })
   email: string;
 
   @ApiProperty({
     description: 'Phone number for contact and Mpesa transactions',
     example: '+254712345678',
   })
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ unique: true, index: true })
   phoneNumber: string;
 
   @ApiProperty({
@@ -196,7 +196,7 @@ export class User {
     description: 'National ID of the employee',
     example: '23456789',
   })
-  @Prop({ required: true, unique: true })
+  @Prop({ unique: true })
   nationalId: string;
 
   @ApiProperty({
@@ -432,8 +432,8 @@ export class Counter {
   @Prop()
   name: string;
 
-  @ApiProperty({ required: true, default: 0 })
-  @Prop({ required: true, default: 0 })
+  @ApiProperty({ default: 0 })
+  @Prop({ default: 0 })
   sequenceValue: number;
 }
 
