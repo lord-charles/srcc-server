@@ -894,12 +894,12 @@ export class ConsultantController {
   @Get('organizations')
   // @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
-  @Public()
   async getOrganizations() {
     return this.consultantService.getOrganizations();
   }
 
   @Get('organization/:id')
+  @Public()
   @UseGuards(JwtAuthGuard, RolesGuard)
   // @Roles('admin', 'hr')
   async getOrganization(@Param('id') id: string) {
