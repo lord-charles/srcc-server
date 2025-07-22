@@ -944,6 +944,7 @@ export class ConsultantController {
 
   //update consultant
   @Patch('organization/update/:id')
+  @Public()
   @ApiOperation({
     summary: 'Update organization by MongoDB ID',
     description:
