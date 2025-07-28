@@ -301,7 +301,7 @@ export class User {
   @ApiProperty({
     description: 'Availability status',
     example: 'available',
-    enum: ['available', 'partially_available', 'not_available'],
+    // enum: ['available', 'partially_available', 'not_available'],
   })
   @Prop({ type: String, default: 'available' })
   availability: string;
@@ -309,7 +309,7 @@ export class User {
   @ApiProperty({
     description: 'Preferred work type',
     example: ['remote', 'hybrid'],
-    enum: ['remote', 'onsite', 'hybrid'],
+    // enum: ['remote', 'onsite', 'hybrid'],
   })
   @Prop({ type: [String] })
   preferredWorkTypes: string[];
