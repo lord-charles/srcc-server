@@ -1,5 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsDate, IsNumber, IsBoolean, IsOptional, IsArray, ValidateNested, IsEmail, IsMongoId, IsUrl, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsDate,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsEmail,
+  IsMongoId,
+  IsUrl,
+  IsEnum,
+  IsNotEmpty,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { Schema as MongooseSchema } from 'mongoose';
 import { TeamMemberDto } from './team-member.dto';
@@ -45,7 +58,11 @@ export class RiskAssessmentDto {
   @IsString({ each: true })
   factors: string[] = [];
 
-  @ApiProperty({ description: 'Risk mitigation strategies', required: false, default: [] })
+  @ApiProperty({
+    description: 'Risk mitigation strategies',
+    required: false,
+    default: [],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -77,7 +94,7 @@ export class FinancialTrackingDto {
 export class CreateProjectDto {
   @ApiProperty({
     example: 'Health System Upgrade',
-    description: 'The name of the project. Should be unique and descriptive.'
+    description: 'The name of the project. Should be unique and descriptive.',
   })
   @IsNotEmpty()
   @IsString()
@@ -85,15 +102,17 @@ export class CreateProjectDto {
 
   @ApiProperty({
     example: 'SU',
-    description: 'The department of the project'
+    description: 'The department of the project',
   })
   @IsNotEmpty()
   @IsString()
   department: string;
 
   @ApiProperty({
-    example: 'A comprehensive project to upgrade the health system infrastructure including new equipment and staff training.',
-    description: 'Detailed description of the project scope, objectives, and expected outcomes.'
+    example:
+      'A comprehensive project to upgrade the health system infrastructure including new equipment and staff training.',
+    description:
+      'Detailed description of the project scope, objectives, and expected outcomes.',
   })
   @IsNotEmpty()
   @IsString()
@@ -109,7 +128,7 @@ export class CreateProjectDto {
 
   @ApiProperty({
     example: 4800000,
-    description: 'Total estimated value of the project deliverables'
+    description: 'Total estimated value of the project deliverables',
   })
   @IsNotEmpty()
   @IsNumber()
@@ -117,7 +136,7 @@ export class CreateProjectDto {
 
   @ApiProperty({
     example: 'USD',
-    description: 'Currency code for all monetary values in the project'
+    description: 'Currency code for all monetary values in the project',
   })
   @IsNotEmpty()
   @IsString()
@@ -125,7 +144,7 @@ export class CreateProjectDto {
 
   @ApiProperty({
     example: '2024-01-01T00:00:00.000Z',
-    description: 'Date when the contract/project officially starts'
+    description: 'Date when the contract/project officially starts',
   })
   @IsNotEmpty()
   @Type(() => Date)
@@ -134,7 +153,7 @@ export class CreateProjectDto {
 
   @ApiProperty({
     example: '2025-12-31T00:00:00.000Z',
-    description: 'Date when the contract/project is scheduled to end'
+    description: 'Date when the contract/project is scheduled to end',
   })
   @IsNotEmpty()
   @Type(() => Date)
@@ -143,7 +162,7 @@ export class CreateProjectDto {
 
   @ApiProperty({
     example: 'Ministry of Health',
-    description: 'Name of the client organization funding the project'
+    description: 'Name of the client organization funding the project',
   })
   @IsNotEmpty()
   @IsString()
@@ -152,22 +171,37 @@ export class CreateProjectDto {
   @ApiProperty({
     example: 'active',
     description: 'Current status of the project',
-    enum: ['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled']
+    enum: [
+      'draft',
+      'pending_approval',
+      'active',
+      'on_hold',
+      'completed',
+      'cancelled',
+    ],
   })
   @IsNotEmpty()
-  @IsEnum(['draft', 'pending_approval', 'active', 'on_hold', 'completed', 'cancelled'])
+  @IsEnum([
+    'draft',
+    'pending_approval',
+    'active',
+    'on_hold',
+    'completed',
+    'cancelled',
+  ])
   status: string;
 
   @ApiProperty({
     description: 'Project manager ID reference',
-    example: '507f1f77bcf86cd799439011'
+    example: '507f1f77bcf86cd799439011',
   })
   @IsOptional()
   @IsMongoId()
   projectManagerId?: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({
-    description: 'Team members', type: [TeamMemberDto]
+    description: 'Team members',
+    type: [TeamMemberDto],
   })
   @IsOptional()
   @IsArray()
@@ -176,7 +210,8 @@ export class CreateProjectDto {
   teamMembers?: TeamMemberDto[];
 
   @ApiProperty({
-    description: 'Project milestones', type: [MilestoneDto]
+    description: 'Project milestones',
+    type: [MilestoneDto],
   })
   @IsOptional()
   @IsArray()
@@ -185,32 +220,36 @@ export class CreateProjectDto {
   milestones?: MilestoneDto[];
 
   @ApiProperty({
-    example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/project-proposal.pdf',
-    description: 'Cloudinary URL for the uploaded project proposal document'
+    example:
+      'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/project-proposal.pdf',
+    description: 'Cloudinary URL for the uploaded project proposal document',
   })
   @IsOptional()
   @IsUrl()
   projectProposalUrl?: string;
 
   @ApiProperty({
-    example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-contract.pdf',
-    description: 'Cloudinary URL for the uploaded signed contract document'
+    example:
+      'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-contract.pdf',
+    description: 'Cloudinary URL for the uploaded signed contract document',
   })
   @IsOptional()
   @IsUrl()
   signedContractUrl?: string;
 
   @ApiProperty({
-    example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/execution-memo.pdf',
-    description: 'Cloudinary URL for the uploaded contract execution memo'
+    example:
+      'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/execution-memo.pdf',
+    description: 'Cloudinary URL for the uploaded contract execution memo',
   })
   @IsOptional()
   @IsUrl()
   contractExecutionMemoUrl?: string;
 
   @ApiProperty({
-    example: 'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-budget.pdf',
-    description: 'Cloudinary URL for the uploaded signed budget document'
+    example:
+      'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-budget.pdf',
+    description: 'Cloudinary URL for the uploaded signed budget document',
   })
   @IsOptional()
   @IsUrl()
@@ -227,20 +266,23 @@ export class CreateProjectDto {
   riskLevel?: string;
 
   @ApiProperty({
-    description: 'Risk assessment details'
+    description: 'Risk assessment details',
   })
   @IsOptional()
   @ValidateNested()
   @Type(() => RiskAssessmentDto)
   riskAssessment?: RiskAssessmentDto;
 
-  @ApiProperty({ example: 'Monthly', enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'] })
+  @ApiProperty({
+    example: 'Monthly',
+    enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'],
+  })
   @IsOptional()
   @IsEnum(['Weekly', 'Biweekly', 'Monthly', 'Quarterly'])
   reportingFrequency?: string;
 
   @ApiProperty({
-    description: 'Actual completion date'
+    description: 'Actual completion date',
   })
   @IsOptional()
   @IsDate()
@@ -253,7 +295,7 @@ export class CreateProjectDto {
   amountSpent?: number;
 
   @ApiProperty({
-    description: 'Financial tracking details'
+    description: 'Financial tracking details',
   })
   @IsOptional()
   @ValidateNested()
@@ -261,7 +303,7 @@ export class CreateProjectDto {
   financialTracking?: FinancialTrackingDto;
 
   @ApiProperty({
-    description: 'Key performance indicators'
+    description: 'Key performance indicators',
   })
   @IsOptional()
   @IsArray()

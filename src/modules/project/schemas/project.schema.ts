@@ -84,11 +84,11 @@ export class Project {
   status: string;
 
   @ApiProperty({ description: 'User who created the project' })
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   createdBy: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({ description: 'User who last updated the project' })
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   updatedBy: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({ description: 'Project manager reference' })

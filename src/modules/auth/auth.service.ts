@@ -305,6 +305,7 @@ export class AuthService {
         undefined,
         req,
       );
+      console.log(error);
       throw new BadRequestException(
         'SRCC: Could not process password reset request. Please try again later.',
       );

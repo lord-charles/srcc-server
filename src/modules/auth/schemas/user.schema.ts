@@ -309,9 +309,26 @@ export class User {
   @ApiProperty({
     description: 'Preferred work type',
     example: ['remote', 'hybrid'],
-    // enum: ['remote', 'onsite', 'hybrid'],
+    type: [String],
   })
-  @Prop({ type: [String] })
+  @Prop({
+    type: [String],
+    set: function (workTypes: any) {
+      // If it's a string, try to parse it
+
+      if (typeof workTypes === 'string') {
+        try {
+          workTypes = JSON.parse(workTypes);
+        } catch (e) {
+          workTypes = [workTypes];
+        }
+      }
+      // Flatten the array in case it's nested
+      return Array.isArray(workTypes)
+        ? workTypes.flat(Infinity).filter(Boolean)
+        : [];
+    },
+  })
   preferredWorkTypes: string[];
 
   @ApiProperty({
