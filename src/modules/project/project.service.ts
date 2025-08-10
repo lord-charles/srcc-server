@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
+import { User, UserDocument } from '../auth/schemas/user.schema';
+import { Organization, OrganizationDocument } from '../auth/schemas/organization.schema';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { TeamMemberDto } from './dto/team-member.dto';
@@ -11,6 +13,9 @@ import { Schema as MongooseSchema } from 'mongoose';
 export class ProjectService {
   constructor(
     @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Organization.name)
+    private organizationModel: Model<OrganizationDocument>,
   ) { }
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
@@ -18,8 +23,44 @@ export class ProjectService {
     return createdProject.save();
   }
 
-  async findAll(query: any = {}): Promise<Project[]> {
-    return this.projectModel.find(query).exec();
+  async findAll(query: any = {}, userId?: string): Promise<Project[]> {
+    // Determine if the requester is an admin (can be a User or Organization)
+    let isAdmin = false;
+    if (userId) {
+      const user = await this.userModel
+        .findById(userId)
+        .select('roles')
+        .lean();
+      if (user && Array.isArray(user.roles) && user.roles.includes('admin')) {
+        isAdmin = true;
+      } else {
+        const org = await this.organizationModel
+          .findById(userId)
+          .select('roles')
+          .lean();
+        if (org && Array.isArray(org.roles) && org.roles.includes('admin')) {
+          isAdmin = true;
+        }
+      }
+    }
+
+    const finalQuery = isAdmin
+      ? { ...query }
+      : {
+          $and: [
+            { ...query },
+            {
+              $or: [
+                { projectManagerId: userId },
+                { 'teamMembers.userId': userId },
+              ],
+            },
+          ],
+        };
+
+    return this.projectModel
+      .find(finalQuery)
+      .exec();
   }
 
   async findOne(id: string): Promise<Project> {

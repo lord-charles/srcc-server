@@ -351,8 +351,8 @@ export class ProjectController {
   @Get()
   @ApiOperation({ summary: 'Get all projects' })
   @ApiResponse({ status: 200, description: 'Return all projects.' })
-  findAll(@Query() query: any) {
-    return this.projectService.findAll(query);
+  findAll(@Query() query: any, @Req() req: any) {
+    return this.projectService.findAll(query, req.user.sub);
   }
 
   @Get(':id')

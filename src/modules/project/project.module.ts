@@ -10,6 +10,7 @@ import { BudgetController } from './controllers/budget.controller';
 import { InvoiceService } from './services/invoice.service';
 import { BudgetService } from './services/budget.service';
 import { User, UserSchema } from '../auth/schemas/user.schema';
+import { Organization, OrganizationSchema } from '../auth/schemas/organization.schema';
 import { NotificationService } from '../notifications/services/notification.service';
 import { Budget, BudgetSchema } from './schemas/budget.schema';
 import { Contract, ContractSchema } from './schemas/contract.schema';
@@ -24,6 +25,7 @@ import { ContractService } from './services/contract.service';
       { name: Invoice.name, schema: InvoiceSchema },
       { name: Budget.name, schema: BudgetSchema },
       { name: User.name, schema: UserSchema },
+      { name: Organization.name, schema: OrganizationSchema },
     ]),
     CloudinaryModule,
   ],
