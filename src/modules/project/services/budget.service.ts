@@ -429,6 +429,7 @@ export class BudgetService {
   }
 
   async create(userId: Types.ObjectId, dto: CreateBudgetDto): Promise<Budget> {
+    console.log("budget creator id", userId);
     const project = await this.projectModel.findById(dto.projectId);
     if (!project) {
       throw new NotFoundException('Project not found');

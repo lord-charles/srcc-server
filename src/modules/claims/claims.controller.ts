@@ -98,7 +98,7 @@ export class ClaimsController {
   })
   @ApiResponse({ status: 404, description: 'Project, contract, or milestone not found' })
   create(@Body() createClaimDto: CreateClaimDto, @Request() req: any) {
-    return this.claimsService.create(createClaimDto, new Types.ObjectId(req.user.id));
+    return this.claimsService.create(createClaimDto, new Types.ObjectId(req.user.sub));
   }
 
   @Get()
@@ -111,7 +111,7 @@ export class ClaimsController {
     description: 'Returns an array of ClaimDocument objects with populated project, contract, and user references'
   })
   findAll(@Request() req: any) {
-    return this.claimsService.findAll(new Types.ObjectId(req.user.id));
+    return this.claimsService.findAll(new Types.ObjectId(req.user.sub));
   }
 
   
@@ -164,7 +164,7 @@ export class ClaimsController {
   @ApiResponse({ status: 403, description: 'User is not authorized to view this claim' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   findOne(@Param('id') id: string, @Request() req: any) {
-    return this.claimsService.findOne(id, new Types.ObjectId(req.user.id));
+    return this.claimsService.findOne(id, new Types.ObjectId(req.user.sub));
   }
 
   @Patch(':id')
@@ -239,7 +239,7 @@ export class ClaimsController {
     @Body() updateClaimDto: UpdateClaimDto,
     @Request() req: any,
   ) {
-    return this.claimsService.update(id, updateClaimDto, new Types.ObjectId(req.user.id));
+    return this.claimsService.update(id, updateClaimDto, new Types.ObjectId(req.user.sub));
   }
 
   @Post(':id/submit')
@@ -255,7 +255,7 @@ export class ClaimsController {
   @ApiResponse({ status: 403, description: 'User is not the claim owner' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   submit(@Param('id') id: string, @Request() req: any) {
-    return this.claimsService.submit(id, new Types.ObjectId(req.user.id));
+    return this.claimsService.submit(id, new Types.ObjectId(req.user.sub));
   }
 
   @Post(':id/approve')
@@ -302,7 +302,7 @@ export class ClaimsController {
     if (!comments) {
       throw new BadRequestException('Comments are required for approval');
     }
-    return this.claimsService.approve(id, comments, new Types.ObjectId(req.user.id));
+    return this.claimsService.approve(id, comments, new Types.ObjectId(req.user.sub));
   }
 
   @Post(':id/reject')
@@ -342,7 +342,7 @@ export class ClaimsController {
     if (!reason) {
       throw new BadRequestException('Reason is required for rejection');
     }
-    return this.claimsService.reject(id, reason, new Types.ObjectId(req.user.id));
+    return this.claimsService.reject(id, reason, new Types.ObjectId(req.user.sub));
   }
 
   @Post(':id/request-revision')
@@ -397,7 +397,7 @@ export class ClaimsController {
     }
     return this.claimsService.requestRevision(
       id,
-      new Types.ObjectId(req.user.id),
+      new Types.ObjectId(req.user.sub),
       reason,
       returnToStatus,
       comments,
@@ -456,7 +456,7 @@ export class ClaimsController {
     if (!paymentDetails.paymentMethod || !paymentDetails.transactionId) {
       throw new BadRequestException('Payment method and transaction ID are required');
     }
-    return this.claimsService.markAsPaid(id, paymentDetails, new Types.ObjectId(req.user.id));
+    return this.claimsService.markAsPaid(id, paymentDetails, new Types.ObjectId(req.user.sub));
   }
 
   @Post(':id/cancel')
@@ -475,7 +475,7 @@ export class ClaimsController {
   @ApiResponse({ status: 403, description: 'User is not the claim owner' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   cancel(@Param('id') id: string, @Request() req: any) {
-    return this.claimsService.cancel(id, new Types.ObjectId(req.user.id));
+    return this.claimsService.cancel(id, new Types.ObjectId(req.user.sub));
   }
 
   @Get('by-contract/:contractId')
@@ -489,6 +489,6 @@ export class ClaimsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid contract ID format' })
   async findClaimsByContract(@Param('contractId') contractId: string, @Request() req: any) {
-    return await this.claimsService.findClaimsByContract(contractId, req.user.id);
+    return await this.claimsService.findClaimsByContract(contractId, req.user.sub);
   }
 }

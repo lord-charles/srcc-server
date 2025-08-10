@@ -112,7 +112,7 @@ export class ImprestController {
 
     return this.imprestService.create(
       createImprestDto,
-      req.user.id,
+      req.user.sub,
       attachments,
     );
   }
@@ -137,7 +137,7 @@ export class ImprestController {
     description: 'Returns all imprest requests created by the user.',
   })
   async findMyImprests(@Req() req: any) {
-    return this.imprestService.findMyImprests(req.user.id);
+    return this.imprestService.findMyImprests(req.user.sub);
   }
 
   @Get(':id')
@@ -157,7 +157,7 @@ export class ImprestController {
     @Req() req: any,
     @Body() approvalDto: ImprestApprovalDto,
   ) {
-    return this.imprestService.approveByHod(id, req.user.id, approvalDto);
+    return this.imprestService.approveByHod(id, req.user.sub, approvalDto);
   }
 
   @Post(':id/approve/accountant')
@@ -174,7 +174,7 @@ export class ImprestController {
   ) {
     return this.imprestService.approveByAccountant(
       id,
-      req.user.id,
+      req.user.sub,
       approvalDto,
     );
   }
@@ -188,7 +188,7 @@ export class ImprestController {
     @Req() req: any,
     @Body() rejectionDto: ImprestRejectionDto,
   ) {
-    return this.imprestService.reject(id, req.user.id, rejectionDto);
+    return this.imprestService.reject(id, req.user.sub, rejectionDto);
   }
 
   @Post(':id/disburse')
@@ -205,7 +205,7 @@ export class ImprestController {
     }
     return this.imprestService.recordDisbursement(
       id,
-      req.user.id,
+      req.user.sub,
       disbursementDto,
     );
   }
@@ -297,7 +297,7 @@ export class ImprestController {
 
     return this.imprestService.submitAccounting(
       id,
-      req.user.id,
+      req.user.sub,
       { receipts, comments: accountingDto.comments },
       processedReceipts,
     );
@@ -325,7 +325,7 @@ export class ImprestController {
   ) {
     return this.imprestService.approveAccounting(
       id,
-      req.user.id,
+      req.user.sub,
       body.comments,
     );
   }

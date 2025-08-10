@@ -44,7 +44,7 @@ export class BudgetController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Req() req: any, @Body() dto: CreateBudgetDto): Promise<Budget> {
-    return this.budgetService.create(req.user.id, dto);
+    return this.budgetService.create(req.user.sub, dto);
   }
 
   @Get()
@@ -101,7 +101,7 @@ export class BudgetController {
     @Req() req: any,
     @Body() dto: UpdateBudgetDto,
   ): Promise<Budget> {
-    return this.budgetService.update(new Types.ObjectId(id), req.user.id, dto);
+    return this.budgetService.update(new Types.ObjectId(id), req.user.sub, dto);
   }
 
   @Post(':id/submit')
@@ -128,7 +128,7 @@ export class BudgetController {
   ): Promise<Budget> {
     return this.budgetService.submitForApproval(
       new Types.ObjectId(id),
-      req.user.id,
+      req.user.sub,
     );
   }
 
@@ -151,7 +151,7 @@ export class BudgetController {
     @Req() req: any,
     @Body() dto: BudgetApprovalDto,
   ): Promise<Budget> {
-    return this.budgetService.approve(new Types.ObjectId(id), req.user.id, dto);
+    return this.budgetService.approve(new Types.ObjectId(id), req.user.sub, dto);
   }
 
   @Post(':id/reject')
@@ -173,7 +173,7 @@ export class BudgetController {
     @Req() req: any,
     @Body() dto: BudgetRejectionDto,
   ): Promise<Budget> {
-    return this.budgetService.reject(new Types.ObjectId(id), req.user.id, dto);
+    return this.budgetService.reject(new Types.ObjectId(id), req.user.sub, dto);
   }
 
   @Post(':id/request-revision')
@@ -201,7 +201,7 @@ export class BudgetController {
   ): Promise<Budget> {
     return this.budgetService.requestRevision(
       new Types.ObjectId(id),
-      req.user.id,
+      req.user.sub,
       dto,
     );
   }

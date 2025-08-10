@@ -306,8 +306,8 @@ export class ProjectController {
       executionMemoUrl: executionMemoResult.secure_url,
       signedBudgetUrl: signedBudgetResult.secure_url,
       status: createProjectDto.status || 'draft',
-      createdBy: req.user.id,
-      updatedBy: req.user.id,
+      createdBy: req.user.sub,
+      updatedBy: req.user.sub,
       totalProjectValue: createProjectDto.totalProjectValue !== undefined ? Number(createProjectDto.totalProjectValue) : undefined,
     };
 
@@ -587,7 +587,7 @@ export class ProjectController {
         typeof updateProjectDto.riskAssessment === 'string'
           ? JSON.parse(updateProjectDto.riskAssessment)
           : updateProjectDto.riskAssessment,
-      updatedBy: req.user.id,
+      updatedBy: req.user.sub,
     };
 
     // Handle optional file uploads

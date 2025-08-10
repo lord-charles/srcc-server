@@ -229,6 +229,7 @@ export class AuthService {
       companyName: organization.companyName,
       registrationStatus: organization.registrationStatus,
       status: organization.status,
+      permissions: organization.permissions,
     };
     const token = this.jwtService.sign(payload);
     return {

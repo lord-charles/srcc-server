@@ -55,7 +55,7 @@ export class InvoiceController {
 
     @Body() dto: CreateInvoiceDto,
   ): Promise<Invoice> {
-    return this.invoiceService.create(req.user.id, dto);
+    return this.invoiceService.create(req.user.sub, dto);
   }
 
   @Get(':id')
@@ -78,7 +78,7 @@ export class InvoiceController {
 
     @Body() dto: UpdateInvoiceDto,
   ): Promise<Invoice> {
-    return this.invoiceService.update(new Types.ObjectId(id), req.user.id, dto);
+    return this.invoiceService.update(new Types.ObjectId(id), req.user.sub, dto);
   }
 
   @Post(':id/submit')
@@ -94,7 +94,7 @@ export class InvoiceController {
   ): Promise<Invoice> {
     return this.invoiceService.submitForApproval(
       new Types.ObjectId(id),
-      req.user.id,
+      req.user.sub,
     );
   }
 
@@ -109,7 +109,7 @@ export class InvoiceController {
   ): Promise<Invoice> {
     return this.invoiceService.approve(
       new Types.ObjectId(id),
-      req.user.id,
+      req.user.sub,
       dto,
     );
   }
@@ -123,7 +123,7 @@ export class InvoiceController {
 
     @Body() dto: InvoiceRejectionDto,
   ): Promise<Invoice> {
-    return this.invoiceService.reject(new Types.ObjectId(id), req.user.id, dto);
+    return this.invoiceService.reject(new Types.ObjectId(id), req.user.sub, dto);
   }
 
   @Post(':id/payments')
@@ -167,7 +167,7 @@ export class InvoiceController {
     };
     return this.invoiceService.recordPayment(
       new Types.ObjectId(id),
-      req.user.id,
+      req.user.sub,
       paymentDtoWithReceipt,
     );
   }
@@ -194,7 +194,7 @@ export class InvoiceController {
     return this.invoiceService.attachOrUpdateActualInvoice(
       new Types.ObjectId(id),
       uploadResult.secure_url,
-      req.user.id,
+      req.user.sub,
     );
   }
 
@@ -213,7 +213,7 @@ export class InvoiceController {
   ): Promise<Invoice> {
     return this.invoiceService.requestRevision(
       new Types.ObjectId(id),
-      req.user.id,
+      req.user.sub,
       dto,
     );
   }
