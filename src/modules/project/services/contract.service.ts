@@ -877,7 +877,7 @@ export class ContractService {
       .lean();
 
     if (!approvers.length) {
-      throw new Error(
+      throw new BadRequestException(
         `No active approvers found for level: ${level}. Please contact system administrator.`,
       );
     }
