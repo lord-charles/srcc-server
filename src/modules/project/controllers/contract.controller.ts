@@ -60,7 +60,7 @@ export class ContractController {
   async create(@Body() createContractDto: CreateContractDto, @Req() req) {
     return await this.contractService.create(
       createContractDto,
-      req.user.userId,
+      req.user.sub,
     );
   }
 
@@ -145,9 +145,9 @@ export class ContractController {
   })
   async findByUser(@Param('userId') userId: string, @Req() req) {
     // For team members, only allow them to see their own contracts
-    if (req.user.roles.includes('team_member') && req.user.userId !== userId) {
+    if (req.user.roles.includes('team_member') && req.user.sub !== userId) {
       this.logger.warn(
-        `User ${req.user.userId} attempted to access contracts for user ${userId}`,
+        `User ${req.user.sub} attempted to access contracts for user ${userId}`,
       );
       throw new BadRequestException('You can only view your own contracts');
     }
@@ -168,7 +168,7 @@ export class ContractController {
     description: 'Unauthorized.',
   })
   async findMyContracts(@Req() req) {
-    return await this.contractService.findMyContracts(req.user._id);
+    return await this.contractService.findMyContracts(req.user.sub);
   }
 
   @Get(':id')
@@ -193,10 +193,10 @@ export class ContractController {
     // For team members, only allow them to see their own contracts
     if (
       req.user.roles.includes('team_member') &&
-      contract.contractedUserId.toString() !== req.user.userId
+      contract.contractedUserId.toString() !== req.user.sub
     ) {
       this.logger.warn(
-        `User ${req.user.userId} attempted to access contract ${id}`,
+        `User ${req.user.sub} attempted to access contract ${id}`,
       );
       throw new BadRequestException('You can only view your own contracts');
     }
@@ -232,11 +232,11 @@ export class ContractController {
     @Body() updateContractDto: UpdateContractDto,
     @Req() req,
   ) {
-    this.logger.log(`Updating contract ${id} by user ${req.user.userId}`);
+    this.logger.log(`Updating contract ${id} by user ${req.user.sub}`);
     return await this.contractService.update(
       id,
       updateContractDto,
-      req.user.userId,
+      req.user.sub,
     );
   }
 
@@ -260,7 +260,7 @@ export class ContractController {
     description: 'Forbidden resource.',
   })
   async remove(@Param('id') id: string, @Req() req) {
-    this.logger.log(`Deleting contract ${id} by user ${req.user.userId}`);
+    this.logger.log(`Deleting contract ${id} by user ${req.user.sub}`);
     await this.contractService.remove(id);
     return { message: 'Contract successfully deleted' };
   }
@@ -286,7 +286,7 @@ export class ContractController {
   })
   async generateOTP(@Param('id') id: string, @Req() req) {
     this.logger.log(
-      `Generating OTP for contract ${id} requested by user ${req.user.userId}`,
+      `Generating OTP for contract ${id} requested by user ${req.user.sub}`,
     );
 
     // Get contract to check if user is authorized
@@ -295,10 +295,10 @@ export class ContractController {
     // For team members, only allow them to generate OTP for their own contracts
     if (
       req.user.roles.includes('team_member') &&
-      contract.contractedUserId.toString() !== req.user.userId
+      contract.contractedUserId.toString() !== req.user.sub
     ) {
       this.logger.warn(
-        `User ${req.user.userId} attempted to generate OTP for contract ${id}`,
+        `User ${req.user.sub} attempted to generate OTP for contract ${id}`,
       );
       throw new BadRequestException(
         'You can only generate OTP for your own contracts',
@@ -342,10 +342,10 @@ export class ContractController {
     // For team members, only allow them to verify OTP for their own contracts
     if (
       req.user.roles.includes('team_member') &&
-      contract.contractedUserId.toString() !== req.user.userId
+      contract.contractedUserId.toString() !== req.user.sub
     ) {
       this.logger.warn(
-        `User ${req.user.userId} attempted to verify OTP for contract ${id}`,
+        `User ${req.user.sub} attempted to verify OTP for contract ${id}`,
       );
       throw new BadRequestException(
         'You can only verify OTP for your own contracts',
@@ -356,7 +356,7 @@ export class ContractController {
       await this.contractService.verifyOTPAndAcceptContract(
         id,
         verifyContractOtpDto.otp,
-        req.user.userId,
+        req.user.sub,
       );
 
     return {
@@ -385,8 +385,8 @@ export class ContractController {
     @Body() approvalDto: ContractApprovalDto,
     @Req() req,
   ) {
-    this.logger.log(`Approving contract ${id} by user ${req.user.userId}`);
-    return await this.contractService.approve(id, req.user.userId, approvalDto);
+    this.logger.log(`Approving contract ${id} by user ${req.user.sub}`);
+    return await this.contractService.approve(id, req.user.sub, approvalDto);
   }
 
   @Post(':id/reject')
@@ -401,7 +401,7 @@ export class ContractController {
     @Body() rejectionDto: ContractRejectionDto,
     @Req() req,
   ) {
-    return await this.contractService.reject(id, req.user.userId, rejectionDto);
+    return await this.contractService.reject(id, req.user.sub, rejectionDto);
   }
 
 }

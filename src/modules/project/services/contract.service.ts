@@ -196,6 +196,7 @@ export class ContractService {
 
   //  * Find my contracts
   async findMyContracts(userId: string): Promise<Contract[]> {
+    console.log(userId);
     try {
       return await this.contractModel
         .find({ contractedUserId: new Types.ObjectId(userId) })
