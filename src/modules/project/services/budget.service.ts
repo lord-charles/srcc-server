@@ -190,7 +190,7 @@ export class BudgetService {
       .lean();
 
     if (!approvers.length) {
-      throw new Error(
+      throw new BadRequestException(
         `No active approvers found for level: ${level}. Please contact system administrator.`,
       );
     }
@@ -516,7 +516,7 @@ export class BudgetService {
         .select('-__v');
 
       if (!updatedBudget) {
-        throw new Error('Failed to update budget');
+        throw new BadRequestException('Failed to update budget');
       }
 
       return updatedBudget;
