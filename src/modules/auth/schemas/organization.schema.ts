@@ -176,6 +176,49 @@ export class Organization {
   @Prop({ required: false, unique: true })
   organizationId?: string;
 
+  @ApiProperty({
+    description: 'Roles assigned in the app',
+    example: ['consultant'],
+  })
+  @Prop({
+    type: [String],
+    default: ['consultant'],
+  })
+  roles: string[];
+  
+  @ApiProperty({
+    description: 'User module permissions',
+    example: {
+      '/projects': ['read', 'write'],
+      '/my-projects': ['read', 'write'],
+      '/budget': ['read'],
+      '/my-contracts': ['read', 'write'],
+      '/contracts': [],
+      '/claims': [],
+      '/my-claims': ['read', 'write'],
+      '/imprest': [],
+      '/my-imprest': ['read', 'write'],
+      '/users': [],
+    },
+    required: false,
+  })
+  @Prop({
+    type: Object,
+    default: {
+      '/projects': [],
+      '/my-projects': ['read', 'write'],
+      '/budget': [],
+      '/my-contracts': ['read', 'write'],
+      '/contracts': [],
+      '/claims': [],
+      '/my-claims': ['read', 'write'],
+      '/imprest': [],
+      '/my-imprest': ['read', 'write'],
+      '/users': [],
+    },
+  })
+  permissions: Record<string, string[]>;
+
   @ApiProperty({ description: 'Hashed password for the organization account' })
   @Prop({ required: false, select: false })
   password?: string;

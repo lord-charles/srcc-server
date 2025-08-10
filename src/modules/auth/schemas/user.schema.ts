@@ -441,6 +441,32 @@ export class User {
 
   @Prop({ select: false })
   emailVerificationPinExpires?: Date;
+
+  @ApiProperty({
+    description: 'User module permissions',
+    example: {
+      '/projects': ['read', 'write'],
+      '/my-projects': ['read', 'write'],
+      '/budget': ['read'],
+    },
+    required: false,
+  })
+  @Prop({
+    type: Object,
+    default: {
+      '/projects': [],
+      '/my-projects': ['read', 'write'],
+      '/budget': [],
+      '/my-contracts': ['read', 'write'],
+      '/contracts': [],
+      '/claims': [],
+      '/my-claims': ['read', 'write'],
+      '/imprest': [],
+      '/my-imprest': ['read', 'write'],
+      '/users': [],
+    },
+  })
+  permissions: Record<string, string[]>;
 }
 
 @Schema({ _id: false, timestamps: true })
