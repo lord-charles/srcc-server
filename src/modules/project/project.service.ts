@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
@@ -19,8 +19,18 @@ export class ProjectService {
   ) { }
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
-    const createdProject = new this.projectModel(createProjectDto);
-    return createdProject.save();
+    try {
+      const createdProject = new this.projectModel(createProjectDto);
+      return await createdProject.save();
+    } catch (error) {
+      // Log the error for debugging purposes
+      console.error('Error creating project:', error);
+
+      // Throw a more specific and user-friendly error message
+      throw new BadRequestException(
+        `Failed to create project. Please check the provided data. Error: ${error.message}`,
+      );
+    }
   }
 
   async findAll(query: any = {}, userId?: string): Promise<Project[]> {
