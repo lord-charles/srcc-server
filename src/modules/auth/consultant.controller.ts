@@ -173,10 +173,13 @@ export class ConsultantController {
         error instanceof BadRequestException ||
         error instanceof NotFoundException
       ) {
+      console.log(error.message);
+
         throw new BadRequestException(error.message);
       }
-      throw new BadRequestException(`Failed to verify OTP: ${error.message}`);
       console.log(error.message);
+
+      throw new BadRequestException(`Failed to verify OTP: ${error.message}`);
 
     }
   }
