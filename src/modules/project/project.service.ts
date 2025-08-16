@@ -23,12 +23,8 @@ export class ProjectService {
       const createdProject = new this.projectModel(createProjectDto);
       return await createdProject.save();
     } catch (error) {
-      // Log the error for debugging purposes
-      console.error('Error creating project:', error);
-
-      // Throw a more specific and user-friendly error message
       throw new BadRequestException(
-        `Failed to create project. Please check the provided data. Error: ${error.message}`,
+        `Error: ${error.message}`,
       );
     }
   }
