@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
 import { User, UserDocument } from '../auth/schemas/user.schema';
-import { Organization, OrganizationDocument } from '../auth/schemas/organization.schema';
+import {
+  Organization,
+  OrganizationDocument,
+} from '../auth/schemas/organization.schema';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { TeamMemberDto } from './dto/team-member.dto';
@@ -16,16 +23,14 @@ export class ProjectService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Organization.name)
     private organizationModel: Model<OrganizationDocument>,
-  ) { }
+  ) {}
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
     try {
       const createdProject = new this.projectModel(createProjectDto);
       return await createdProject.save();
     } catch (error) {
-      throw new BadRequestException(
-        `Error: ${error.message}`,
-      );
+      throw new BadRequestException(`Error: ${error.message}`);
     }
   }
 
@@ -33,10 +38,7 @@ export class ProjectService {
     // Determine if the requester is an admin (can be a User or Organization)
     let isAdmin = false;
     if (userId) {
-      const user = await this.userModel
-        .findById(userId)
-        .select('roles')
-        .lean();
+      const user = await this.userModel.findById(userId).select('roles').lean();
       if (user && Array.isArray(user.roles) && user.roles.includes('admin')) {
         isAdmin = true;
       } else {
@@ -57,6 +59,7 @@ export class ProjectService {
             { ...query },
             {
               $or: [
+                { createdBy: userId },
                 { projectManagerId: userId },
                 { 'teamMembers.userId': userId },
               ],
@@ -64,9 +67,7 @@ export class ProjectService {
           ],
         };
 
-    return this.projectModel
-      .find(finalQuery)
-      .exec();
+    return this.projectModel.find(finalQuery).exec();
   }
 
   async findOne(id: string): Promise<Project> {
