@@ -46,7 +46,6 @@ export class ImprestController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new imprest request' })
-  @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
@@ -63,12 +62,12 @@ export class ImprestController {
           example: 'Contingency Cash',
         },
         explanation: { type: 'string', example: 'January 2024 - January 2025' },
-        attachments: {
+        attachmentUrls: {
           type: 'array',
           items: {
             type: 'string',
-            format: 'binary',
           },
+          example: ['https://res.cloudinary.com/...'],
         },
       },
       required: [
@@ -84,27 +83,15 @@ export class ImprestController {
     status: 201,
     description: 'Imprest request created successfully.',
   })
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'attachments', maxCount: 15 }]),
-  )
-  async create(
-    @Body() createImprestDto: CreateImprestDto,
-    @Req() req: any,
-    @UploadedFiles() files: { attachments?: Express.Multer.File[] },
-  ) {
+  async create(@Body() createImprestDto: CreateImprestDto, @Req() req: any) {
     const attachments = [];
 
-    if (files?.attachments?.length) {
-      const uploadPromises = files.attachments.map((file) =>
-        this.cloudinaryService.uploadFile(file, 'imprest-attachments'),
-      );
-
-      const uploadResults = await Promise.all(uploadPromises);
-
-      for (let i = 0; i < uploadResults.length; i++) {
+    // Convert attachment URLs to attachment objects
+    if (createImprestDto.attachmentUrls?.length) {
+      for (let i = 0; i < createImprestDto.attachmentUrls.length; i++) {
         attachments.push({
-          fileName: files.attachments[i].originalname,
-          fileUrl: uploadResults[i].secure_url,
+          fileName: `Attachment ${i + 1}`,
+          fileUrl: createImprestDto.attachmentUrls[i],
           uploadedAt: new Date(),
         });
       }

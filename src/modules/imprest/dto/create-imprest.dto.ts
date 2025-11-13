@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsEnum, Min, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsEnum,
+  Min,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateImprestDto {
   @ApiProperty({
@@ -43,16 +50,17 @@ export class CreateImprestDto {
   @IsString()
   @IsNotEmpty()
   explanation: string;
-  
+
   @ApiProperty({
-    description: 'Optional file attachments',
+    description: 'Optional file attachment URLs from Cloudinary',
     type: 'array',
     items: {
       type: 'string',
-      format: 'binary',
     },
     required: false,
+    example: ['https://res.cloudinary.com/...'],
   })
   @IsOptional()
-  attachments?: any[];
+  @IsString({ each: true })
+  attachmentUrls?: string[];
 }
