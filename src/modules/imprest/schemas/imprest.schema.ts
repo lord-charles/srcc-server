@@ -15,7 +15,7 @@ export class Imprest {
   @ApiProperty({
     description: 'Department or account',
   })
-  @Prop({ required: true, trim: true })
+  @Prop({ required: false, trim: true })
   department: string;
 
   @ApiProperty({
@@ -163,12 +163,14 @@ export class Imprest {
     type: {
       verifiedBy: { type: Types.ObjectId, ref: 'User' },
       verifiedAt: Date,
-      receipts: [{
-        description: String,
-        amount: Number,
-        receiptUrl: String,
-        uploadedAt: Date,
-      }],
+      receipts: [
+        {
+          description: String,
+          amount: Number,
+          receiptUrl: String,
+          uploadedAt: Date,
+        },
+      ],
       totalAmount: Number,
       balance: Number,
       comments: String,
@@ -189,16 +191,18 @@ export class Imprest {
     comments?: string;
   };
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Optional file attachments for the imprest request',
     type: [Object],
   })
   @Prop({
-    type: [{
-      fileName: String,
-      fileUrl: String,
-      uploadedAt: Date,
-    }],
+    type: [
+      {
+        fileName: String,
+        fileUrl: String,
+        uploadedAt: Date,
+      },
+    ],
     default: [],
   })
   attachments?: {
@@ -206,7 +210,6 @@ export class Imprest {
     fileUrl: string;
     uploadedAt: Date;
   }[];
-  
 }
 
 export const ImprestSchema = SchemaFactory.createForClass(Imprest);

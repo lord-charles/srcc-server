@@ -1,186 +1,162 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
-  IsDate,
-  IsNumber,
-  IsBoolean,
+  IsNotEmpty,
   IsOptional,
+  IsNumber,
+  IsDateString,
   IsArray,
   ValidateNested,
-  IsEmail,
+  IsEnum,
   IsMongoId,
   IsUrl,
-  IsEnum,
-  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Schema as MongooseSchema } from 'mongoose';
-import { TeamMemberDto } from './team-member.dto';
 
-export class MilestoneDto {
-  @ApiProperty({ description: 'Milestone title' })
+class TeamMemberDto {
+  @ApiProperty({ example: '507f1f77bcf86cd799439011' })
+  @IsMongoId()
+  @IsNotEmpty()
+  userId: string;
+
+  @ApiProperty({ example: '2024-01-01' })
+  @IsDateString()
+  @IsNotEmpty()
+  startDate: string;
+
+  @ApiProperty({ example: '2024-12-31' })
+  @IsDateString()
+  @IsOptional()
+  endDate?: string;
+
+  @ApiProperty({ example: ['Frontend Development', 'UI/UX Design'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  responsibilities?: string[];
+}
+
+class MilestoneDto {
+  @ApiProperty({ example: 'Phase 1 Completion' })
   @IsString()
+  @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ description: 'Milestone description' })
+  @ApiProperty({ example: 'Complete initial system setup and configuration' })
   @IsString()
-  description: string;
-
-  @ApiProperty({ description: 'Due date of milestone' })
-  @IsDate()
-  @Type(() => Date)
-  dueDate: Date;
-
-  @ApiProperty({ description: 'Milestone completion status' })
-  @IsBoolean()
-  completed: boolean;
-
-  @ApiProperty({ description: 'Milestone completion date' })
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  completionDate?: Date;
+  description?: string;
 
-  @ApiProperty({ description: 'Milestone budget' })
-  @IsNumber()
-  budget: number;
+  @ApiProperty({ example: '2024-03-31' })
+  @IsDateString()
+  @IsNotEmpty()
+  dueDate: string;
 
-  @ApiProperty({ description: 'Milestone actual cost' })
+  @ApiProperty({ example: false })
   @IsOptional()
+  completed?: boolean;
+
+  @ApiProperty({ example: null })
+  @IsDateString()
+  @IsOptional()
+  completionDate?: string;
+
+  @ApiProperty({ example: 1000000 })
   @IsNumber()
+  @IsOptional()
+  budget?: number;
+
+  @ApiProperty({ example: null })
+  @IsNumber()
+  @IsOptional()
   actualCost?: number;
 }
 
-export class RiskAssessmentDto {
-  @ApiProperty({ description: 'Risk factors', required: false, default: [] })
-  @IsOptional()
+class RiskAssessmentDto {
+  @ApiProperty({ example: ['Technical complexity', 'Resource availability'] })
   @IsArray()
   @IsString({ each: true })
-  factors: string[] = [];
+  @IsOptional()
+  factors?: string[];
 
   @ApiProperty({
-    description: 'Risk mitigation strategies',
-    required: false,
-    default: [],
+    example: ['Regular technical reviews', 'Early resource planning'],
   })
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  mitigationStrategies: string[] = [];
-
-  @ApiProperty({ description: 'Last risk assessment date', required: false })
   @IsOptional()
-  @Type(() => Date)
+  mitigationStrategies?: string[];
+
+  @ApiProperty({ example: '2024-01-01' })
+  @IsDateString()
+  @IsOptional()
   lastAssessmentDate?: string;
 
-  @ApiProperty({ description: 'Next risk assessment string', required: false })
+  @ApiProperty({ example: '2024-02-01' })
+  @IsDateString()
   @IsOptional()
-  @Type(() => Date)
-  nextAssessmentDate?: Date;
+  nextAssessmentDate?: string;
 }
 
-export class FinancialTrackingDto {
-  @ApiProperty({ description: 'Invoices', required: false, default: [] })
-  @IsOptional()
+class FinancialTrackingDto {
+  @ApiProperty({ example: ['Invoice 1', 'Invoice 2'] })
   @IsArray()
-  invoices: any[] = [];
+  @IsString({ each: true })
+  @IsOptional()
+  invoices?: string[];
 
-  @ApiProperty({ description: 'Expenses', required: false, default: [] })
-  @IsOptional()
+  @ApiProperty({ example: ['Expense 1', 'Expense 2'] })
   @IsArray()
-  expenses: any[] = [];
+  @IsString({ each: true })
+  @IsOptional()
+  expenses?: string[];
 }
 
 export class CreateProjectDto {
-  @ApiProperty({
-    example: 'Health System Upgrade',
-    description: 'The name of the project. Should be unique and descriptive.',
-  })
-  @IsNotEmpty()
+  @ApiProperty({ example: 'Health System Upgrade' })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @ApiProperty({
-    example: 'SU',
-    description: 'The department of the project',
-  })
-  @IsNotEmpty()
+  @ApiProperty({ example: 'ILAB' })
   @IsString()
+  @IsNotEmpty()
   department: string;
 
-  @ApiProperty({
-    example:
-      'A comprehensive project to upgrade the health system infrastructure including new equipment and staff training.',
-    description:
-      'Detailed description of the project scope, objectives, and expected outcomes.',
-  })
-  @IsNotEmpty()
+  @ApiProperty({ example: 'Comprehensive upgrade of the hospital management system' })
   @IsString()
+  @IsNotEmpty()
   description: string;
 
-  // @ApiProperty({
-  //   example: 5000000,
-  //   description: 'Total budget allocated for the project in the specified currency'
-  // })
-  // @IsNotEmpty()
-  // @IsNumber()
-  // totalBudget: number;
-
-  @ApiProperty({
-    example: 4800000,
-    description: 'Total estimated value of the project deliverables',
-  })
-  @IsNotEmpty()
+  @ApiProperty({ example: 2300000 })
   @IsNumber()
+  @IsNotEmpty()
   totalProjectValue: number;
 
-  @ApiProperty({
-    example: 'USD',
-    description: 'Currency code for all monetary values in the project',
-  })
-  @IsNotEmpty()
+  @ApiProperty({ example: 'KES' })
   @IsString()
+  @IsNotEmpty()
+  @IsEnum(['KES', 'USD', 'EUR', 'GBP'])
   currency: string;
 
-  @ApiProperty({
-    example: '2024-01-01T00:00:00.000Z',
-    description: 'Date when the contract/project officially starts',
-  })
+  @ApiProperty({ example: '2024-01-01' })
+  @IsDateString()
   @IsNotEmpty()
-  @Type(() => Date)
-  @IsDate()
-  contractStartDate: Date;
+  contractStartDate: string;
 
-  @ApiProperty({
-    example: '2025-12-31T00:00:00.000Z',
-    description: 'Date when the contract/project is scheduled to end',
-  })
+  @ApiProperty({ example: '2024-12-31' })
+  @IsDateString()
   @IsNotEmpty()
-  @Type(() => Date)
-  @IsDate()
-  contractEndDate: Date;
+  contractEndDate: string;
 
-  @ApiProperty({
-    example: 'Ministry of Health',
-    description: 'Name of the client organization funding the project',
-  })
-  @IsNotEmpty()
+  @ApiProperty({ example: 'Ministry of Health' })
   @IsString()
+  @IsNotEmpty()
   client: string;
 
-  @ApiProperty({
-    example: 'active',
-    description: 'Current status of the project',
-    enum: [
-      'draft',
-      'pending_approval',
-      'active',
-      'on_hold',
-      'completed',
-      'cancelled',
-    ],
-  })
-  @IsNotEmpty()
+  @ApiProperty({ example: 'draft' })
+  @IsString()
+  @IsOptional()
   @IsEnum([
     'draft',
     'pending_approval',
@@ -189,123 +165,96 @@ export class CreateProjectDto {
     'completed',
     'cancelled',
   ])
-  status: string;
+  status?: string;
 
-  @ApiProperty({
-    description: 'Project manager ID reference',
-    example: '507f1f77bcf86cd799439011',
-  })
-  @IsOptional()
+  @ApiProperty({ example: '507f1f77bcf86cd799439011' })
   @IsMongoId()
-  projectManagerId?: MongooseSchema.Types.ObjectId;
+  @IsNotEmpty()
+  projectManagerId: string;
 
-  @ApiProperty({
-    description: 'Team members',
-    type: [TeamMemberDto],
-  })
-  @IsOptional()
+  @ApiProperty({ type: [TeamMemberDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TeamMemberDto)
+  @IsOptional()
   teamMembers?: TeamMemberDto[];
 
-  @ApiProperty({
-    description: 'Project milestones',
-    type: [MilestoneDto],
-  })
-  @IsOptional()
+  @ApiProperty({ type: [MilestoneDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MilestoneDto)
+  @IsOptional()
   milestones?: MilestoneDto[];
 
-  @ApiProperty({
-    example:
-      'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/project-proposal.pdf',
-    description: 'Cloudinary URL for the uploaded project proposal document',
-  })
+  @ApiProperty({ type: RiskAssessmentDto })
+  @ValidateNested()
+  @Type(() => RiskAssessmentDto)
   @IsOptional()
-  @IsUrl()
-  projectProposalUrl?: string;
+  riskAssessment?: RiskAssessmentDto;
 
-  @ApiProperty({
-    example:
-      'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-contract.pdf',
-    description: 'Cloudinary URL for the uploaded signed contract document',
-  })
-  @IsOptional()
-  @IsUrl()
-  signedContractUrl?: string;
-
-  @ApiProperty({
-    example:
-      'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/execution-memo.pdf',
-    description: 'Cloudinary URL for the uploaded contract execution memo',
-  })
-  @IsOptional()
-  @IsUrl()
-  contractExecutionMemoUrl?: string;
-
-  @ApiProperty({
-    example:
-      'https://res.cloudinary.com/your-cloud-name/raw/upload/v1234567890/signed-budget.pdf',
-    description: 'Cloudinary URL for the uploaded signed budget document',
-  })
-  @IsOptional()
-  @IsUrl()
-  signedBudgetUrl?: string;
-
-  @ApiProperty({ example: 'Public Procurement' })
-  @IsNotEmpty()
+  @ApiProperty({ example: 'Monthly' })
   @IsString()
+  @IsOptional()
+  @IsEnum(['Weekly', 'Biweekly', 'Monthly', 'Quarterly'])
+  reportingFrequency?: string;
+
+  @ApiProperty({ example: 'http://example.com/proposal.pdf' })
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  projectProposalUrl: string;
+
+  @ApiProperty({ example: 'http://example.com/contract.pdf' })
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  signedContractUrl: string;
+
+  @ApiProperty({ example: 'http://example.com/memo.pdf' })
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  executionMemoUrl: string;
+
+  @ApiProperty({ example: 'http://example.com/budget.pdf' })
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  signedBudgetUrl: string;
+
+  @ApiProperty({ example: 'Open Tender' })
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum([
+    'Open Tender',
+    'Restricted Tender',
+    'Direct Procurement',
+    'Request for Quotation',
+  ])
   procurementMethod: string;
 
   @ApiProperty({ example: 'High' })
   @IsOptional()
   @IsEnum(['Low', 'Medium', 'High'])
-  riskLevel?: string;
+  riskLevel: string;
 
-  @ApiProperty({
-    description: 'Risk assessment details',
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => RiskAssessmentDto)
-  riskAssessment?: RiskAssessmentDto;
-
-  @ApiProperty({
-    example: 'Monthly',
-    enum: ['Weekly', 'Biweekly', 'Monthly', 'Quarterly'],
-  })
-  @IsOptional()
-  @IsEnum(['Weekly', 'Biweekly', 'Monthly', 'Quarterly'])
-  reportingFrequency?: string;
-
-  @ApiProperty({
-    description: 'Actual completion date',
-  })
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  actualCompletionDate?: Date;
-
-  @ApiProperty({ example: 0 })
-  @IsOptional()
-  @IsNumber()
-  amountSpent?: number;
-
-  @ApiProperty({
-    description: 'Financial tracking details',
-  })
-  @IsOptional()
+  @ApiProperty({ type: FinancialTrackingDto })
   @ValidateNested()
   @Type(() => FinancialTrackingDto)
+  @IsOptional()
   financialTracking?: FinancialTrackingDto;
 
-  @ApiProperty({
-    description: 'Key performance indicators',
-  })
-  @IsOptional()
+  @ApiProperty({ example: ['KPI 1', 'KPI 2'] })
   @IsArray()
-  kpis?: any[];
+  @IsString({ each: true })
+  @IsOptional()
+  kpis?: string[];
+
+  @IsOptional()
+  @IsString()
+  createdBy?: string;
+
+  @IsOptional()
+  @IsString()
+  updatedBy?: string;
 }

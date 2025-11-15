@@ -32,6 +32,7 @@ import {
   RequestPasswordResetDto,
 } from './dto/reset-password.dto';
 import { LoginType } from './types/auth.types';
+import { UpdateUserDto } from './dto/user.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -278,5 +279,38 @@ export class AuthController {
       throw new Error('Invalid user document type');
     }
     return this.authService.sanitizeUser(req.user);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Post('/permissions/:userId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update user permissions',
+    description: `Update module permissions for a specific user. This endpoint is restricted to admin users only.`,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User permissions updated successfully',
+    schema: {
+      properties: {
+        id: { type: 'string' },
+        firstName: { type: 'string' },
+        lastName: { type: 'string' },
+        email: { type: 'string' },
+        permissions: { type: 'object' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  @ApiBearerAuth()
+  async updateUserPermissions(
+    @Param('userId') userId: string,
+    @Body() updatePermissionsDto: UpdateUserDto,
+  ) {
+    return this.authService.updateUserPermissions(userId, updatePermissionsDto.permissions);
   }
 }

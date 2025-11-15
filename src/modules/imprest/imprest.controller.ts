@@ -46,7 +46,6 @@ export class ImprestController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new imprest request' })
-  @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
@@ -63,12 +62,12 @@ export class ImprestController {
           example: 'Contingency Cash',
         },
         explanation: { type: 'string', example: 'January 2024 - January 2025' },
-        attachments: {
+        attachmentUrls: {
           type: 'array',
           items: {
             type: 'string',
-            format: 'binary',
           },
+          example: ['https://res.cloudinary.com/...'],
         },
       },
       required: [
@@ -84,27 +83,15 @@ export class ImprestController {
     status: 201,
     description: 'Imprest request created successfully.',
   })
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'attachments', maxCount: 15 }]),
-  )
-  async create(
-    @Body() createImprestDto: CreateImprestDto,
-    @Req() req: any,
-    @UploadedFiles() files: { attachments?: Express.Multer.File[] },
-  ) {
+  async create(@Body() createImprestDto: CreateImprestDto, @Req() req: any) {
     const attachments = [];
 
-    if (files?.attachments?.length) {
-      const uploadPromises = files.attachments.map((file) =>
-        this.cloudinaryService.uploadFile(file, 'imprest-attachments'),
-      );
-
-      const uploadResults = await Promise.all(uploadPromises);
-
-      for (let i = 0; i < uploadResults.length; i++) {
+    // Convert attachment URLs to attachment objects
+    if (createImprestDto.attachmentUrls?.length) {
+      for (let i = 0; i < createImprestDto.attachmentUrls.length; i++) {
         attachments.push({
-          fileName: files.attachments[i].originalname,
-          fileUrl: uploadResults[i].secure_url,
+          fileName: `Attachment ${i + 1}`,
+          fileUrl: createImprestDto.attachmentUrls[i],
           uploadedAt: new Date(),
         });
       }
@@ -112,7 +99,7 @@ export class ImprestController {
 
     return this.imprestService.create(
       createImprestDto,
-      req.user.id,
+      req.user.sub,
       attachments,
     );
   }
@@ -137,7 +124,7 @@ export class ImprestController {
     description: 'Returns all imprest requests created by the user.',
   })
   async findMyImprests(@Req() req: any) {
-    return this.imprestService.findMyImprests(req.user.id);
+    return this.imprestService.findMyImprests(req.user.sub);
   }
 
   @Get(':id')
@@ -157,7 +144,7 @@ export class ImprestController {
     @Req() req: any,
     @Body() approvalDto: ImprestApprovalDto,
   ) {
-    return this.imprestService.approveByHod(id, req.user.id, approvalDto);
+    return this.imprestService.approveByHod(id, req.user.sub, approvalDto);
   }
 
   @Post(':id/approve/accountant')
@@ -174,7 +161,7 @@ export class ImprestController {
   ) {
     return this.imprestService.approveByAccountant(
       id,
-      req.user.id,
+      req.user.sub,
       approvalDto,
     );
   }
@@ -188,7 +175,7 @@ export class ImprestController {
     @Req() req: any,
     @Body() rejectionDto: ImprestRejectionDto,
   ) {
-    return this.imprestService.reject(id, req.user.id, rejectionDto);
+    return this.imprestService.reject(id, req.user.sub, rejectionDto);
   }
 
   @Post(':id/disburse')
@@ -205,7 +192,7 @@ export class ImprestController {
     }
     return this.imprestService.recordDisbursement(
       id,
-      req.user.id,
+      req.user.sub,
       disbursementDto,
     );
   }
@@ -297,7 +284,7 @@ export class ImprestController {
 
     return this.imprestService.submitAccounting(
       id,
-      req.user.id,
+      req.user.sub,
       { receipts, comments: accountingDto.comments },
       processedReceipts,
     );
@@ -325,7 +312,7 @@ export class ImprestController {
   ) {
     return this.imprestService.approveAccounting(
       id,
-      req.user.id,
+      req.user.sub,
       body.comments,
     );
   }

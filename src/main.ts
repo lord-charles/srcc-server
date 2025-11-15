@@ -56,7 +56,7 @@ async function bootstrap() {
   });
 
   const port = configService.get<number>('PORT', 5000);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   // Log the URLs
   const logger = new Logger('Bootstrap');

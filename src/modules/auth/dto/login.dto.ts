@@ -13,7 +13,7 @@ import { LoginType } from '../types/auth.types';
 export class LoginUserDto {
   @ApiProperty({
     description: 'Account password',
-    example: 'securePassword123',
+    example: 'cmihunyo@strathmore.edu',
   })
   @IsString()
   @IsNotEmpty()
@@ -21,7 +21,7 @@ export class LoginUserDto {
 
   @ApiProperty({
     description: 'Employee email address',
-    example: 'jane.wanjiku@company.com',
+    example: 'cmihunyo@strathmore.edu',
   })
   @IsEmail()
   @IsNotEmpty()
@@ -39,7 +39,7 @@ export class LoginUserDto {
 export class EmailDto {
   @ApiProperty({
     description: 'Employee email address',
-    example: 'jane.wanjiku@company.com',
+    example: 'cmihunyo@strathmore.edu',
   })
   @IsEmail()
   @IsNotEmpty()

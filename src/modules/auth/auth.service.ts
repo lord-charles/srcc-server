@@ -40,6 +40,8 @@ export class AuthService {
     private readonly consultantService: ConsultantService,
     @InjectModel(Organization.name)
     private organizationModel: Model<OrganizationDocument>,
+    @InjectModel(User.name)
+    private userModel: Model<UserDocument>,
   ) {}
 
   async login(
@@ -227,6 +229,7 @@ export class AuthService {
       companyName: organization.companyName,
       registrationStatus: organization.registrationStatus,
       status: organization.status,
+      permissions: organization.permissions,
     };
     const token = this.jwtService.sign(payload);
     return {
@@ -525,8 +528,11 @@ export class AuthService {
       isEmailVerified: user.isEmailVerified || false,
       firstName: user.firstName,
       lastName: user.lastName,
+      permissions: user.permissions,
     };
   }
+
+
 
   async getUserProfile(userId: string): Promise<Partial<User>> {
     const user = await this.userService.findById(userId);
@@ -534,5 +540,24 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
     return this.sanitizeUser(user as UserDocument);
+  }
+
+  async updateUserPermissions(
+    userId: string,
+    permissions: Record<string, string[]>,
+  ): Promise<Partial<User>> {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Update only the permissions field
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      { $set: { permissions } },
+      { new: true, runValidators: true }
+    ).exec();
+    
+    return this.sanitizeUser(updatedUser as UserDocument);
   }
 }

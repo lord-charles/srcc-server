@@ -216,6 +216,7 @@ export class ContractService {
 
   //  * Find my contracts
   async findMyContracts(userId: string): Promise<Contract[]> {
+    console.log(userId);
     try {
       return await this.contractModel
         .find({ contractedUserId: new Types.ObjectId(userId) })
@@ -897,7 +898,7 @@ export class ContractService {
       .lean();
 
     if (!approvers.length) {
-      throw new Error(
+      throw new BadRequestException(
         `No active approvers found for level: ${level}. Please contact system administrator.`,
       );
     }

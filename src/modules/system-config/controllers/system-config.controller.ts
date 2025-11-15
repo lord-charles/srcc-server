@@ -29,7 +29,7 @@ export class SystemConfigController {
   @Roles('admin', 'hr')
   @ApiOperation({ summary: 'Create a new system configuration' })
   create(@Body() createDto: CreateSystemConfigDto, @Req() req) {
-    return this.systemConfigService.create(createDto, req.user.id);
+    return this.systemConfigService.create(createDto, req.user.sub);
   }
 
   @Get()
@@ -61,7 +61,7 @@ export class SystemConfigController {
     @Body() updateDto: UpdateSystemConfigDto,
     @Req() req,
   ) {
-    return this.systemConfigService.update(key, updateDto, req.user.id);
+    return this.systemConfigService.update(key, updateDto, req.user.sub);
   }
 
   @Delete(':key')

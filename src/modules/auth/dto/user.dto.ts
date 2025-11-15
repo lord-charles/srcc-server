@@ -197,6 +197,18 @@ export class CreateUserDto {
   @ValidateNested()
   @Type(() => EmergencyContactDto)
   emergencyContact?: EmergencyContactDto;
+
+  @ApiProperty({
+    description: 'User module permissions',
+    example: {
+      '/projects': ['read', 'write'],
+      '/my-projects': ['read', 'write'],
+      '/budget': ['read'],
+    },
+    required: false,
+  })
+  @IsOptional()
+  permissions?: Record<string, string[]>;
 }
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}
