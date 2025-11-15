@@ -15,6 +15,9 @@ import { Budget, BudgetSchema } from './schemas/budget.schema';
 import { Contract, ContractSchema } from './schemas/contract.schema';
 import { ContractController } from './controllers/contract.controller';
 import { ContractService } from './services/contract.service';
+import { ContractTemplate, ContractTemplateSchema } from './schemas/contract-template.schema';
+import { ContractTemplateController } from './controllers/contract-template.controller';
+import { ContractTemplateService } from './services/contract-template.service';
 
 @Module({
   imports: [
@@ -24,6 +27,7 @@ import { ContractService } from './services/contract.service';
       { name: Invoice.name, schema: InvoiceSchema },
       { name: Budget.name, schema: BudgetSchema },
       { name: User.name, schema: UserSchema },
+      { name: ContractTemplate.name, schema: ContractTemplateSchema },
     ]),
     CloudinaryModule,
   ],
@@ -32,6 +36,7 @@ import { ContractService } from './services/contract.service';
     InvoiceController,
     BudgetController,
     ContractController,
+    ContractTemplateController,
   ],
   providers: [
     ProjectService,
@@ -39,7 +44,9 @@ import { ContractService } from './services/contract.service';
     BudgetService,
     NotificationService,
     ContractService,
+    ContractTemplateService,
   ],
   exports: [ProjectService, ContractService],
 })
 export class ProjectModule {}
+

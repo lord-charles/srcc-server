@@ -17,6 +17,7 @@ import { ConfigService } from '@nestjs/config';
 import { Project } from 'project';
 import { ContractApprovalDto, ContractRejectionDto } from '../dto/contract-approval.dto';
 import { Claim, ClaimDocument } from 'src/modules/claims/schemas/claim.schema';
+import { ContractTemplate, ContractTemplateDocument } from '../schemas/contract-template.schema';
 
 interface OtpData {
   otp: string;
@@ -47,6 +48,7 @@ export class ContractService {
     @InjectModel(Contract.name) private contractModel: Model<ContractDocument>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
+    @InjectModel(ContractTemplate.name) private templateModel: Model<ContractTemplateDocument>,
     private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
   ) {
@@ -122,12 +124,30 @@ export class ContractService {
 
       const contractNumber = await this.generateContractNumber();
 
+      // Optionally embed template snapshot if templateId provided
+      let templateSnapshot: any = undefined;
+      if (createContractDto.templateId) {
+        const tpl = await this.templateModel.findById(createContractDto.templateId).lean();
+        if (!tpl) {
+          throw new NotFoundException(`Template with ID ${createContractDto.templateId} not found`);
+        }
+        templateSnapshot = {
+          name: tpl.name,
+          version: tpl.version,
+          contentType: tpl.contentType,
+          content: tpl.content,
+          variables: tpl.variables || [],
+        };
+      }
+
       const newContract = new this.contractModel({
         ...createContractDto,
         contractNumber,
         createdBy: new Types.ObjectId(currentUserId),
         updatedBy: new Types.ObjectId(currentUserId),
         status: 'pending_finance_approval',
+        ...(createContractDto.templateId && { templateId: new Types.ObjectId(createContractDto.templateId) }),
+        ...(templateSnapshot && { templateSnapshot }),
       });
 
       const savedContract = await newContract.save();

@@ -174,6 +174,29 @@ export class Contract extends Document {
     reason: string;
     level: string;
   };
+
+  @ApiProperty({ description: 'Reference to the selected template used for this contract' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'ContractTemplate', required: false })
+  templateId?: MongooseSchema.Types.ObjectId;
+
+  @ApiProperty({ description: 'Snapshot of the template content at the time of contract creation' })
+  @Prop({
+    type: {
+      name: { type: String },
+      version: { type: String },
+      contentType: { type: String },
+      content: { type: String },
+      variables: { type: [String], default: [] }
+    },
+    required: false,
+  })
+  templateSnapshot?: {
+    name: string;
+    version: string;
+    contentType: string;
+    content: string;
+    variables?: string[];
+  };
 }
 
 export const ContractSchema = SchemaFactory.createForClass(Contract);

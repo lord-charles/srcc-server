@@ -82,4 +82,13 @@ export class CreateContractDto {
     changedFields: string[];
     approvedBy: string;
   }[];
+
+  @ApiProperty({
+    description: 'Optional reference to the contract template to use',
+    example: '60d21b4667d0d8992e610c85',
+    required: false,
+  })
+  @IsMongoId()
+  @IsOptional()
+  templateId?: string;
 }
