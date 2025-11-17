@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsDate,
+  IsEnum,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateContractDto {
@@ -54,7 +62,8 @@ export class CreateContractDto {
   projectId: string;
 
   @ApiProperty({
-    description: 'Reference to the contracted user (team member or project manager)',
+    description:
+      'Reference to the contracted user (team member or project manager)',
     example: '60d21b4667d0d8992e610c85',
   })
   @IsMongoId()
@@ -63,10 +72,24 @@ export class CreateContractDto {
 
   @ApiProperty({
     description: 'Contract status',
-    enum: ['draft', 'pending_signature', 'active', 'suspended', 'terminated', 'completed'],
+    enum: [
+      'draft',
+      'pending_signature',
+      'active',
+      'suspended',
+      'terminated',
+      'completed',
+    ],
     default: 'draft',
   })
-  @IsEnum(['draft', 'pending_signature', 'active', 'suspended', 'terminated', 'completed'])
+  @IsEnum([
+    'draft',
+    'pending_signature',
+    'active',
+    'suspended',
+    'terminated',
+    'completed',
+  ])
   @IsOptional()
   status?: string;
 
@@ -91,4 +114,13 @@ export class CreateContractDto {
   @IsMongoId()
   @IsOptional()
   templateId?: string;
+
+  @ApiProperty({
+    description:
+      'Edited template content (if admin made changes to the template)',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  editedTemplateContent?: string;
 }

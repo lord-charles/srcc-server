@@ -15,9 +15,15 @@ import * as crypto from 'crypto';
 import { User } from 'src/modules/auth/schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { Project } from 'project';
-import { ContractApprovalDto, ContractRejectionDto } from '../dto/contract-approval.dto';
+import {
+  ContractApprovalDto,
+  ContractRejectionDto,
+} from '../dto/contract-approval.dto';
 import { Claim, ClaimDocument } from 'src/modules/claims/schemas/claim.schema';
-import { ContractTemplate, ContractTemplateDocument } from '../schemas/contract-template.schema';
+import {
+  ContractTemplate,
+  ContractTemplateDocument,
+} from '../schemas/contract-template.schema';
 
 interface OtpData {
   otp: string;
@@ -40,15 +46,16 @@ export class ContractService {
   } as const;
 
   private readonly approvalDeadlines = {
-    finance: 48, 
-    md: 72, 
+    finance: 48,
+    md: 72,
   } as const;
 
   constructor(
     @InjectModel(Contract.name) private contractModel: Model<ContractDocument>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
-    @InjectModel(ContractTemplate.name) private templateModel: Model<ContractTemplateDocument>,
+    @InjectModel(ContractTemplate.name)
+    private templateModel: Model<ContractTemplateDocument>,
     private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
   ) {
@@ -127,15 +134,20 @@ export class ContractService {
       // Optionally embed template snapshot if templateId provided
       let templateSnapshot: any = undefined;
       if (createContractDto.templateId) {
-        const tpl = await this.templateModel.findById(createContractDto.templateId).lean();
+        const tpl = await this.templateModel
+          .findById(createContractDto.templateId)
+          .lean();
         if (!tpl) {
-          throw new NotFoundException(`Template with ID ${createContractDto.templateId} not found`);
+          throw new NotFoundException(
+            `Template with ID ${createContractDto.templateId} not found`,
+          );
         }
         templateSnapshot = {
           name: tpl.name,
           version: tpl.version,
           contentType: tpl.contentType,
-          content: tpl.content,
+          // Use edited content if provided, otherwise use original template content
+          content: createContractDto.editedTemplateContent || tpl.content,
           variables: tpl.variables || [],
         };
       }
@@ -146,7 +158,9 @@ export class ContractService {
         createdBy: new Types.ObjectId(currentUserId),
         updatedBy: new Types.ObjectId(currentUserId),
         status: 'pending_finance_approval',
-        ...(createContractDto.templateId && { templateId: new Types.ObjectId(createContractDto.templateId) }),
+        ...(createContractDto.templateId && {
+          templateId: new Types.ObjectId(createContractDto.templateId),
+        }),
         ...(templateSnapshot && { templateSnapshot }),
       });
 
@@ -251,7 +265,7 @@ export class ContractService {
   //  * Find a contract by ID
   async findOne(id: string): Promise<Contract> {
     try {
-      const contract = await this.contractModel 
+      const contract = await this.contractModel
         .findById(id)
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('projectId', 'name')
@@ -569,7 +583,6 @@ export class ContractService {
     }
   }
 
-
   //  * Send contract acceptance confirmation
   private async sendContractAcceptanceConfirmation(
     contract: Contract,
@@ -679,23 +692,28 @@ export class ContractService {
     const nextLevel = 'finance';
     const approvers = await this.getApprovers(nextLevel);
 
-    const updatedContract = await this.contractModel.findByIdAndUpdate(
-      id,
-      {
-        status: nextStatus,
-        updatedBy: userId,
-        currentLevelDeadline: this.calculateDeadline(this.approvalDeadlines.finance),
-        $push: {
-          amendments: {
-            date: new Date(),
-            description: 'Contract submitted for financial review and approval',
-            changedFields: ['status'],
-            approvedBy: userId,
+    const updatedContract = await this.contractModel
+      .findByIdAndUpdate(
+        id,
+        {
+          status: nextStatus,
+          updatedBy: userId,
+          currentLevelDeadline: this.calculateDeadline(
+            this.approvalDeadlines.finance,
+          ),
+          $push: {
+            amendments: {
+              date: new Date(),
+              description:
+                'Contract submitted for financial review and approval',
+              changedFields: ['status'],
+              approvedBy: userId,
+            },
           },
         },
-      },
-      { new: true },
-    ).populate('projectId contractedUserId');
+        { new: true },
+      )
+      .populate('projectId contractedUserId');
 
     await this.notifyApprovers(updatedContract, approvers, nextLevel);
 
@@ -709,7 +727,7 @@ export class ContractService {
   }
 
   async approve(
-    id:   string,
+    id: string,
     userId: string,
     dto: ContractApprovalDto,
   ): Promise<Contract> {
@@ -764,11 +782,9 @@ export class ContractService {
       };
     }
 
-    const updatedContract = await this.contractModel.findByIdAndUpdate(
-      id,
-      update,
-      { new: true },
-    ).populate('projectId contractedUserId');
+    const updatedContract = await this.contractModel
+      .findByIdAndUpdate(id, update, { new: true })
+      .populate('projectId contractedUserId');
 
     // Notify relevant parties based on approval stage
     if (nextLevel) {
@@ -787,7 +803,9 @@ export class ContractService {
     level: string,
   ): Promise<void> {
     const project = await this.projectModel.findById(contract.projectId);
-    const contractedUser = await this.userModel.findById(contract.contractedUserId);
+    const contractedUser = await this.userModel.findById(
+      contract.contractedUserId,
+    );
 
     const emailTemplate = this.generateApprovalEmailTemplate(
       contract,
@@ -876,10 +894,11 @@ export class ContractService {
   }
 
   private formatRole(role: string): string {
-    return role === 'md' 
+    return role === 'md'
       ? 'Managing Director'
-      : role.split('_')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      : role
+          .split('_')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
   }
 
@@ -905,7 +924,6 @@ export class ContractService {
 
     return approvers;
   }
-
 
   private async notifyContractActivation(contract: Contract): Promise<void> {
     const user = await this.userModel.findById(contract.contractedUserId);
@@ -979,7 +997,7 @@ export class ContractService {
     user: User,
   ): Promise<void> {
     const project = await this.projectModel.findById(contract.projectId);
-    
+
     if (!project) {
       throw new NotFoundException('Project not found');
     }
@@ -1035,38 +1053,35 @@ export class ContractService {
       throw new BadRequestException('Contract is not in an approvable status');
     }
 
-    const updatedContract = await this.contractModel.findByIdAndUpdate(
-      id,
-      {
-        status: 'rejected',
-        updatedBy: userId,
-        currentLevelDeadline: null,
-        rejectionDetails: {
-          rejectedBy: userId,
-          rejectedAt: new Date(),
-          reason: dto.reason,
-          level: dto.level,
-        },
-        $push: {
-          amendments: {
-            date: new Date(),
-            description: `Contract rejected by ${this.formatRole(dto.level)}`,
-            changedFields: ['status'],
-            approvedBy: userId,
+    const updatedContract = await this.contractModel
+      .findByIdAndUpdate(
+        id,
+        {
+          status: 'rejected',
+          updatedBy: userId,
+          currentLevelDeadline: null,
+          rejectionDetails: {
+            rejectedBy: userId,
+            rejectedAt: new Date(),
+            reason: dto.reason,
+            level: dto.level,
+          },
+          $push: {
+            amendments: {
+              date: new Date(),
+              description: `Contract rejected by ${this.formatRole(dto.level)}`,
+              changedFields: ['status'],
+              approvedBy: userId,
+            },
           },
         },
-      },
-      { new: true },
-    ).populate('projectId contractedUserId');
+        { new: true },
+      )
+      .populate('projectId contractedUserId');
 
     // Notify stakeholders of rejection
     // const user = await this.userModel.findById(contract.contractedUserId);
 
-
     return updatedContract;
   }
-
-  
 }
-
-
