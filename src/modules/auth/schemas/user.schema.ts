@@ -313,16 +313,15 @@ export class User {
   })
   @Prop({
     type: [String],
-    set: function (workTypes: any) {
+    get: function (workTypes: any) {
       // Handle null/undefined
       if (!workTypes) return [];
 
-      // If it's a string, try to parse it (handles stringified arrays from DB)
+      // If it's a string, try to parse it (handles corrupted data from DB)
       if (typeof workTypes === 'string') {
         try {
           workTypes = JSON.parse(workTypes);
         } catch (e) {
-          // If parsing fails, treat as single value
           return [workTypes];
         }
       }
@@ -334,7 +333,28 @@ export class User {
           .filter((val) => val && typeof val === 'string');
       }
 
-      // Fallback for any other type
+      return [];
+    },
+    set: function (workTypes: any) {
+      // Handle null/undefined
+      if (!workTypes) return [];
+
+      // If it's a string, try to parse it
+      if (typeof workTypes === 'string') {
+        try {
+          workTypes = JSON.parse(workTypes);
+        } catch (e) {
+          return [workTypes];
+        }
+      }
+
+      // Flatten deeply nested arrays and filter out empty values
+      if (Array.isArray(workTypes)) {
+        return workTypes
+          .flat(Infinity)
+          .filter((val) => val && typeof val === 'string');
+      }
+
       return [];
     },
   })
@@ -490,6 +510,8 @@ export class Counter {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.set('toJSON', { getters: true });
+UserSchema.set('toObject', { getters: true });
 export const CounterSchema = SchemaFactory.createForClass(Counter);
 
 UserSchema.pre<UserDocument>('save', async function (next) {
