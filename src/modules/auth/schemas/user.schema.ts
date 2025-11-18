@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 export type UserDocument = User & Document;
@@ -312,7 +312,7 @@ export class User {
     type: [String],
   })
   @Prop({
-    type: [String],
+    type: MongooseSchema.Types.Mixed,
     get: function (workTypes: any) {
       // Handle null/undefined
       if (!workTypes) return [];
