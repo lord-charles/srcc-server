@@ -314,19 +314,28 @@ export class User {
   @Prop({
     type: [String],
     set: function (workTypes: any) {
-      // If it's a string, try to parse it
+      // Handle null/undefined
+      if (!workTypes) return [];
 
+      // If it's a string, try to parse it (handles stringified arrays from DB)
       if (typeof workTypes === 'string') {
         try {
           workTypes = JSON.parse(workTypes);
         } catch (e) {
-          workTypes = [workTypes];
+          // If parsing fails, treat as single value
+          return [workTypes];
         }
       }
-      // Flatten the array in case it's nested
-      return Array.isArray(workTypes)
-        ? workTypes.flat(Infinity).filter(Boolean)
-        : [];
+
+      // Flatten deeply nested arrays and filter out empty values
+      if (Array.isArray(workTypes)) {
+        return workTypes
+          .flat(Infinity)
+          .filter((val) => val && typeof val === 'string');
+      }
+
+      // Fallback for any other type
+      return [];
     },
   })
   preferredWorkTypes: string[];
