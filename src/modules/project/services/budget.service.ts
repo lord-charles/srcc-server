@@ -30,7 +30,7 @@ export class BudgetService {
     @InjectModel(Project.name) private projectModel: Model<Project>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly notificationService: NotificationService,
-  ) { }
+  ) {}
 
   private async notifyStakeholders(
     budget: Budget,
@@ -100,15 +100,16 @@ export class BudgetService {
             <p><strong>Version:</strong> ${budget.version}</p>
           </div>
 
-          ${comments
-        ? `
+          ${
+            comments
+              ? `
           <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
             <h3 style="color: #34495e; margin-top: 0;">Comments</h3>
             <p>${comments}</p>
           </div>
           `
-        : ''
-      }
+              : ''
+          }
 
           <div style="background-color: white; padding: 15px; border-radius: 5px;">
             <p style="margin-bottom: 20px;">You can view the complete budget details in the <a href="https://srcc.strathmore.edu/budgets/${budget.id}" style="color: #3498db; text-decoration: none;">SRCC Portal</a>.</p>
@@ -374,11 +375,11 @@ export class BudgetService {
   ): Promise<Budget> {
     const budget = await this.findOne(id);
 
-    if (budget.status !== 'draft' && budget.status !== 'revision_requested') {
-      throw new BadRequestException(
-        'Budget can only be updated when in draft or revision requested status',
-      );
-    }
+    // if (budget.status !== 'draft' && budget.status !== 'revision_requested') {
+    //   throw new BadRequestException(
+    //     'Budget can only be updated when in draft or revision requested status',
+    //   );
+    // }
 
     // Increment version when significant changes are made
     const shouldIncrementVersion =
@@ -429,7 +430,7 @@ export class BudgetService {
   }
 
   async create(userId: Types.ObjectId, dto: CreateBudgetDto): Promise<Budget> {
-    console.log("budget creator id", userId);
+    console.log('budget creator id', userId);
     const project = await this.projectModel.findById(dto.projectId);
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -740,7 +741,6 @@ export class BudgetService {
     return budget;
   }
 
-
   async findAll(): Promise<Budget[]> {
     return this.budgetModel
       .find()
@@ -838,15 +838,16 @@ export class BudgetService {
             </div>
           </div>
 
-          ${budget.notes
-        ? `
+          ${
+            budget.notes
+              ? `
           <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
             <h3 style="color: #34495e; margin-top: 0;">Additional Notes</h3>
             <p style="margin: 0;">${budget.notes}</p>
           </div>
           `
-        : ''
-      }
+              : ''
+          }
 
           <div style="background-color: white; padding: 15px; border-radius: 5px;">
             <p style="margin-bottom: 20px;">You can view the complete budget details in the <a href="https://srcc.strathmore.edu/budgets/${budget.id}" style="color: #3498db; text-decoration: none;">SRCC Portal</a>.</p>
