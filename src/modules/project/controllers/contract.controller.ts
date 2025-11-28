@@ -57,7 +57,7 @@ export class ContractController {
     status: HttpStatus.FORBIDDEN,
     description: 'Forbidden resource.',
   })
-  async create(@Body() createContractDto: CreateContractDto, @Req() req) {
+  async create(@Body() createContractDto: CreateContractDto, @Req() req: any) {
     return await this.contractService.create(
       createContractDto,
       req.user.sub,

@@ -171,6 +171,25 @@ export class Invoice extends Document {
   @Prop()
   actualInvoice?: string;
 
+  @ApiProperty({ description: 'Attachments for the invoice', type: [Object] })
+  @Prop({
+    type: [
+      {
+        name: { type: String, required: true },
+        url: { type: String, required: true },
+        type: { type: String },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  attachments: {
+    name: string;
+    url: string;
+    type?: string;
+    uploadedAt: Date;
+  }[];
+
   @ApiProperty({ description: 'Payment tracking' })
   @Prop({ type: [PaymentDetails], default: [] })
   payments: PaymentDetails[];

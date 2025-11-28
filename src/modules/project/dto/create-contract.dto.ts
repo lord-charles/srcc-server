@@ -7,6 +7,9 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsArray,
+  ValidateNested,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -123,4 +126,30 @@ export class CreateContractDto {
   @IsString()
   @IsOptional()
   editedTemplateContent?: string;
+
+  @ApiProperty({
+    description: 'Optional attachments (URLs) to include with this contract',
+    required: false,
+    type: () => [AttachmentDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
+}
+
+export class AttachmentDto {
+  @ApiProperty({ example: 'Signed Offer Letter' })
+  @IsString()
+  name: string;
+
+  @ApiProperty({ example: 'https://res.cloudinary.com/.../offer.pdf' })
+  @IsUrl()
+  url: string;
+
+  @ApiProperty({ example: 'supporting', required: false })
+  @IsOptional()
+  @IsString()
+  type?: string;
 }

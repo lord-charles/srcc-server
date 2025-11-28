@@ -67,7 +67,10 @@ export class ProjectService {
           ],
         };
 
-    return this.projectModel.find(finalQuery).exec();
+    return this.projectModel
+      .find(finalQuery)
+      .populate('createdBy', 'firstName lastName email')
+      .exec();
   }
 
   async findOne(id: string): Promise<Project> {

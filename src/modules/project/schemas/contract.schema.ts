@@ -197,6 +197,25 @@ export class Contract extends Document {
     content: string;
     variables?: string[];
   };
+
+  @ApiProperty({ description: 'Additional document attachments for the contract', type: [Object] })
+  @Prop({
+    type: [
+      {
+        name: { type: String},
+        url: { type: String},
+        type: { type: String },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  attachments: {
+    name: string;
+    url: string;
+    type?: string;
+    uploadedAt: Date;
+  }[];
 }
 
 export const ContractSchema = SchemaFactory.createForClass(Contract);

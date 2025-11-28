@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsDate, IsArray, ValidateNested, IsOptional, IsEnum, Min, IsMongoId, ArrayMinSize } from 'class-validator';
+import { IsString, IsNumber, IsDate, IsArray, ValidateNested, IsOptional, IsEnum, Min, IsMongoId, ArrayMinSize, IsUrl } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class InvoiceItemDto {
@@ -100,68 +100,67 @@ export class CreateInvoiceDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({
+    description: 'Optional attachments for this invoice',
+    required: false,
+    type: () => [AttachmentDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AttachmentDto)
+  attachments?: AttachmentDto[];
 }
 
 export class UpdateInvoiceDto extends CreateInvoiceDto {}
 
 export class CreatePaymentDto {
-  @ApiProperty({
-    example: 100000,
-    description: 'Amount paid in this transaction'
-  })
+  @ApiProperty({ example: 100000, description: 'Amount paid in this transaction' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   amountPaid: number;
 
-  @ApiProperty({
-    type: 'string',
-    format: 'binary',
-    required: false,
-    description: 'Payment receipt file (PDF, image, etc.)'
-  })
-  receiptFile?: Express.Multer.File;
+  @ApiProperty({ description: 'Payment method', enum: ['bank_transfer', 'cheque', 'mpesa', 'cash'], required: false })
+  @IsOptional()
+  @IsString()
+  method?: string;
 
-  @ApiProperty({
-    example: 'Payment for milestone 1',
-    description: 'Comments about this payment',
-    required: false
-  })
+  @ApiProperty({ example: 'TRX123456', description: 'Payment reference number', required: false })
+  @IsOptional()
+  @IsString()
+  referenceNumber?: string;
+
+  @ApiProperty({ example: '2025-02-20', description: 'Date when the payment was made' })
+  @Type(() => Date)
+  @IsDate()
+  paidAt: Date;
+
+  @ApiProperty({ description: 'Payment receipt URL', required: false })
+  @IsOptional()
+  @IsUrl()
+  receiptUrl?: string;
+
+  @ApiProperty({ example: 'Payment for milestone 1', description: 'Comments about this payment', required: false })
   @IsOptional()
   @IsString()
   comments?: string;
+}
 
-  @ApiProperty({
-    example: 'MPESA',
-    description: 'Payment method used'
-  })
+export class AttachmentDto {
+  @ApiProperty({ example: 'Delivery Note', description: 'Attachment name' })
   @IsString()
-  @IsOptional()
-  paymentMethod: string;
+  name: string;
 
-  @ApiProperty({
-    example: 'QK7XLPBRN5',
-    description: 'Reference number for the payment'
-  })
-  @IsString()
-  @IsOptional()
-  referenceNumber: string;
+  @ApiProperty({ example: 'https://res.cloudinary.com/.../file.pdf', description: 'Attachment URL' })
+  @IsUrl()
+  url: string;
 
-  @ApiProperty({
-    example: '2025-02-20',
-    description: 'Date when the payment was made'
-  })
-  @Type(() => Date)
-  @IsDate()
-  paymentDate: Date;
-
-  @ApiProperty({
-    example: 'First installment payment',
-    description: 'Additional notes about the payment'
-  })
+  @ApiProperty({ example: 'supporting', required: false })
   @IsOptional()
   @IsString()
-  notes?: string;
+  type?: string;
 }
 
 export class InvoiceApprovalDto {

@@ -157,6 +157,12 @@ export class Project {
   executionMemoUrl: string;
 
   @ApiProperty({
+    example: 'https://res.cloudinary.com/example/signed-budget.pdf',
+  })
+  @Prop({ required: true })
+  signedBudgetUrl: string;
+
+  @ApiProperty({
     description: 'Document references for additional uploads',
     type: [Object],
   })
