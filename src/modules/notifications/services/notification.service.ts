@@ -27,10 +27,12 @@ export class NotificationService {
     message: string,
   ): Promise<boolean> {
     try {
+      const portalUrl = 'https://cleanuri.com/JWpdAE';
+      const finalSmsMessage = `${message}\nAccess SRCC Portal: ${portalUrl}`;
       const response = await axios.post(process.env.SMS_API_URL, {
         apikey: process.env.SMS_API_KEY,
         partnerID: process.env.SMS_PARTNER_ID,
-        message: message,
+        message: finalSmsMessage,
         shortcode: process.env.SMS_SHORTCODE,
         mobile: phoneNumber,
       });
@@ -53,10 +55,12 @@ export class NotificationService {
 
   async sendSMS(phoneNumber: string, message: string): Promise<boolean> {
     try {
+      const portalUrl = 'https://cleanuri.com/JWpdAE';
+      const finalMessage = `${message}\nAccess SRCC Portal: ${portalUrl}`;
       const response = await axios.post(process.env.SMS_API_URL, {
         apikey: process.env.SMS_API_KEY,
         partnerID: process.env.SMS_PARTNER_ID,
-        message: message,
+        message: finalMessage,
         shortcode: process.env.SMS_SHORTCODE,
         mobile: phoneNumber,
       });
@@ -137,6 +141,16 @@ export class NotificationService {
             font-size: 12px;
             color: #666;
           }
+          .cta {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 10px 16px;
+            background-color: #003366;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+          }
           @media only screen and (max-width: 600px) {
             .container {
               width: 100%;
@@ -155,9 +169,13 @@ export class NotificationService {
             <div class="message">
               ${message.replace(/\n/g, '<br>')}
             </div>
+            <div style="text-align:center;">
+              <a class="cta" href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener">Access SRCC Portal</a>
+            </div>
             <div class="footer">
               <p>This is an automated message from SRCC. Please do not reply to this email.</p>
               <p>If you have any questions, please contact our support team.</p>
+              <p>Portal: <a href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener">https://cleanuri.com/JWpdAE</a></p>
             </div>
           </div>
         </div>
@@ -225,9 +243,13 @@ export class NotificationService {
             <div style="background-color: #ffffff; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               ${message.replace(/\n/g, '<br>')}
             </div>
+            <div style="text-align:center; margin-top: 16px;">
+              <a href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener" style="display:inline-block;padding:10px 16px;background:#003366;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold;">Access SRCC Portal</a>
+            </div>
             <div style="margin-top: 20px; padding: 20px; border-top: 1px solid #eee; color: #666; font-size: 12px;">
               <p>This is an automated message from SRCC. Please do not reply to this email.</p>
               <p>If you have any questions, please contact our support team.</p>
+              <p>Portal: <a href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener">https://cleanuri.com/JWpdAE</a></p>
             </div>
           </div>
         `,
