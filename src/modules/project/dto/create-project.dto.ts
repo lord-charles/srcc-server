@@ -199,10 +199,10 @@ export class CreateProjectDto {
   reportingFrequency?: string;
 
   @ApiProperty({ example: 'http://example.com/proposal.pdf' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @IsUrl()
-  projectProposalUrl: string;
+  projectProposalUrl?: string;
 
   @ApiProperty({ example: 'http://example.com/contract.pdf' })
   @IsString()

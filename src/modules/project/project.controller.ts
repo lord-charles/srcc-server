@@ -48,7 +48,6 @@ export class ProjectController {
     Required documents will be uploaded directly as URLs.
     
     Required documents:
-    - Project Proposal
     - Signed Contract
     - Contract Execution Memo
     - Signed Budget

@@ -141,8 +141,8 @@ export class Project {
   @ApiProperty({
     example: 'https://res.cloudinary.com/example/project-proposal.pdf',
   })
-  @Prop({ required: true })
-  projectProposalUrl: string;
+  @Prop()
+  projectProposalUrl?: string;
 
   @ApiProperty({
     example: 'https://res.cloudinary.com/example/signed-contract.pdf',
