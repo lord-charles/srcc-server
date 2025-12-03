@@ -657,7 +657,6 @@ export class ContractService {
       </ul>
     </div>
     <p>Your contract is now active. Please log in to the SRCC portal for further details and to track your project progress.</p>
-    <a href="https://portal.srcc.com" class="button">Log in to SRCC Portal</a>
   </div>
   <div class="footer">
     <p>Best regards,<br>SRCC Management Team</p>
@@ -878,7 +877,7 @@ export class ContractService {
           </div>
 
           <div style="text-align: center; margin-top: 20px;">
-            <a href="https://srcc.strathmore.edu/contracts/${contract._id}/review" 
+            <a href="https://srcc.cognitron.co.ke/contracts" 
                style="display: inline-block; background-color: #2ecc71; color: white; padding: 12px 24px; 
                       text-decoration: none; border-radius: 5px; font-weight: bold;">
               Review Contract
@@ -965,18 +964,6 @@ export class ContractService {
                 <li>Enter the OTP to formally accept the contract</li>
               </ol>
             </div>
-
-            <div style="text-align: center; margin-top: 20px;">
-              <a href="https://srcc.strathmore.edu/contracts/${contract._id}/accept" 
-                 style="display: inline-block; background-color: #2ecc71; color: white; padding: 12px 24px; 
-                        text-decoration: none; border-radius: 5px; font-weight: bold;">
-                Review and Accept Contract
-              </a>
-            </div>
-          </div>
-          
-          <div style="font-size: 12px; color: #666; margin-top: 20px;">
-            <p>If you have any questions, please contact the SRCC support team.</p>
           </div>
         </div>
       </div>

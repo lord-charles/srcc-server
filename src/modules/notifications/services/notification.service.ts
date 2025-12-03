@@ -172,11 +172,6 @@ export class NotificationService {
             <div style="text-align:center;">
               <a class="cta" href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener">Access SRCC Portal</a>
             </div>
-            <div class="footer">
-              <p>This is an automated message from SRCC. Please do not reply to this email.</p>
-              <p>If you have any questions, please contact our support team.</p>
-              <p>Portal: <a href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener">https://cleanuri.com/JWpdAE</a></p>
-            </div>
           </div>
         </div>
       </body>
@@ -249,7 +244,6 @@ export class NotificationService {
             <div style="margin-top: 20px; padding: 20px; border-top: 1px solid #eee; color: #666; font-size: 12px;">
               <p>This is an automated message from SRCC. Please do not reply to this email.</p>
               <p>If you have any questions, please contact our support team.</p>
-              <p>Portal: <a href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener">https://cleanuri.com/JWpdAE</a></p>
             </div>
           </div>
         `,
