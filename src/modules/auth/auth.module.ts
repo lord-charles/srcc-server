@@ -26,6 +26,7 @@ import {
 } from './schemas/organization.schema';
 import { SystemLogsModule } from '../system-logs/system-logs.module';
 import { OrganizationService } from './organization.service';
+import { Project, ProjectSchema } from '../project/schemas/project.schema';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { OrganizationService } from './organization.service';
       { name: User.name, schema: UserSchema },
       { name: Organization.name, schema: OrganizationSchema },
       { name: SystemLog.name, schema: SystemLogSchema },
+      { name: Project.name, schema: ProjectSchema },
     ]),
     CloudinaryModule,
     JwtModule.registerAsync({

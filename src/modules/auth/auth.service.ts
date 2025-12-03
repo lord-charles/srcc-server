@@ -29,6 +29,7 @@ import {
 } from './dto/reset-password.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { Project, ProjectDocument } from '../project/schemas/project.schema';
 
 @Injectable()
 export class AuthService {
@@ -42,6 +43,8 @@ export class AuthService {
     private organizationModel: Model<OrganizationDocument>,
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
+    @InjectModel(Project.name)
+    private projectModel: Model<ProjectDocument>,
   ) {}
 
   async login(
@@ -135,7 +138,7 @@ export class AuthService {
       req,
     );
     return {
-      user: this.sanitizeUser(user as UserDocument),
+      user: await this.sanitizeUser(user as UserDocument),
       token: token.token,
       type: 'user',
     };
@@ -515,8 +518,14 @@ export class AuthService {
     };
   }
 
-  sanitizeUser(user: UserDocument): any {
+  async sanitizeUser(user: UserDocument): Promise<any> {
     const { password, ...userWithoutPassword } = user.toObject();
+
+    // Check if user has any projects (as creator or project manager)
+    const hasProject = await this.projectModel.exists({
+      $or: [{ createdBy: user._id }, { projectManagerId: user._id }],
+    });
+
     return {
       ...userWithoutPassword,
       _id: user._id,
@@ -529,17 +538,16 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       permissions: user.permissions,
+      hasProject: !!hasProject,
     };
   }
-
-
 
   async getUserProfile(userId: string): Promise<Partial<User>> {
     const user = await this.userService.findById(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    return this.sanitizeUser(user as UserDocument);
+    return await this.sanitizeUser(user as UserDocument);
   }
 
   async updateUserPermissions(
@@ -552,12 +560,14 @@ export class AuthService {
     }
 
     // Update only the permissions field
-    const updatedUser = await this.userModel.findByIdAndUpdate(
-      userId,
-      { $set: { permissions } },
-      { new: true, runValidators: true }
-    ).exec();
-    
-    return this.sanitizeUser(updatedUser as UserDocument);
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $set: { permissions } },
+        { new: true, runValidators: true },
+      )
+      .exec();
+
+    return await this.sanitizeUser(updatedUser as UserDocument);
   }
 }
