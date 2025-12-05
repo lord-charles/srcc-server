@@ -218,6 +218,10 @@ export class ContractService {
         .find(query)
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('projectId', 'name')
+        .populate('amendments.approvedBy', 'firstName lastName email')
+        .populate('approvalFlow.financeApprovals.approverId', 'firstName lastName email')
+        .populate('approvalFlow.mdApprovals.approverId', 'firstName lastName email')
+        .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
     } catch (error) {
       this.logger.error(
@@ -236,6 +240,10 @@ export class ContractService {
         .find({ contractedUserId: new Types.ObjectId(userId) })
         .populate('projectId', 'name milestones')
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
+        .populate('amendments.approvedBy', 'firstName lastName email')
+        .populate('approvalFlow.financeApprovals.approverId', 'firstName lastName email')
+        .populate('approvalFlow.mdApprovals.approverId', 'firstName lastName email')
+        .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
     } catch (error) {
       this.logger.error(
@@ -252,6 +260,10 @@ export class ContractService {
       return await this.contractModel
         .find({ projectId: new Types.ObjectId(projectId) })
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
+        .populate('amendments.approvedBy', 'firstName lastName email')
+        .populate('approvalFlow.financeApprovals.approverId', 'firstName lastName email')
+        .populate('approvalFlow.mdApprovals.approverId', 'firstName lastName email')
+        .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
     } catch (error) {
       this.logger.error(
@@ -271,6 +283,10 @@ export class ContractService {
         .populate('projectId', 'name')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
+        .populate('amendments.approvedBy', 'firstName lastName email')
+        .populate('approvalFlow.financeApprovals.approverId', 'firstName lastName email')
+        .populate('approvalFlow.mdApprovals.approverId', 'firstName lastName email')
+        .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
 
       if (!contract) {
@@ -338,6 +354,10 @@ export class ContractService {
         .populate('projectId', 'name')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
+        .populate('amendments.approvedBy', 'firstName lastName email')
+        .populate('approvalFlow.financeApprovals.approverId', 'firstName lastName email')
+        .populate('approvalFlow.mdApprovals.approverId', 'firstName lastName email')
+        .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
 
       if (!contract) {
@@ -783,7 +803,11 @@ export class ContractService {
 
     const updatedContract = await this.contractModel
       .findByIdAndUpdate(id, update, { new: true })
-      .populate('projectId contractedUserId');
+      .populate('projectId contractedUserId')
+      .populate('amendments.approvedBy', 'firstName lastName email')
+      .populate('approvalFlow.financeApprovals.approverId', 'firstName lastName email')
+      .populate('approvalFlow.mdApprovals.approverId', 'firstName lastName email')
+      .populate('finalApproval.approvedBy', 'firstName lastName email');
 
     // Notify relevant parties based on approval stage
     if (nextLevel) {
