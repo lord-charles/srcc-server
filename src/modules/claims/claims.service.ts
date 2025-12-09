@@ -85,6 +85,10 @@ export class ClaimsService {
     claim: ClaimDocument,
     userId: Types.ObjectId,
   ): Promise<void> {
+    this.logger.log(
+      `notifyStakeholders called for claim ${claim._id} with status: ${claim.status}`,
+    );
+
     const [project, claimant, updatedBy] = await Promise.all([
       this.projectModel.findById(claim.projectId),
       this.userModel.findById(claim.claimantId),
@@ -100,39 +104,52 @@ export class ClaimsService {
       project.department,
     );
 
+    // Check if status is a pending approval status
+    if (
+      claim.status.startsWith('pending_') &&
+      claim.status.endsWith('_approval')
+    ) {
+      this.logger.log(`Processing pending approval status: ${claim.status}`);
+
+      const currentRole = claim.status
+        .replace('pending_', '')
+        .replace('_approval', '') as ApprovalRole;
+
+      this.logger.log(`Extracted role: ${currentRole}`);
+
+      // Find the current step in the approval flow to get the correct department
+      const currentStep = approvalFlow.steps.find(
+        (step) => `pending_${step.role}_approval` === claim.status,
+      );
+
+      this.logger.log(
+        `Current step found: ${currentStep ? JSON.stringify(currentStep) : 'Not found'}`,
+      );
+
+      const departmentForApprovers =
+        currentStep?.department || project.department;
+
+      this.logger.log(`Department for approvers: ${departmentForApprovers}`);
+
+      const approvers = await this.getApprovers(
+        currentRole,
+        departmentForApprovers,
+      );
+
+      this.logger.log(`Sending notification to ${approvers.length} approvers`);
+
+      await this.claimsNotificationService.notifyClaimSubmitted(
+        claim,
+        project,
+        claimant,
+        approvers,
+      );
+      return;
+    }
+
     switch (claim.status as ClaimStatus) {
-      case 'pending_checker_approval':
-      case 'pending_reviewer_approval':
-      case 'pending_approver_approval':
-      case 'pending_srcc_checker_approval':
-      case 'pending_srcc_finance_approval':
-      case 'pending_director_approval':
-      case 'pending_academic_director_approval':
-      case 'pending_finance_approval': {
-        const currentRole = claim.status
-          .replace('pending_', '')
-          .replace('_approval', '') as ApprovalRole;
-
-        // Find the current step in the approval flow to get the correct department
-        const currentStep = approvalFlow.steps.find(
-          (step) => `pending_${step.role}_approval` === claim.status,
-        );
-
-        const departmentForApprovers =
-          currentStep?.department || project.department;
-        const approvers = await this.getApprovers(
-          currentRole,
-          departmentForApprovers,
-        );
-        await this.claimsNotificationService.notifyClaimSubmitted(
-          claim,
-          project,
-          claimant,
-          approvers,
-        );
-        break;
-      }
       case 'approved':
+        this.logger.log('Notifying claim approved');
         await this.claimsNotificationService.notifyClaimApproved(
           claim,
           project,
@@ -141,6 +158,7 @@ export class ClaimsService {
         );
         break;
       case 'rejected': {
+        this.logger.log('Notifying claim rejected');
         // Get rejection comments from the rejection details
         const level = claim.rejection?.level;
         let comments = 'No reason provided';
@@ -160,6 +178,7 @@ export class ClaimsService {
         break;
       }
       case 'revision_requested':
+        this.logger.log('Notifying claim revision requested');
         await this.claimsNotificationService.notifyClaimUpdated(
           claim,
           project,
@@ -168,6 +187,7 @@ export class ClaimsService {
         );
         break;
       case 'paid':
+        this.logger.log('Notifying claim paid');
         await this.claimsNotificationService.notifyClaimPaid(
           claim,
           project,
@@ -176,6 +196,7 @@ export class ClaimsService {
         );
         break;
       case 'cancelled':
+        this.logger.log('Notifying claim cancelled');
         await this.claimsNotificationService.notifyClaimCancelled(
           claim,
           project,
@@ -184,6 +205,7 @@ export class ClaimsService {
         );
         break;
       case 'draft': {
+        this.logger.log('Notifying claim created (draft)');
         // For draft, get the first step's department
         const firstStep = approvalFlow.steps[0];
         const departmentForApprovers =
@@ -196,6 +218,8 @@ export class ClaimsService {
         );
         break;
       }
+      default:
+        this.logger.warn(`No notification handler for status: ${claim.status}`);
     }
   }
 
