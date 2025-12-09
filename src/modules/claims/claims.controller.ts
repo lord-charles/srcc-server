@@ -634,4 +634,26 @@ export class ClaimsController {
       req.user.sub,
     );
   }
+
+  @Get('by-project/:projectId')
+  @ApiOperation({
+    summary: 'Get all claims for a specific project',
+    description:
+      'Returns all claims associated with the given project ID, sorted by creation date in descending order. Includes milestone details and populated references.',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns an array of ClaimDocument objects with populated references including project, contract, claimant, and milestone details',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid project ID format' })
+  async findClaimsByProject(
+    @Param('projectId') projectId: string,
+    @Request() req: any,
+  ) {
+    return await this.claimsService.findClaimsByProject(
+      projectId,
+      req.user.sub,
+    );
+  }
 }

@@ -508,6 +508,59 @@ export class ClaimsService {
     }
   }
 
+  async findClaimsByProject(projectId: string, userId: string): Promise<any[]> {
+    try {
+      // Get user to check authorization
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Get project to check authorization
+      const project = await this.projectModel.findById(projectId);
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+
+      // Check if user is authorized to view project claims
+      const isAdmin = user.roles?.includes('admin');
+      const isProjectCreator = project.createdBy?.toString() === userId;
+      const isProjectManager = project.projectManagerId?.toString() === userId;
+      const isAssistantPM = project.assistantProjectManagers?.some(
+        (apm) => apm.userId.toString() === userId,
+      );
+
+      if (
+        !isAdmin &&
+        !isProjectCreator &&
+        !isProjectManager &&
+        !isAssistantPM
+      ) {
+        throw new BadRequestException(
+          'You are not authorized to view claims for this project',
+        );
+      }
+
+      return await this.claimModel
+        .find({
+          projectId: new Types.ObjectId(projectId),
+        })
+        .populate('projectId', 'name description')
+        .populate('contractId', 'contractNumber contractValue')
+        .populate('claimantId', 'firstName lastName email')
+        .populate('createdBy', 'firstName lastName')
+        .populate('updatedBy', 'firstName lastName')
+        .sort({ createdAt: -1 })
+        .exec();
+    } catch (error) {
+      this.logger.error(
+        `Error finding claims for project ${projectId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
   async findOne(id: string, userId: Types.ObjectId) {
     const claim = await this.claimModel
       .findOne({ _id: id, claimantId: userId })
