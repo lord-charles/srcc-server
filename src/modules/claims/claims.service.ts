@@ -384,8 +384,33 @@ export class ClaimsService {
   async findAll(userId: Types.ObjectId) {
     return this.claimModel
       .find({ claimantId: userId })
-      .populate('projectId', 'name')
-      .populate('contractId', 'contractNumber')
+      .populate('projectId', 'name description')
+      .populate({
+        path: 'contractId',
+        select:
+          'contractNumber contractValue currency status startDate endDate description',
+        populate: [
+          {
+            path: 'projectId',
+            select: 'name description',
+          },
+          {
+            path: 'createdBy',
+            select: 'firstName lastName email',
+          },
+          {
+            path: 'contractedUserId',
+            select: 'firstName lastName email',
+          },
+        ],
+      })
+      .populate('claimantId', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email')
+      .populate('updatedBy', 'firstName lastName email')
+      .populate({
+        path: 'auditTrail.performedBy',
+        select: 'firstName lastName email',
+      })
       .exec();
   }
   async findAllClaims(
@@ -430,10 +455,32 @@ export class ClaimsService {
 
       const rawClaims = await query
         .populate('projectId', 'name description department')
-        .populate('contractId', 'contractNumber contractValue')
+        .populate({
+          path: 'contractId',
+          select:
+            'contractNumber contractValue currency status startDate endDate description',
+          populate: [
+            {
+              path: 'projectId',
+              select: 'name description',
+            },
+            {
+              path: 'createdBy',
+              select: 'firstName lastName email',
+            },
+            {
+              path: 'contractedUserId',
+              select: 'firstName lastName email',
+            },
+          ],
+        })
         .populate('claimantId', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName')
-        .populate('updatedBy', 'firstName lastName')
+        .populate('createdBy', 'firstName lastName email')
+        .populate('updatedBy', 'firstName lastName email')
+        .populate({
+          path: 'auditTrail.performedBy',
+          select: 'firstName lastName email',
+        })
         .sort({ createdAt: -1 })
         .lean()
         .exec();
@@ -492,11 +539,33 @@ export class ClaimsService {
           claimantId: new Types.ObjectId(claimantId),
         })
         .populate('projectId', 'name description')
-        .populate('contractId', 'contractNumber contractValue')
+        .populate({
+          path: 'contractId',
+          select:
+            'contractNumber contractValue currency status startDate endDate description',
+          populate: [
+            {
+              path: 'projectId',
+              select: 'name description',
+            },
+            {
+              path: 'createdBy',
+              select: 'firstName lastName email',
+            },
+            {
+              path: 'contractedUserId',
+              select: 'firstName lastName email',
+            },
+          ],
+        })
         .populate('claimantId', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName')
-        .populate('updatedBy', 'firstName lastName')
+        .populate('createdBy', 'firstName lastName email')
+        .populate('updatedBy', 'firstName lastName email')
         .populate('milestones.milestoneId', 'title description')
+        .populate({
+          path: 'auditTrail.performedBy',
+          select: 'firstName lastName email',
+        })
         .sort({ createdAt: -1 })
         .exec();
     } catch (error) {
@@ -546,10 +615,32 @@ export class ClaimsService {
           projectId: new Types.ObjectId(projectId),
         })
         .populate('projectId', 'name description')
-        .populate('contractId', 'contractNumber contractValue')
+        .populate({
+          path: 'contractId',
+          select:
+            'contractNumber contractValue currency status startDate endDate description',
+          populate: [
+            {
+              path: 'projectId',
+              select: 'name description',
+            },
+            {
+              path: 'createdBy',
+              select: 'firstName lastName email',
+            },
+            {
+              path: 'contractedUserId',
+              select: 'firstName lastName email',
+            },
+          ],
+        })
         .populate('claimantId', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName')
-        .populate('updatedBy', 'firstName lastName')
+        .populate('createdBy', 'firstName lastName email')
+        .populate('updatedBy', 'firstName lastName email')
+        .populate({
+          path: 'auditTrail.performedBy',
+          select: 'firstName lastName email',
+        })
         .sort({ createdAt: -1 })
         .exec();
     } catch (error) {
@@ -565,10 +656,32 @@ export class ClaimsService {
     const claim = await this.claimModel
       .findOne({ _id: id, claimantId: userId })
       .populate('projectId', 'name description milestones')
-      .populate('contractId', 'contractNumber contractValue')
-      .populate('claimantId', 'name email')
-      .populate('createdBy', 'name')
-      .populate('updatedBy', 'name')
+      .populate({
+        path: 'contractId',
+        select:
+          'contractNumber contractValue currency status startDate endDate description',
+        populate: [
+          {
+            path: 'projectId',
+            select: 'name description',
+          },
+          {
+            path: 'createdBy',
+            select: 'firstName lastName email',
+          },
+          {
+            path: 'contractedUserId',
+            select: 'firstName lastName email',
+          },
+        ],
+      })
+      .populate('claimantId', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email')
+      .populate('updatedBy', 'firstName lastName email')
+      .populate({
+        path: 'auditTrail.performedBy',
+        select: 'firstName lastName email',
+      })
       .exec();
 
     if (!claim) {
