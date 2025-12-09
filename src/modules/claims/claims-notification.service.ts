@@ -36,7 +36,7 @@ export class ClaimsNotificationService {
     claimant: User,
     approvers: User[],
   ) {
-    this.logger.log(`notifyClaimCreated called for claim ${claim._id}`);
+    this.logger.log(`notifyClaimCreated called for claim ${claim}`);
     this.logger.log(`Number of approvers to notify: ${approvers.length}`);
 
     const subject = `New Claim Submitted - ${project.name}`;
@@ -58,7 +58,7 @@ export class ClaimsNotificationService {
     claimant: User,
     approvers: User[],
   ) {
-    this.logger.log(`notifyClaimSubmitted called for claim ${claim._id}`);
+    this.logger.log(`notifyClaimSubmitted called for claim ${claim}`);
     this.logger.log(`Number of approvers to notify: ${approvers.length}`);
 
     const subject = `Claim Pending Approval - ${project.name}`;
