@@ -333,7 +333,10 @@ export class ClaimsService {
       .populate('contractId', 'contractNumber')
       .exec();
   }
-  async findAllClaims(filters: any = {}): Promise<any[]> {
+  async findAllClaims(
+    filters: any = {},
+    userId: Types.ObjectId,
+  ): Promise<any[]> {
     interface PopulatedProject {
       _id: Types.ObjectId;
       name: string;
@@ -345,8 +348,32 @@ export class ClaimsService {
       projectId: PopulatedProject;
     }
     try {
-      const rawClaims = await this.claimModel
-        .find(filters)
+      // Get the user to check their role and department
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      this.logger.log(
+        `Finding claims for user ${user.email} with roles: ${user.roles?.join(', ')} and department: ${user.department}`,
+      );
+
+      // Check if user is admin
+      const isAdmin = user.roles?.includes('admin');
+
+      this.logger.log(`User is admin: ${isAdmin}`);
+
+      // Build the query
+      let query = this.claimModel.find(filters);
+
+      // If not admin, filter by department
+      if (!isAdmin && user.department) {
+        this.logger.log(`Filtering claims by department: ${user.department}`);
+        // We need to populate first, then filter
+        // So we'll get all claims and filter after population
+      }
+
+      const rawClaims = await query
         .populate('projectId', 'name description department')
         .populate('contractId', 'contractNumber contractValue')
         .populate('claimantId', 'firstName lastName email')
@@ -356,7 +383,19 @@ export class ClaimsService {
         .lean()
         .exec();
 
-      const claims = rawClaims as unknown as PopulatedClaim[];
+      let claims = rawClaims as unknown as PopulatedClaim[];
+
+      // Filter by department if not admin
+      if (!isAdmin && user.department) {
+        claims = claims.filter(
+          (claim) => claim.projectId?.department === user.department,
+        );
+        this.logger.log(
+          `Filtered to ${claims.length} claims in department ${user.department}`,
+        );
+      } else {
+        this.logger.log(`Returning all ${claims.length} claims (admin user)`);
+      }
 
       // Add approval flow to each claim
       const enhancedClaims = await Promise.all(
@@ -759,16 +798,37 @@ export class ClaimsService {
       paymentMethod: string;
       transactionId: string;
       reference: string;
+      paymentAdviceUrl: string;
     },
     userId: Types.ObjectId,
   ): Promise<ClaimDocument> {
-    const claim = await this.findOne(id, userId);
+    // Validate required fields
+    if (!paymentDetails.paymentAdviceUrl) {
+      throw new BadRequestException(
+        'Payment advice URL is required to mark claim as paid',
+      );
+    }
+
+    if (!paymentDetails.paymentMethod || !paymentDetails.transactionId) {
+      throw new BadRequestException(
+        'Payment method and transaction ID are required',
+      );
+    }
+
+    const claim = await this.claimModel.findById(id);
+    if (!claim) {
+      throw new NotFoundException('Claim not found');
+    }
 
     if (claim.status !== 'approved') {
       throw new BadRequestException(
         'Only approved claims can be marked as paid',
       );
     }
+
+    this.logger.log(
+      `Marking claim ${id} as paid by user ${userId}. Transaction: ${paymentDetails.transactionId}`,
+    );
 
     const updatedClaim = await this.claimModel.findByIdAndUpdate(
       id,
@@ -792,10 +852,43 @@ export class ClaimsService {
       { new: true },
     );
 
+    if (!updatedClaim) {
+      throw new NotFoundException('Claim not found');
+    }
+
     // Notify stakeholders
     await this.notifyStakeholders(updatedClaim, userId);
 
+    this.logger.log(`Claim ${id} successfully marked as paid`);
+
     return updatedClaim;
+  }
+
+  async deleteClaim(id: string, userId: Types.ObjectId): Promise<void> {
+    const claim = await this.claimModel.findById(id);
+    if (!claim) {
+      throw new NotFoundException('Claim not found');
+    }
+
+    // Check if claim is paid
+    if (claim.status === 'paid') {
+      throw new BadRequestException(
+        'Paid claims cannot be deleted. Please contact the administrator if you need to make changes.',
+      );
+    }
+
+    // Only allow deletion of draft or cancelled claims
+    if (!['draft', 'cancelled'].includes(claim.status)) {
+      throw new BadRequestException(
+        'Only draft or cancelled claims can be deleted. Please cancel the claim first if needed.',
+      );
+    }
+
+    this.logger.log(`Deleting claim ${id} by user ${userId}`);
+
+    await this.claimModel.findByIdAndDelete(id);
+
+    this.logger.log(`Claim ${id} successfully deleted`);
   }
 
   async cancel(id: string, userId: Types.ObjectId): Promise<ClaimDocument> {

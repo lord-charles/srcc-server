@@ -151,4 +151,93 @@ export class UserController {
   async remove(@Param('id') id: string, @Req() req: Request) {
     return this.userService.remove(id, req);
   }
+
+  // Suspend user
+  @Patch('/users/:id/suspend')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Suspend a user account',
+    description:
+      'Suspends a user account. Suspended users cannot access the system until unsuspended.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User suspended successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'User is already suspended',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async suspendUser(
+    @Param('id') userId: string,
+    @Body('reason') reason: string,
+    @Req() req: any,
+  ) {
+    return this.userService.suspendUser(userId, req.user.sub, reason);
+  }
+
+  // Unsuspend user
+  @Patch('/users/:id/unsuspend')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Unsuspend a user account',
+    description:
+      'Reactivates a suspended user account. User will be able to access the system again.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User unsuspended successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'User is not suspended',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async unsuspendUser(@Param('id') userId: string, @Req() req: any) {
+    return this.userService.unsuspendUser(userId, req.user.sub);
+  }
+
+  // Update user status
+  @Patch('/users/:id/status')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update user account status',
+    description:
+      'Updates user account status. Valid statuses: pending, active, inactive, suspended, terminated',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User status updated successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid status provided',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+  })
+  async updateUserStatus(
+    @Param('id') userId: string,
+    @Body('status') status: string,
+    @Body('reason') reason: string,
+    @Req() req: any,
+  ) {
+    return this.userService.updateUserStatus(
+      userId,
+      status,
+      req.user.sub,
+      reason,
+    );
+  }
 }

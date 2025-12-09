@@ -27,7 +27,10 @@ import { VerifyContractOtpDto } from '../dto/verify-contract-otp.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
-import { ContractApprovalDto, ContractRejectionDto } from '../dto/contract-approval.dto';
+import {
+  ContractApprovalDto,
+  ContractRejectionDto,
+} from '../dto/contract-approval.dto';
 
 @ApiTags('contracts')
 @Controller('contracts')
@@ -36,7 +39,7 @@ import { ContractApprovalDto, ContractRejectionDto } from '../dto/contract-appro
 export class ContractController {
   private readonly logger = new Logger(ContractController.name);
 
-  constructor(private readonly contractService: ContractService) { }
+  constructor(private readonly contractService: ContractService) {}
 
   @Post()
   // @Roles('admin', 'project_manager')
@@ -58,10 +61,7 @@ export class ContractController {
     description: 'Forbidden resource.',
   })
   async create(@Body() createContractDto: CreateContractDto, @Req() req: any) {
-    return await this.contractService.create(
-      createContractDto,
-      req.user.sub,
-    );
+    return await this.contractService.create(createContractDto, req.user.sub);
   }
 
   @Get()
@@ -259,9 +259,14 @@ export class ContractController {
     status: HttpStatus.FORBIDDEN,
     description: 'Forbidden resource.',
   })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description:
+      'Only administrators can delete contracts, or contract has paid claims.',
+  })
   async remove(@Param('id') id: string, @Req() req) {
     this.logger.log(`Deleting contract ${id} by user ${req.user.sub}`);
-    await this.contractService.remove(id);
+    await this.contractService.remove(id, req.user.sub);
     return { message: 'Contract successfully deleted' };
   }
 
@@ -403,5 +408,4 @@ export class ContractController {
   ) {
     return await this.contractService.reject(id, req.user.sub, rejectionDto);
   }
-
 }

@@ -10,15 +10,22 @@ import { BudgetController } from './controllers/budget.controller';
 import { InvoiceService } from './services/invoice.service';
 import { BudgetService } from './services/budget.service';
 import { User, UserSchema } from '../auth/schemas/user.schema';
-import { Organization, OrganizationSchema } from '../auth/schemas/organization.schema';
+import {
+  Organization,
+  OrganizationSchema,
+} from '../auth/schemas/organization.schema';
 import { NotificationService } from '../notifications/services/notification.service';
 import { Budget, BudgetSchema } from './schemas/budget.schema';
 import { Contract, ContractSchema } from './schemas/contract.schema';
 import { ContractController } from './controllers/contract.controller';
 import { ContractService } from './services/contract.service';
-import { ContractTemplate, ContractTemplateSchema } from './schemas/contract-template.schema';
+import {
+  ContractTemplate,
+  ContractTemplateSchema,
+} from './schemas/contract-template.schema';
 import { ContractTemplateController } from './controllers/contract-template.controller';
 import { ContractTemplateService } from './services/contract-template.service';
+import { Claim, ClaimSchema } from '../claims/schemas/claim.schema';
 
 @Module({
   imports: [
@@ -30,6 +37,7 @@ import { ContractTemplateService } from './services/contract-template.service';
       { name: User.name, schema: UserSchema },
       { name: ContractTemplate.name, schema: ContractTemplateSchema },
       { name: Organization.name, schema: OrganizationSchema },
+      { name: Claim.name, schema: ClaimSchema },
     ]),
     CloudinaryModule,
   ],
@@ -51,4 +59,3 @@ import { ContractTemplateService } from './services/contract-template.service';
   exports: [ProjectService, ContractService],
 })
 export class ProjectModule {}
-

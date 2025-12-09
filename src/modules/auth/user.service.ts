@@ -394,4 +394,119 @@ export class UserService {
       return false;
     }
   }
+
+  /**
+   * Suspend a user account
+   * @param userId - User ID to suspend
+   * @param adminId - Admin performing the action
+   * @param reason - Reason for suspension
+   * @returns Promise<User> - Updated user
+   */
+  async suspendUser(
+    userId: string,
+    adminId: string,
+    reason?: string,
+  ): Promise<User> {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (user.status === 'suspended') {
+        throw new BadRequestException('User is already suspended');
+      }
+
+      user.status = 'suspended';
+      await user.save();
+
+      this.logger.warn(
+        `User ${user.email} (ID: ${userId}) suspended by admin ${adminId}. Reason: ${reason || 'Not provided'}`,
+      );
+
+      return user;
+    } catch (error) {
+      this.logger.error(`Error suspending user ${userId}:`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Unsuspend a user account (reactivate)
+   * @param userId - User ID to unsuspend
+   * @param adminId - Admin performing the action
+   * @returns Promise<User> - Updated user
+   */
+  async unsuspendUser(userId: string, adminId: string): Promise<User> {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (user.status !== 'suspended') {
+        throw new BadRequestException('User is not suspended');
+      }
+
+      user.status = 'active';
+      await user.save();
+
+      this.logger.log(
+        `User ${user.email} (ID: ${userId}) unsuspended by admin ${adminId}`,
+      );
+
+      return user;
+    } catch (error) {
+      this.logger.error(`Error unsuspending user ${userId}:`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user status
+   * @param userId - User ID
+   * @param status - New status
+   * @param adminId - Admin performing the action
+   * @param reason - Reason for status change
+   * @returns Promise<User> - Updated user
+   */
+  async updateUserStatus(
+    userId: string,
+    status: string,
+    adminId: string,
+    reason?: string,
+  ): Promise<User> {
+    try {
+      const validStatuses = [
+        'pending',
+        'active',
+        'inactive',
+        'suspended',
+        'terminated',
+      ];
+      if (!validStatuses.includes(status)) {
+        throw new BadRequestException(
+          `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+        );
+      }
+
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const oldStatus = user.status;
+      user.status = status;
+      await user.save();
+
+      this.logger.log(
+        `User ${user.email} (ID: ${userId}) status changed from ${oldStatus} to ${status} by admin ${adminId}. Reason: ${reason || 'Not provided'}`,
+      );
+
+      return user;
+    } catch (error) {
+      this.logger.error(`Error updating user status ${userId}:`, error.stack);
+      throw error;
+    }
+  }
 }

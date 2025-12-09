@@ -8,6 +8,7 @@ import {
   UseGuards,
   Req,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -151,7 +152,11 @@ export class BudgetController {
     @Req() req: any,
     @Body() dto: BudgetApprovalDto,
   ): Promise<Budget> {
-    return this.budgetService.approve(new Types.ObjectId(id), req.user.sub, dto);
+    return this.budgetService.approve(
+      new Types.ObjectId(id),
+      req.user.sub,
+      dto,
+    );
   }
 
   @Post(':id/reject')
@@ -222,5 +227,25 @@ export class BudgetController {
   @ApiResponse({ status: 200, description: 'Budget found', type: Budget })
   async findByProject(@Param('projectId') projectId: string): Promise<Budget> {
     return this.budgetService.findByProject(new Types.ObjectId(projectId));
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a budget',
+    description:
+      'Delete a budget. Only administrators can delete budgets. Approved budgets cannot be deleted.',
+  })
+  @ApiResponse({ status: 200, description: 'Budget deleted successfully' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Only administrators can delete budgets, or budget is approved',
+  })
+  @ApiResponse({ status: 404, description: 'Budget not found' })
+  async remove(@Param('id') id: string, @Req() req: any): Promise<void> {
+    return this.budgetService.remove(
+      new Types.ObjectId(id),
+      new Types.ObjectId(req.user.sub),
+    );
   }
 }

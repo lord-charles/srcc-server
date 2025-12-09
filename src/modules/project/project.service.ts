@@ -127,7 +127,13 @@ export class ProjectService {
     return updatedProject;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, userId: string): Promise<void> {
+    // Check if user is admin
+    const user = await this.userModel.findById(userId).select('roles').lean();
+    if (!user || !user.roles?.includes('admin')) {
+      throw new BadRequestException('Only administrators can delete projects');
+    }
+
     const result = await this.projectModel.deleteOne({ _id: id }).exec();
     if (result.deletedCount === 0) {
       throw new NotFoundException(`Project with ID ${id} not found`);

@@ -772,6 +772,33 @@ export class BudgetService {
       .exec();
   }
 
+  async remove(id: Types.ObjectId, userId: Types.ObjectId): Promise<void> {
+    // Check if user is admin
+    const user = await this.userModel.findById(userId).select('roles').lean();
+    if (!user || !user.roles?.includes('admin')) {
+      throw new BadRequestException('Only administrators can delete budgets');
+    }
+
+    const budget = await this.budgetModel.findById(id);
+    if (!budget) {
+      throw new NotFoundException('Budget not found');
+    }
+
+    // Prevent deletion of approved budgets
+    if (budget.status === 'approved') {
+      throw new BadRequestException(
+        'Cannot delete approved budgets. Please contact system administrator.',
+      );
+    }
+
+    await this.budgetModel.deleteOne({ _id: id }).exec();
+
+    // Remove budget reference from project
+    await this.projectModel.findByIdAndUpdate(budget.projectId, {
+      $unset: { budgetId: 1 },
+    });
+  }
+
   private async generateBaseEmailMessage(
     budget: Budget,
     project: Project,

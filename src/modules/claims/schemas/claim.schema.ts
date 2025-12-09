@@ -53,16 +53,18 @@ export class Claim {
     description: 'Milestones this claim is associated with',
   })
   @Prop({
-    type: [{
-      milestoneId: { type: String, required: true },
-      title: { type: String, required: true },
-      percentageClaimed: { type: Number, required: true },
-      maxClaimableAmount: { type: Number, required: true },
-      previouslyClaimed: { type: Number, required: true, default: 0 },
-      currentClaim: { type: Number, required: true },
-      remainingClaimable: { type: Number, required: true },
-    }],
-    required: true
+    type: [
+      {
+        milestoneId: { type: String, required: true },
+        title: { type: String, required: true },
+        percentageClaimed: { type: Number, required: true },
+        maxClaimableAmount: { type: Number, required: true },
+        previouslyClaimed: { type: Number, required: true, default: 0 },
+        currentClaim: { type: Number, required: true },
+        remainingClaimable: { type: Number, required: true },
+      },
+    ],
+    required: true,
   })
   milestones: {
     milestoneId: string;
@@ -92,7 +94,9 @@ export class Claim {
   @Prop({ type: Date })
   currentLevelDeadline?: Date;
 
-  @ApiProperty({ description: 'Revision request details if status is revision_requested' })
+  @ApiProperty({
+    description: 'Revision request details if status is revision_requested',
+  })
   @Prop({
     type: {
       requestedBy: { type: MongooseSchema.ObjectId, ref: 'User' },
@@ -115,13 +119,19 @@ export class Claim {
 
   @ApiProperty({ description: 'Supporting documents for the claim' })
   @Prop({
-    type: [{
-      url: { type: String, required: true },
-      name: { type: String, required: true },
-      type: { type: String, required: true },
-      uploadedAt: { type: Date, default: Date.now },
-      uploadedBy: { type: MongooseSchema.ObjectId, ref: 'User', required: true },
-    }],
+    type: [
+      {
+        url: { type: String, required: true },
+        name: { type: String, required: true },
+        type: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now },
+        uploadedBy: {
+          type: MongooseSchema.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+      },
+    ],
     default: [],
   })
   documents: {
@@ -245,6 +255,7 @@ export class Claim {
       transactionId: String,
       paymentMethod: String,
       reference: String,
+      paymentAdviceUrl: String,
       bankAccount: {
         accountName: String,
         accountNumber: String,
@@ -255,11 +266,12 @@ export class Claim {
     _id: false,
   })
   payment?: {
-    contractId: Types.ObjectId;
+    paidBy: Types.ObjectId;
     paidAt: Date;
     transactionId: string;
     paymentMethod: string;
     reference: string;
+    paymentAdviceUrl: string;
     bankAccount?: {
       accountName: string;
       accountNumber: string;
@@ -302,17 +314,23 @@ export class Claim {
   notes?: string;
 
   @ApiProperty({ description: 'Audit trail of all claim changes' })
-  @Prop([{
-    action: { type: String, required: true },
-    performedBy: { type: MongooseSchema.ObjectId, ref: 'User', required: true },
-    performedAt: { type: Date, required: true },
-    details: { type: Object },
-    previousValues: { type: Object },
-  }])
+  @Prop([
+    {
+      action: { type: String, required: true },
+      performedBy: {
+        type: MongooseSchema.ObjectId,
+        ref: 'User',
+        required: true,
+      },
+      performedAt: { type: Date, required: true },
+      details: { type: Object },
+      previousValues: { type: Object },
+    },
+  ])
   auditTrail: {
     action: string;
     performedBy: Types.ObjectId;
-      performedAt: Date;
+    performedAt: Date;
     details?: Record<string, any>;
     previousValues?: Record<string, any>;
   }[];

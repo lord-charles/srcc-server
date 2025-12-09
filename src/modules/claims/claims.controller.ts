@@ -5,14 +5,22 @@ import {
   Body,
   Patch,
   Param,
+  Delete,
   UseGuards,
   Request,
   BadRequestException,
   HttpStatus,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiBody, ApiQuery } from '@nestjs/swagger';
-import {  Types } from 'mongoose';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { Types } from 'mongoose';
 import { ClaimsService } from './claims.service';
 import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimDto } from './dto/update-claim.dto';
@@ -28,9 +36,10 @@ export class ClaimsController {
   constructor(private readonly claimsService: ClaimsService) {}
 
   @Post()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create a new claim',
-    description: 'Creates a new claim for a project. The claim must include at least one milestone and can optionally include supporting documents and bank account details.'
+    description:
+      'Creates a new claim for a project. The claim must include at least one milestone and can optionally include supporting documents and bank account details.',
   })
   @ApiBody({
     type: CreateClaimDto,
@@ -46,29 +55,29 @@ export class ClaimsController {
             {
               milestoneId: '65123456789012345678901236',
               title: 'UI Development Phase 1',
-              percentageClaimed: 75
-            }
+              percentageClaimed: 75,
+            },
           ],
           documents: [
             {
               url: 'https://storage.example.com/docs/invoice-123.pdf',
               name: 'March Invoice',
-              type: 'invoice'
+              type: 'invoice',
             },
             {
               url: 'https://storage.example.com/docs/timesheet-123.pdf',
               name: 'March Timesheet',
-              type: 'timesheet'
-            }
+              type: 'timesheet',
+            },
           ],
           bankAccount: {
             accountName: 'John Doe',
             accountNumber: '1234567890',
             bankName: 'Equity Bank',
-            branchName: 'Westlands'
+            branchName: 'Westlands',
           },
-          notes: 'Completing milestone for UI development phase 1'
-        }
+          notes: 'Completing milestone for UI development phase 1',
+        },
       },
       simpleClaim: {
         summary: 'Simple milestone claim',
@@ -81,43 +90,55 @@ export class ClaimsController {
             {
               milestoneId: '65123456789012345678901236',
               title: 'Backend API Development',
-              percentageClaimed: 50
-            }
-          ]
-        }
-      }
-    }
+              percentageClaimed: 50,
+            },
+          ],
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 201, 
-    description: 'Claim created successfully. Returns the created claim object with status "draft".'
+  @ApiResponse({
+    status: 201,
+    description:
+      'Claim created successfully. Returns the created claim object with status "draft".',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Validation error. Possible reasons: Invalid project/contract ID, amount less than 0, missing required fields, invalid milestone configuration'
+  @ApiResponse({
+    status: 400,
+    description:
+      'Validation error. Possible reasons: Invalid project/contract ID, amount less than 0, missing required fields, invalid milestone configuration',
   })
-  @ApiResponse({ status: 404, description: 'Project, contract, or milestone not found' })
+  @ApiResponse({
+    status: 404,
+    description: 'Project, contract, or milestone not found',
+  })
   create(@Body() createClaimDto: CreateClaimDto, @Request() req: any) {
-    return this.claimsService.create(createClaimDto, new Types.ObjectId(req.user.sub));
+    return this.claimsService.create(
+      createClaimDto,
+      new Types.ObjectId(req.user.sub),
+    );
   }
 
   @Get()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get all claims for the authenticated user',
-    description: 'Returns all claims where the user is either the claimant or an approver. Claims are returned as ClaimDocument objects.'
+    description:
+      'Returns all claims where the user is either the claimant or an approver. Claims are returned as ClaimDocument objects.',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns an array of ClaimDocument objects with populated project, contract, and user references'
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns an array of ClaimDocument objects with populated project, contract, and user references',
   })
   findAll(@Request() req: any) {
     return this.claimsService.findAll(new Types.ObjectId(req.user.sub));
   }
 
-  
   @Get('claims')
   // @Roles('admin', 'finance_approver', 'claim_manager')
-  @ApiOperation({ summary: 'Get all claims with optional date filtering' })
+  @ApiOperation({
+    summary:
+      'Get all claims with optional date filtering. Admins see all claims, others see only claims from their department.',
+  })
   @ApiQuery({
     name: 'startDate',
     required: false,
@@ -133,44 +154,53 @@ export class ClaimsController {
     description: 'List of all claims with populated references',
   })
   async findAllClaims(
+    @Request() req: any,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
     const filters = {};
-    
+
     if (startDate) {
       filters['createdAt'] = { $gte: new Date(startDate) };
     }
-    
+
     if (endDate) {
-      filters['createdAt'] = { 
+      filters['createdAt'] = {
         ...filters['createdAt'],
-        $lte: new Date(endDate)
+        $lte: new Date(endDate),
       };
     }
 
-    return await this.claimsService.findAllClaims(filters);
+    return await this.claimsService.findAllClaims(
+      filters,
+      new Types.ObjectId(req.user.sub),
+    );
   }
 
   @Get(':id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get a specific claim by ID',
-    description: 'Returns detailed information about a specific claim as a ClaimDocument, including its approval history and milestone details.'
+    description:
+      'Returns detailed information about a specific claim as a ClaimDocument, including its approval history and milestone details.',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns the ClaimDocument with populated references'
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the ClaimDocument with populated references',
   })
-  @ApiResponse({ status: 403, description: 'User is not authorized to view this claim' })
+  @ApiResponse({
+    status: 403,
+    description: 'User is not authorized to view this claim',
+  })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   findOne(@Param('id') id: string, @Request() req: any) {
     return this.claimsService.findOne(id, new Types.ObjectId(req.user.sub));
   }
 
   @Patch(':id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update a claim',
-    description: 'Updates a draft or revision_requested claim. Only the claim owner can update it. All fields are optional but must match validation rules when provided.'
+    description:
+      'Updates a draft or revision_requested claim. Only the claim owner can update it. All fields are optional but must match validation rules when provided.',
   })
   @ApiBody({
     type: UpdateClaimDto,
@@ -183,11 +213,12 @@ export class ClaimsController {
             {
               milestoneId: '65123456789012345678901236',
               title: 'UI Development Phase 1',
-              percentageClaimed: 80
-            }
+              percentageClaimed: 80,
+            },
           ],
-          notes: 'Updated milestone completion percentage based on latest progress'
-        }
+          notes:
+            'Updated milestone completion percentage based on latest progress',
+        },
       },
       updateDocuments: {
         summary: 'Add supporting documents',
@@ -196,15 +227,15 @@ export class ClaimsController {
             {
               url: 'https://storage.example.com/docs/invoice-124.pdf',
               name: 'Updated Invoice',
-              type: 'invoice'
+              type: 'invoice',
             },
             {
               url: 'https://storage.example.com/docs/timesheet-124.pdf',
               name: 'Updated Timesheet',
-              type: 'timesheet'
-            }
-          ]
-        }
+              type: 'timesheet',
+            },
+          ],
+        },
       },
       updateBankDetails: {
         summary: 'Update bank account details',
@@ -213,24 +244,25 @@ export class ClaimsController {
             accountName: 'John Doe',
             accountNumber: '1234567890',
             bankName: 'Equity Bank',
-            branchName: 'Westlands'
-          }
-        }
-      }
-    }
+            branchName: 'Westlands',
+          },
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Claim updated successfully. Returns the updated ClaimDocument.'
+  @ApiResponse({
+    status: 200,
+    description:
+      'Claim updated successfully. Returns the updated ClaimDocument.',
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: `Validation error. Possible reasons:
     - Amount less than 0
     - Invalid milestone configuration
     - Invalid document type (must be one of: invoice, receipt, timesheet, report, other)
     - Claim not in editable status (must be draft or revision_requested)
-    - Invalid bank account details`
+    - Invalid bank account details`,
   })
   @ApiResponse({ status: 403, description: 'User is not the claim owner' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
@@ -239,19 +271,28 @@ export class ClaimsController {
     @Body() updateClaimDto: UpdateClaimDto,
     @Request() req: any,
   ) {
-    return this.claimsService.update(id, updateClaimDto, new Types.ObjectId(req.user.sub));
+    return this.claimsService.update(
+      id,
+      updateClaimDto,
+      new Types.ObjectId(req.user.sub),
+    );
   }
 
   @Post(':id/submit')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Submit a claim for approval',
-    description: 'Submits a draft claim for approval. This will start the approval workflow starting with checker approval.'
+    description:
+      'Submits a draft claim for approval. This will start the approval workflow starting with checker approval.',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Claim submitted successfully. Returns updated ClaimDocument with status "pending_checker_approval"'
+  @ApiResponse({
+    status: 200,
+    description:
+      'Claim submitted successfully. Returns updated ClaimDocument with status "pending_checker_approval"',
   })
-  @ApiResponse({ status: 400, description: 'Claim is not in draft status or missing required fields' })
+  @ApiResponse({
+    status: 400,
+    description: 'Claim is not in draft status or missing required fields',
+  })
   @ApiResponse({ status: 403, description: 'User is not the claim owner' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   submit(@Param('id') id: string, @Request() req: any) {
@@ -259,9 +300,10 @@ export class ClaimsController {
   }
 
   @Post(':id/approve')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Approve a claim',
-    description: 'Approves a claim at the current approval level. Requires appropriate role (checker/manager/finance). Updates claim status based on approval flow.'
+    description:
+      'Approves a claim at the current approval level. Requires appropriate role (checker/manager/finance). Updates claim status based on approval flow.',
   })
   @ApiBody({
     schema: {
@@ -271,27 +313,30 @@ export class ClaimsController {
         comments: {
           type: 'string',
           example: 'All milestones verified and completed as claimed',
-          description: 'Approval comments explaining the decision'
-        }
-      }
-    }
+          description: 'Approval comments explaining the decision',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: `Returns updated ClaimDocument with:
     - Updated status based on approval flow
     - New approval details in the approval object
     - Updated audit trail
-    - Next level deadline if applicable`
+    - Next level deadline if applicable`,
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: `Invalid request. Possible reasons:
     - Missing approval comments
     - Claim not in correct status for approval
-    - Invalid approval flow state`
+    - Invalid approval flow state`,
   })
-  @ApiResponse({ status: 403, description: 'User does not have required role for current approval level' })
+  @ApiResponse({
+    status: 403,
+    description: 'User does not have required role for current approval level',
+  })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   // @Roles('claim_checker', 'claim_manager', 'finance_approver')
   approve(
@@ -302,13 +347,18 @@ export class ClaimsController {
     if (!comments) {
       throw new BadRequestException('Comments are required for approval');
     }
-    return this.claimsService.approve(id, comments, new Types.ObjectId(req.user.sub));
+    return this.claimsService.approve(
+      id,
+      comments,
+      new Types.ObjectId(req.user.sub),
+    );
   }
 
   @Post(':id/reject')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Reject a claim',
-    description: 'Rejects a claim at any approval level. Requires appropriate role. Sets claim status to rejected.'
+    description:
+      'Rejects a claim at any approval level. Requires appropriate role. Sets claim status to rejected.',
   })
   @ApiBody({
     schema: {
@@ -318,20 +368,24 @@ export class ClaimsController {
         reason: {
           type: 'string',
           example: 'Milestone completion evidence not sufficient',
-          description: 'Detailed reason for rejection'
-        }
-      }
-    }
+          description: 'Detailed reason for rejection',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns updated ClaimDocument with status "rejected" and rejection details'
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns updated ClaimDocument with status "rejected" and rejection details',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Missing rejection reason or claim not in rejectable status'
+  @ApiResponse({
+    status: 400,
+    description: 'Missing rejection reason or claim not in rejectable status',
   })
-  @ApiResponse({ status: 403, description: 'User does not have required role for current approval level' })
+  @ApiResponse({
+    status: 403,
+    description: 'User does not have required role for current approval level',
+  })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   // @Roles('claim_checker', 'claim_manager', 'finance_approver')
   reject(
@@ -342,13 +396,18 @@ export class ClaimsController {
     if (!reason) {
       throw new BadRequestException('Reason is required for rejection');
     }
-    return this.claimsService.reject(id, reason, new Types.ObjectId(req.user.sub));
+    return this.claimsService.reject(
+      id,
+      reason,
+      new Types.ObjectId(req.user.sub),
+    );
   }
 
   @Post(':id/request-revision')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Request revision for a claim',
-    description: 'Requests changes to a claim. The claim will be returned to draft status for the claimant to update.'
+    description:
+      'Requests changes to a claim. The claim will be returned to draft status for the claimant to update.',
   })
   @ApiBody({
     schema: {
@@ -358,31 +417,35 @@ export class ClaimsController {
         reason: {
           type: 'string',
           example: 'Please update milestone completion percentage',
-          description: 'Main reason for requesting revision'
+          description: 'Main reason for requesting revision',
         },
         returnToStatus: {
           type: 'string',
           example: 'draft',
           enum: ['draft'],
-          description: 'Status to return the claim to'
+          description: 'Status to return the claim to',
         },
         comments: {
           type: 'string',
           example: 'Milestone 2 seems to be only 60% complete',
-          description: 'Additional details about required changes'
-        }
-      }
-    }
+          description: 'Additional details about required changes',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns updated ClaimDocument with status changed to specified return status'
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns updated ClaimDocument with status changed to specified return status',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Missing required fields or invalid return status'
+  @ApiResponse({
+    status: 400,
+    description: 'Missing required fields or invalid return status',
   })
-  @ApiResponse({ status: 403, description: 'User does not have required role for current approval level' })
+  @ApiResponse({
+    status: 403,
+    description: 'User does not have required role for current approval level',
+  })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   // @Roles('claim_checker', 'claim_manager', 'finance_approver')
   requestRevision(
@@ -393,7 +456,9 @@ export class ClaimsController {
     @Request() req: any,
   ) {
     if (!reason || !returnToStatus) {
-      throw new BadRequestException('Reason and returnToStatus are required for revision request');
+      throw new BadRequestException(
+        'Reason and returnToStatus are required for revision request',
+      );
     }
     return this.claimsService.requestRevision(
       id,
@@ -405,72 +470,122 @@ export class ClaimsController {
   }
 
   @Post(':id/mark-as-paid')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Mark a claim as paid',
-    description: 'Records payment details for an approved claim. Only available to finance approvers. Updates claim status to paid.'
+    description:
+      'Records payment details for an approved claim. Payment advice URL is MANDATORY. Only available to finance approvers. Updates claim status to paid.',
   })
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['paymentMethod', 'transactionId'],
+      required: ['paymentMethod', 'transactionId', 'paymentAdviceUrl'],
       properties: {
         paymentMethod: {
           type: 'string',
           example: 'bank_transfer',
           enum: ['bank_transfer', 'mpesa', 'cheque'],
-          description: 'Method used for payment'
+          description: 'Method used for payment',
         },
         transactionId: {
           type: 'string',
           example: 'TRX123456789',
-          description: 'Unique transaction identifier from the payment system'
+          description: 'Unique transaction identifier from the payment system',
         },
         reference: {
           type: 'string',
           example: 'INV/2025/001',
-          description: 'Optional payment reference or invoice number'
-        }
-      }
-    }
+          description: 'Optional payment reference or invoice number',
+        },
+        paymentAdviceUrl: {
+          type: 'string',
+          example: 'https://cloudinary.com/payment-advice/claim-123.pdf',
+          description:
+            'URL to the payment advice document (MANDATORY - claim cannot be marked as paid without this)',
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns updated ClaimDocument with status "paid" and payment details'
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns updated ClaimDocument with status "paid" and payment details including payment advice URL',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Missing payment details, claim not in approved status, or invalid payment method'
+  @ApiResponse({
+    status: 400,
+    description:
+      'Missing payment details (payment advice URL is mandatory), claim not in approved status, or invalid payment method',
   })
-  @ApiResponse({ status: 403, description: 'User does not have finance_approver role' })
+  @ApiResponse({
+    status: 403,
+    description: 'User does not have finance_approver role',
+  })
   @ApiResponse({ status: 404, description: 'Claim not found' })
   // @Roles('finance_approver')
   markAsPaid(
     @Param('id') id: string,
-    @Body() paymentDetails: {
+    @Body()
+    paymentDetails: {
       paymentMethod: string;
       transactionId: string;
       reference: string;
+      paymentAdviceUrl: string;
     },
     @Request() req: any,
   ) {
     if (!paymentDetails.paymentMethod || !paymentDetails.transactionId) {
-      throw new BadRequestException('Payment method and transaction ID are required');
+      throw new BadRequestException(
+        'Payment method and transaction ID are required',
+      );
     }
-    return this.claimsService.markAsPaid(id, paymentDetails, new Types.ObjectId(req.user.sub));
+    if (!paymentDetails.paymentAdviceUrl) {
+      throw new BadRequestException(
+        'Payment advice URL is required to mark claim as paid',
+      );
+    }
+    return this.claimsService.markAsPaid(
+      id,
+      paymentDetails,
+      new Types.ObjectId(req.user.sub),
+    );
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a claim',
+    description:
+      'Permanently deletes a claim. Only draft or cancelled claims can be deleted. PAID CLAIMS CANNOT BE DELETED.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Claim deleted successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Claim cannot be deleted. Paid claims or claims in approval process cannot be deleted. Only draft or cancelled claims can be deleted.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'User is not authorized to delete this claim',
+  })
+  @ApiResponse({ status: 404, description: 'Claim not found' })
+  deleteClaim(@Param('id') id: string, @Request() req: any) {
+    return this.claimsService.deleteClaim(id, new Types.ObjectId(req.user.sub));
   }
 
   @Post(':id/cancel')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Cancel a claim',
-    description: 'Cancels a claim. Only the claim owner can cancel their claim, and only if it\'s in draft status.'
+    description:
+      "Cancels a claim. Only the claim owner can cancel their claim, and only if it's in draft status.",
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns updated ClaimDocument with status "cancelled"'
+  @ApiResponse({
+    status: 200,
+    description: 'Returns updated ClaimDocument with status "cancelled"',
   })
-  @ApiResponse({ 
-    status: 400, 
-    description: 'Claim cannot be cancelled in current status'
+  @ApiResponse({
+    status: 400,
+    description: 'Claim cannot be cancelled in current status',
   })
   @ApiResponse({ status: 403, description: 'User is not the claim owner' })
   @ApiResponse({ status: 404, description: 'Claim not found' })
@@ -479,16 +594,24 @@ export class ClaimsController {
   }
 
   @Get('by-contract/:contractId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get all claims for a specific contract',
-    description: 'Returns all claims associated with the given contract ID, sorted by creation date in descending order. Includes milestone details and populated references.'
+    description:
+      'Returns all claims associated with the given contract ID, sorted by creation date in descending order. Includes milestone details and populated references.',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns an array of ClaimDocument objects with populated references including project, contract, claimant, and milestone details'
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns an array of ClaimDocument objects with populated references including project, contract, claimant, and milestone details',
   })
   @ApiResponse({ status: 400, description: 'Invalid contract ID format' })
-  async findClaimsByContract(@Param('contractId') contractId: string, @Request() req: any) {
-    return await this.claimsService.findClaimsByContract(contractId, req.user.sub);
+  async findClaimsByContract(
+    @Param('contractId') contractId: string,
+    @Request() req: any,
+  ) {
+    return await this.claimsService.findClaimsByContract(
+      contractId,
+      req.user.sub,
+    );
   }
 }

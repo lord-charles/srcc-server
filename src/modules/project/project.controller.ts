@@ -39,7 +39,7 @@ export class ProjectController {
   constructor(
     private readonly projectService: ProjectService,
     private readonly cloudinaryService: CloudinaryService,
-  ) { }
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -60,7 +60,6 @@ export class ProjectController {
     All monetary values should be in the specified currency (KES for Kenyan Shillings).
     Project status will initially be set to 'draft'.`,
   })
-
   @ApiResponse({
     status: 201,
     description: 'Project created successfully.',
@@ -80,7 +79,11 @@ export class ProjectController {
       'Forbidden - User does not have permission to create projects.',
   })
   async create(@Body() createProjectDto: CreateProjectDto, @Req() req: any) {
-    return this.projectService.create({ ...createProjectDto, createdBy: req.user.sub, updatedBy: req.user.sub });
+    return this.projectService.create({
+      ...createProjectDto,
+      createdBy: req.user.sub,
+      updatedBy: req.user.sub,
+    });
   }
 
   @Get()
@@ -401,11 +404,18 @@ export class ProjectController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a project' })
+  @ApiOperation({
+    summary: 'Delete a project',
+    description: 'Delete a project. Only administrators can delete projects.',
+  })
   @ApiResponse({ status: 200, description: 'Project deleted successfully.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Only administrators can delete projects.',
+  })
   @ApiResponse({ status: 404, description: 'Project not found.' })
-  remove(@Param('id') id: string) {
-    return this.projectService.remove(id);
+  remove(@Param('id') id: string, @Req() req: any) {
+    return this.projectService.remove(id, req.user.sub);
   }
 
   @Get('contract/:contractId')

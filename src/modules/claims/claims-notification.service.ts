@@ -108,7 +108,7 @@ export class ClaimsNotificationService {
     paidBy: User,
   ) {
     const subject = `Claim Payment Processed - ${project.name}`;
-    const message = `Your claim for ${project.name} worth ${claim.currency} ${claim.amount} has been marked as paid by ${paidBy.firstName} ${paidBy.lastName}.\n\nTransaction ID: ${claim.payment?.transactionId || 'N/A'}`;
+    const message = `Your claim for ${project.name} worth ${claim.currency} ${claim.amount} has been marked as paid by ${paidBy.firstName} ${paidBy.lastName}.\n\nTransaction ID: ${claim.payment?.transactionId || 'N/A'}\nPayment Advice: ${claim.payment?.paymentAdviceUrl || 'Not available'}`;
 
     // Notify claimant
     await this.notifyUser(claimant, subject, message);
