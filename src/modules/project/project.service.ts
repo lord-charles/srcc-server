@@ -61,6 +61,7 @@ export class ProjectService {
               $or: [
                 { createdBy: userId },
                 { projectManagerId: userId },
+                { 'assistantProjectManagers.userId': userId },
                 { 'teamMembers.userId': userId },
               ],
             },
@@ -77,6 +78,8 @@ export class ProjectService {
     const project = await this.projectModel
       .findById(id)
       .populate('projectManagerId', 'firstName lastName email')
+      .populate('assistantProjectManagers.userId', 'firstName lastName email')
+      .populate('assistantProjectManagers.contractId')
       .populate('teamMembers.userId', 'firstName lastName email _id')
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email')
@@ -301,6 +304,113 @@ export class ProjectService {
         { $pull: { milestones: { _id: milestoneId } } },
         { new: true },
       )
+      .exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+    return project;
+  }
+
+  async addAssistantProjectManager(
+    projectId: string,
+    assistantData: {
+      userId: MongooseSchema.Types.ObjectId;
+      contractId?: MongooseSchema.Types.ObjectId;
+      responsibilities: string[];
+    },
+  ): Promise<Project> {
+    // Check if user is already an assistant PM
+    const project = await this.projectModel.findById(projectId);
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    const existingAssistant = project.assistantProjectManagers?.find(
+      (apm) => apm.userId.toString() === assistantData.userId.toString(),
+    );
+
+    if (existingAssistant) {
+      throw new BadRequestException(
+        'User is already an assistant project manager',
+      );
+    }
+
+    const updatedProject = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        {
+          $push: {
+            assistantProjectManagers: {
+              ...assistantData,
+              assignedDate: new Date(),
+            },
+          },
+        },
+        { new: true },
+      )
+      .populate('assistantProjectManagers.userId', 'firstName lastName email')
+      .populate('assistantProjectManagers.contractId')
+      .exec();
+
+    return updatedProject;
+  }
+
+  async updateAssistantProjectManager(
+    projectId: string,
+    assistantUserId: string,
+    updateData: {
+      contractId?: MongooseSchema.Types.ObjectId;
+      responsibilities?: string[];
+    },
+  ): Promise<Project> {
+    const updateFields: any = {};
+    if (updateData.contractId) {
+      updateFields['assistantProjectManagers.$.contractId'] =
+        updateData.contractId;
+    }
+    if (updateData.responsibilities) {
+      updateFields['assistantProjectManagers.$.responsibilities'] =
+        updateData.responsibilities;
+    }
+
+    const project = await this.projectModel
+      .findOneAndUpdate(
+        {
+          _id: projectId,
+          'assistantProjectManagers.userId': assistantUserId,
+        },
+        { $set: updateFields },
+        { new: true },
+      )
+      .populate('assistantProjectManagers.userId', 'firstName lastName email')
+      .populate('assistantProjectManagers.contractId')
+      .exec();
+
+    if (!project) {
+      throw new NotFoundException(
+        `Project or assistant project manager not found`,
+      );
+    }
+    return project;
+  }
+
+  async removeAssistantProjectManager(
+    projectId: string,
+    assistantUserId: string,
+  ): Promise<Project> {
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        {
+          $pull: {
+            assistantProjectManagers: { userId: assistantUserId },
+          },
+        },
+        { new: true },
+      )
+      .populate('assistantProjectManagers.userId', 'firstName lastName email')
+      .populate('assistantProjectManagers.contractId')
       .exec();
 
     if (!project) {

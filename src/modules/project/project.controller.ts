@@ -548,4 +548,130 @@ export class ProjectController {
   ) {
     return this.projectService.deleteMilestone(id, milestoneId);
   }
+
+  @Post(':id/assistant-project-managers')
+  @ApiOperation({
+    summary: 'Add assistant project manager to project',
+    description:
+      'Assigns a user as an assistant project manager with optional contract and responsibilities.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Assistant project manager added successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'User is already an assistant project manager.',
+  })
+  @ApiResponse({ status: 404, description: 'Project not found.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['userId', 'responsibilities'],
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID to assign as assistant project manager',
+          example: '507f1f77bcf86cd799439011',
+        },
+        contractId: {
+          type: 'string',
+          description: 'Optional contract ID reference',
+          example: '507f1f77bcf86cd799439012',
+        },
+        responsibilities: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of responsibilities',
+          example: ['Coordinate with stakeholders', 'Monitor project progress'],
+        },
+      },
+    },
+  })
+  addAssistantProjectManager(
+    @Param('id') id: string,
+    @Body()
+    assistantData: {
+      userId: string;
+      contractId?: string;
+      responsibilities: string[];
+    },
+  ) {
+    return this.projectService.addAssistantProjectManager(id, {
+      userId: assistantData.userId as any,
+      contractId: assistantData.contractId as any,
+      responsibilities: assistantData.responsibilities,
+    });
+  }
+
+  @Patch(':id/assistant-project-managers/:assistantUserId')
+  @ApiOperation({
+    summary: 'Update assistant project manager details',
+    description:
+      'Updates contract and/or responsibilities for an assistant project manager.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Assistant project manager updated successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Project or assistant project manager not found.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        contractId: {
+          type: 'string',
+          description: 'Contract ID reference',
+          example: '507f1f77bcf86cd799439012',
+        },
+        responsibilities: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of responsibilities',
+          example: ['Coordinate with stakeholders', 'Monitor project progress'],
+        },
+      },
+    },
+  })
+  updateAssistantProjectManager(
+    @Param('id') id: string,
+    @Param('assistantUserId') assistantUserId: string,
+    @Body()
+    updateData: {
+      contractId?: string;
+      responsibilities?: string[];
+    },
+  ) {
+    return this.projectService.updateAssistantProjectManager(
+      id,
+      assistantUserId,
+      {
+        contractId: updateData.contractId as any,
+        responsibilities: updateData.responsibilities,
+      },
+    );
+  }
+
+  @Delete(':id/assistant-project-managers/:assistantUserId')
+  @ApiOperation({
+    summary: 'Remove assistant project manager from project',
+    description: 'Removes a user from the assistant project managers list.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Assistant project manager removed successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'Project not found.' })
+  removeAssistantProjectManager(
+    @Param('id') id: string,
+    @Param('assistantUserId') assistantUserId: string,
+  ) {
+    return this.projectService.removeAssistantProjectManager(
+      id,
+      assistantUserId,
+    );
+  }
 }

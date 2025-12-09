@@ -26,10 +26,10 @@ class MilestoneClaimDto {
   @IsString()
   title: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Percentage of milestone amount being claimed',
     minimum: 0,
-    maximum: 100
+    maximum: 100,
   })
   @IsNumber()
   @Min(0)
@@ -47,9 +47,9 @@ class DocumentDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Type of document',
-    enum: ['invoice', 'receipt', 'timesheet', 'report', 'other']
+    enum: ['invoice', 'receipt', 'timesheet', 'report', 'other'],
   })
   @IsNotEmpty()
   @IsEnum(['invoice', 'receipt', 'timesheet', 'report', 'other'])
@@ -128,4 +128,13 @@ export class CreateClaimDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({
+    description:
+      'User ID of the claimant (optional - only for authorized users creating claims on behalf of others)',
+    required: false,
+  })
+  @IsOptional()
+  @IsMongoId()
+  claimantId?: Types.ObjectId;
 }

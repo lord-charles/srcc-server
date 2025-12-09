@@ -39,7 +39,7 @@ export class ClaimsController {
   @ApiOperation({
     summary: 'Create a new claim',
     description:
-      'Creates a new claim for a project. The claim must include at least one milestone and can optionally include supporting documents and bank account details.',
+      'Creates a new claim for a project. The claim must include at least one milestone and can optionally include supporting documents and bank account details. Authorized users (admins, project creators, project managers, or assistant project managers) can create claims on behalf of others by providing the claimantId field.',
   })
   @ApiBody({
     type: CreateClaimDto,
@@ -93,6 +93,26 @@ export class ClaimsController {
               percentageClaimed: 50,
             },
           ],
+        },
+      },
+      claimOnBehalf: {
+        summary: 'Create claim on behalf of another user',
+        description:
+          'Only admins, project creators, project managers, or assistant project managers can create claims on behalf of others',
+        value: {
+          projectId: '65123456789012345678901234',
+          contractId: '65123456789012345678901235',
+          claimantId: '65123456789012345678901237',
+          amount: 30000,
+          currency: 'KES',
+          milestones: [
+            {
+              milestoneId: '65123456789012345678901236',
+              title: 'Testing Phase',
+              percentageClaimed: 100,
+            },
+          ],
+          notes: 'Creating claim on behalf of team member',
         },
       },
     },

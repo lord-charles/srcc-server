@@ -251,9 +251,10 @@ export class ClaimsService {
     createClaimDto: CreateClaimDto,
     userId: Types.ObjectId,
   ): Promise<ClaimDocument> {
-    const [contract, project] = await Promise.all([
+    const [contract, project, currentUser] = await Promise.all([
       this.contractModel.findById(createClaimDto.contractId),
       this.projectModel.findById(createClaimDto.projectId),
+      this.userModel.findById(userId),
     ]);
 
     if (!contract) {
@@ -262,6 +263,53 @@ export class ClaimsService {
 
     if (!project) {
       throw new NotFoundException('Project not found');
+    }
+
+    if (!currentUser) {
+      throw new NotFoundException('Current user not found');
+    }
+
+    // Determine the claimant ID
+    let claimantId = userId;
+    let isCreatingOnBehalf = false;
+
+    if (createClaimDto.claimantId) {
+      // User is trying to create claim on behalf of someone else
+      // Check if they are authorized to do so
+      const isAdmin = currentUser.roles?.includes('admin');
+      const isProjectCreator =
+        project.createdBy?.toString() === userId.toString();
+      const isProjectManager =
+        project.projectManagerId?.toString() === userId.toString();
+      const isAssistantPM = project.assistantProjectManagers?.some(
+        (apm) => apm.userId.toString() === userId.toString(),
+      );
+
+      if (
+        !isAdmin &&
+        !isProjectCreator &&
+        !isProjectManager &&
+        !isAssistantPM
+      ) {
+        throw new BadRequestException(
+          'You are not authorized to create claims on behalf of others. Only admins, project creators, project managers, or assistant project managers can do this.',
+        );
+      }
+
+      // Verify the claimant exists
+      const claimant = await this.userModel.findById(createClaimDto.claimantId);
+      if (!claimant) {
+        throw new NotFoundException(
+          `Claimant with ID ${createClaimDto.claimantId} not found`,
+        );
+      }
+
+      claimantId = new Types.ObjectId(createClaimDto.claimantId);
+      isCreatingOnBehalf = true;
+
+      this.logger.log(
+        `User ${currentUser.email} is creating claim on behalf of claimant ${claimant.email}`,
+      );
     }
 
     // Get the approval flow for the project's department
@@ -283,9 +331,9 @@ export class ClaimsService {
       contractId: new Types.ObjectId(createClaimDto.contractId),
       projectId: new Types.ObjectId(createClaimDto.projectId),
       status: initialStatus,
-      createdBy: userId,
+      createdBy: userId, // The person who created the claim
       updatedBy: userId,
-      claimantId: userId,
+      claimantId: claimantId, // The person who will receive payment
       version: 1,
     });
 
@@ -319,6 +367,13 @@ export class ClaimsService {
     }
 
     const savedClaim = await claim.save();
+
+    // Log if claim was created on behalf
+    if (isCreatingOnBehalf) {
+      this.logger.log(
+        `Claim ${savedClaim._id} created by ${currentUser.email} on behalf of claimant ID ${claimantId}`,
+      );
+    }
 
     // Notify stakeholders
     await this.notifyStakeholders(savedClaim, userId);

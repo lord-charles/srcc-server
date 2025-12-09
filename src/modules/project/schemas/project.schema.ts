@@ -103,6 +103,25 @@ export class Project {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Contract' })
   projectManagerContractId?: MongooseSchema.Types.ObjectId;
 
+  @ApiProperty({ description: 'Assistant project managers' })
+  @Prop({
+    type: [
+      {
+        userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        contractId: { type: MongooseSchema.Types.ObjectId, ref: 'Contract' },
+        assignedDate: { type: Date, default: Date.now },
+        responsibilities: [String],
+      },
+    ],
+    default: [],
+  })
+  assistantProjectManagers?: {
+    userId: MongooseSchema.Types.ObjectId;
+    contractId?: MongooseSchema.Types.ObjectId;
+    assignedDate: Date;
+    responsibilities: string[];
+  }[];
+
   @ApiProperty({ description: 'Team members assigned to the project' })
   @Prop({
     type: [
