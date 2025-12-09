@@ -1041,22 +1041,22 @@ export class ClaimsService {
     }
 
     // Check if claim can be cancelled based on status
-    const cancellableStatuses = [
-      'draft',
-      'pending_checker_approval',
-      'pending_reviewer_approval',
-      'pending_approver_approval',
-      'pending_manager_approval',
-      'pending_finance_approval',
-      'pending_srcc_checker_approval',
-      'pending_srcc_finance_approval',
-      'pending_director_approval',
-      'pending_academic_director_approval',
+    // Allow cancellation for draft and any pending status, but not approved, paid, rejected, or cancelled
+    const nonCancellableStatuses = [
+      'approved',
+      'paid',
+      'rejected',
+      'cancelled',
     ];
 
-    if (!cancellableStatuses.includes(claim.status)) {
+    this.logger.log(
+      `Checking if claim ${id} with status "${claim.status}" can be cancelled`,
+    );
+
+    if (nonCancellableStatuses.includes(claim.status)) {
+      this.logger.warn(`Cannot cancel claim ${id} - status is ${claim.status}`);
       throw new BadRequestException(
-        'Only draft or pending claims can be cancelled. Approved or paid claims cannot be cancelled.',
+        `Claims with status "${claim.status}" cannot be cancelled. Only draft or pending claims can be cancelled.`,
       );
     }
 
