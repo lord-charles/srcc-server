@@ -1,5 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { DatabaseModule } from './database/database.module';
 import { LoggerMiddleware } from './middleware/logger.middleware';
@@ -15,6 +17,19 @@ import { ImprestModule } from './modules/imprest/imprest.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    // Rate Limiting
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: configService.get<number>('THROTTLE_TTL') || 60000, // 60 seconds in milliseconds
+            limit: configService.get<number>('THROTTLE_LIMIT') || 100, // 100 requests per TTL
+          },
+        ],
+      }),
+      inject: [ConfigService],
+    }),
     AuthModule,
     DatabaseModule,
     SystemConfigModule,
@@ -22,10 +37,16 @@ import { ImprestModule } from './modules/imprest/imprest.module';
     SystemLogsModule,
     ProjectModule,
     ClaimsModule,
-    ImprestModule
+    ImprestModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    // Apply throttler globally
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -1000,20 +1000,69 @@ export class ClaimsService {
   }
 
   async cancel(id: string, userId: Types.ObjectId): Promise<ClaimDocument> {
-    const claim = await this.findOne(id, userId);
+    // Find claim without claimant restriction
+    const claim = await this.claimModel.findById(id).populate('projectId');
+
+    if (!claim) {
+      throw new NotFoundException('Claim not found');
+    }
+
+    // Check authorization - only claimant, admin, project creator, PM, or assistant PM can cancel
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const project = await this.projectModel.findById(claim.projectId);
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const isAdmin = user.roles?.includes('admin');
+    const isClaimant = claim.claimantId.toString() === userId.toString();
+    const isProjectCreator =
+      project.createdBy?.toString() === userId.toString();
+    const isProjectManager =
+      project.projectManagerId?.toString() === userId.toString();
+    const isAssistantPM = project.assistantProjectManagers?.some(
+      (apm) => apm.userId.toString() === userId.toString(),
+    );
 
     if (
-      ![
-        'draft',
-        'pending_checker_approval',
-        'pending_manager_approval',
-        'pending_finance_approval',
-      ].includes(claim.status)
+      !isAdmin &&
+      !isClaimant &&
+      !isProjectCreator &&
+      !isProjectManager &&
+      !isAssistantPM
     ) {
       throw new BadRequestException(
-        'Only draft or pending claims can be cancelled',
+        'You are not authorized to cancel this claim. Only the claimant, admins, project creators, project managers, or assistant project managers can cancel claims.',
       );
     }
+
+    // Check if claim can be cancelled based on status
+    const cancellableStatuses = [
+      'draft',
+      'pending_checker_approval',
+      'pending_reviewer_approval',
+      'pending_approver_approval',
+      'pending_manager_approval',
+      'pending_finance_approval',
+      'pending_srcc_checker_approval',
+      'pending_srcc_finance_approval',
+      'pending_director_approval',
+      'pending_academic_director_approval',
+    ];
+
+    if (!cancellableStatuses.includes(claim.status)) {
+      throw new BadRequestException(
+        'Only draft or pending claims can be cancelled. Approved or paid claims cannot be cancelled.',
+      );
+    }
+
+    this.logger.log(
+      `User ${user.email} is cancelling claim ${id} (status: ${claim.status})`,
+    );
 
     const updatedClaim = await this.claimModel.findByIdAndUpdate(
       id,
@@ -1025,14 +1074,24 @@ export class ClaimsService {
             action: 'CANCELLED',
             performedBy: userId,
             performedAt: new Date(),
+            details: {
+              previousStatus: claim.status,
+              cancelledBy: `${user.firstName} ${user.lastName}`,
+            },
           },
         },
       },
       { new: true },
     );
 
+    if (!updatedClaim) {
+      throw new NotFoundException('Claim not found');
+    }
+
     // Notify stakeholders
     await this.notifyStakeholders(updatedClaim, userId);
+
+    this.logger.log(`Claim ${id} successfully cancelled by user ${user.email}`);
 
     return updatedClaim;
   }
