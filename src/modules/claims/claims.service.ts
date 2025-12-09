@@ -441,6 +441,7 @@ export class ClaimsService {
     const requiredRole = ClaimsService.roleMap[level as ApprovalRole];
 
     if (!requiredRole) {
+      this.logger.error(`Invalid approval level: ${level}`);
       throw new BadRequestException(`Invalid approval level: ${level}`);
     }
 
@@ -456,9 +457,29 @@ export class ClaimsService {
       query.department = department;
     }
 
+    this.logger.log(
+      `Searching for approvers with query: ${JSON.stringify(query)}`,
+    );
+    this.logger.log(
+      `Level: ${level}, Required Role: ${requiredRole}, Department: ${department || 'Not specified'}`,
+    );
+
     const approvers = await this.userModel.find(query).lean();
 
+    this.logger.log(
+      `Found ${approvers.length} approver(s) for level: ${level}${department ? ` in department: ${department}` : ''}`,
+    );
+
+    if (approvers.length > 0) {
+      this.logger.log(
+        `Approvers found: ${approvers.map((a: any) => `${a.firstName} ${a.lastName} (${a.email}, dept: ${a.department || 'N/A'})`).join(', ')}`,
+      );
+    }
+
     if (!approvers.length) {
+      this.logger.error(
+        `No active approvers found for level: ${level}${department ? ` in department: ${department}` : ''}`,
+      );
       throw new BadRequestException(
         `No active approvers found for level: ${level}${department ? ` in department: ${department}` : ''}. Please contact system administrator.`,
       );
