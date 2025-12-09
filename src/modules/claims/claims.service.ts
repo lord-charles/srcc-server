@@ -33,7 +33,7 @@ const CLAIM_STATUSES = [
   'revision_requested',
 ] as const;
 
-type ClaimStatus = typeof CLAIM_STATUSES[number];
+type ClaimStatus = (typeof CLAIM_STATUSES)[number];
 
 interface ProjectMilestone {
   _id: Types.ObjectId;
@@ -69,7 +69,7 @@ export class ClaimsService {
     srcc_checker: 'srcc_checker',
     srcc_finance: 'srcc_finance',
     reviewer: 'reviewer',
-    approver: 'approver'
+    approver: 'approver',
   } as const;
 
   private getApprovalLevel(status: ClaimStatus): string | null {
@@ -88,12 +88,17 @@ export class ClaimsService {
     const [project, claimant, updatedBy] = await Promise.all([
       this.projectModel.findById(claim.projectId),
       this.userModel.findById(claim.claimantId),
-      this.userModel.findById(userId)
+      this.userModel.findById(userId),
     ]);
 
     if (!project || !claimant || !updatedBy) {
       throw new NotFoundException('Required references not found');
     }
+
+    // Get the approval flow to determine the department for the current step
+    const approvalFlow = await this.approvalFlowService.getApprovalFlow(
+      project.department,
+    );
 
     switch (claim.status as ClaimStatus) {
       case 'pending_checker_approval':
@@ -104,13 +109,36 @@ export class ClaimsService {
       case 'pending_director_approval':
       case 'pending_academic_director_approval':
       case 'pending_finance_approval': {
-        const currentRole = claim.status.replace('pending_', '').replace('_approval', '') as ApprovalRole;
-        const approvers = await this.getApprovers(currentRole);
-        await this.claimsNotificationService.notifyClaimSubmitted(claim, project, claimant, approvers);
+        const currentRole = claim.status
+          .replace('pending_', '')
+          .replace('_approval', '') as ApprovalRole;
+
+        // Find the current step in the approval flow to get the correct department
+        const currentStep = approvalFlow.steps.find(
+          (step) => `pending_${step.role}_approval` === claim.status,
+        );
+
+        const departmentForApprovers =
+          currentStep?.department || project.department;
+        const approvers = await this.getApprovers(
+          currentRole,
+          departmentForApprovers,
+        );
+        await this.claimsNotificationService.notifyClaimSubmitted(
+          claim,
+          project,
+          claimant,
+          approvers,
+        );
         break;
       }
       case 'approved':
-        await this.claimsNotificationService.notifyClaimApproved(claim, project, claimant, updatedBy);
+        await this.claimsNotificationService.notifyClaimApproved(
+          claim,
+          project,
+          claimant,
+          updatedBy,
+        );
         break;
       case 'rejected': {
         // Get rejection comments from the rejection details
@@ -122,21 +150,52 @@ export class ClaimsService {
             comments = approval.comments;
           }
         }
-        await this.claimsNotificationService.notifyClaimRejected(claim, project, claimant, updatedBy, comments);
+        await this.claimsNotificationService.notifyClaimRejected(
+          claim,
+          project,
+          claimant,
+          updatedBy,
+          comments,
+        );
         break;
       }
       case 'revision_requested':
-        await this.claimsNotificationService.notifyClaimUpdated(claim, project, claimant, updatedBy);
+        await this.claimsNotificationService.notifyClaimUpdated(
+          claim,
+          project,
+          claimant,
+          updatedBy,
+        );
         break;
       case 'paid':
-        await this.claimsNotificationService.notifyClaimPaid(claim, project, claimant, updatedBy);
+        await this.claimsNotificationService.notifyClaimPaid(
+          claim,
+          project,
+          claimant,
+          updatedBy,
+        );
         break;
       case 'cancelled':
-        await this.claimsNotificationService.notifyClaimCancelled(claim, project, claimant, updatedBy);
+        await this.claimsNotificationService.notifyClaimCancelled(
+          claim,
+          project,
+          claimant,
+          updatedBy,
+        );
         break;
-      case 'draft':
-        await this.claimsNotificationService.notifyClaimCreated(claim, project, claimant, await this.getApprovers('checker'));
+      case 'draft': {
+        // For draft, get the first step's department
+        const firstStep = approvalFlow.steps[0];
+        const departmentForApprovers =
+          firstStep?.department || project.department;
+        await this.claimsNotificationService.notifyClaimCreated(
+          claim,
+          project,
+          claimant,
+          await this.getApprovers('claim_checker', departmentForApprovers),
+        );
         break;
+      }
     }
   }
 
@@ -149,7 +208,10 @@ export class ClaimsService {
     if (!project) {
       throw new NotFoundException('Project not found');
     }
-    return this.approvalFlowService.getNextApprovalStep(project.department, claim.status);
+    return this.approvalFlowService.getNextApprovalStep(
+      project.department,
+      claim.status,
+    );
   }
 
   constructor(
@@ -161,10 +223,13 @@ export class ClaimsService {
     private readonly approvalFlowService: ApprovalFlowService,
   ) {}
 
-  async create(createClaimDto: CreateClaimDto, userId: Types.ObjectId): Promise<ClaimDocument> {
+  async create(
+    createClaimDto: CreateClaimDto,
+    userId: Types.ObjectId,
+  ): Promise<ClaimDocument> {
     const [contract, project] = await Promise.all([
       this.contractModel.findById(createClaimDto.contractId),
-      this.projectModel.findById(createClaimDto.projectId)
+      this.projectModel.findById(createClaimDto.projectId),
     ]);
 
     if (!contract) {
@@ -175,12 +240,14 @@ export class ClaimsService {
       throw new NotFoundException('Project not found');
     }
 
-
-
     // Get the approval flow for the project's department
-    const approvalFlow = await this.approvalFlowService.getApprovalFlow(project.department);
+    const approvalFlow = await this.approvalFlowService.getApprovalFlow(
+      project.department,
+    );
     if (!approvalFlow || !approvalFlow.steps.length) {
-      throw new BadRequestException(`No approval flow configured for department: ${project.department}`);
+      throw new BadRequestException(
+        `No approval flow configured for department: ${project.department}`,
+      );
     }
 
     // Get the initial status from the first step in the approval flow
@@ -200,18 +267,18 @@ export class ClaimsService {
 
     // Map milestone details
     if (createClaimDto.milestones?.length) {
-      claim.milestones = createClaimDto.milestones.map(m => {
+      claim.milestones = createClaimDto.milestones.map((m) => {
         console.log(m.milestoneId);
-        const projectMilestone = (project.milestones as ProjectMilestone[])?.find(
-          pm => pm._id.toString() === m.milestoneId
-        );
+        const projectMilestone = (
+          project.milestones as ProjectMilestone[]
+        )?.find((pm) => pm._id.toString() === m.milestoneId);
         console.log(project.milestones);
         if (!projectMilestone) {
           throw new BadRequestException(`Milestone ${m.milestoneId} not found`);
         }
 
         const maxClaimableAmount = projectMilestone.budget;
-        const previouslyClaimed = 0; 
+        const previouslyClaimed = 0;
         const currentClaim = (maxClaimableAmount * m.percentageClaimed) / 100;
 
         return {
@@ -221,7 +288,8 @@ export class ClaimsService {
           maxClaimableAmount,
           previouslyClaimed,
           currentClaim,
-          remainingClaimable: maxClaimableAmount - (previouslyClaimed + currentClaim),
+          remainingClaimable:
+            maxClaimableAmount - (previouslyClaimed + currentClaim),
         };
       });
     }
@@ -274,34 +342,36 @@ export class ClaimsService {
           }
 
           // Get the approval flow for the project's department
-          const approvalFlow = await this.approvalFlowService.getApprovalFlow(claim.projectId.department);
+          const approvalFlow = await this.approvalFlowService.getApprovalFlow(
+            claim.projectId.department,
+          );
           if (!approvalFlow) {
             return claim;
           }
 
           return {
             ...claim,
-            approvalFlow
+            approvalFlow,
           };
-        })
+        }),
       );
 
       return enhancedClaims;
     } catch (error) {
-      this.logger.error(
-        `Error finding claims: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Error finding claims: ${error.message}`, error.stack);
       throw error;
     }
   }
 
-  async findClaimsByContract(contractId: string, claimantId: string): Promise<any[]> {
+  async findClaimsByContract(
+    contractId: string,
+    claimantId: string,
+  ): Promise<any[]> {
     try {
       return await this.claimModel
-        .find({ 
+        .find({
           contractId: new Types.ObjectId(contractId),
-          claimantId: new Types.ObjectId(claimantId)
+          claimantId: new Types.ObjectId(claimantId),
         })
         .populate('projectId', 'name description')
         .populate('contractId', 'contractNumber contractValue')
@@ -337,8 +407,15 @@ export class ClaimsService {
     return claim;
   }
 
-  async update(id: string, updateClaimDto: UpdateClaimDto, userId: Types.ObjectId) {
-    const claim = await this.claimModel.findOne({ _id: id, claimantId: userId });
+  async update(
+    id: string,
+    updateClaimDto: UpdateClaimDto,
+    userId: Types.ObjectId,
+  ) {
+    const claim = await this.claimModel.findOne({
+      _id: id,
+      claimantId: userId,
+    });
     if (!claim) {
       throw new NotFoundException('Claim not found');
     }
@@ -353,42 +430,54 @@ export class ClaimsService {
         ...updateClaimDto,
         updatedBy: userId,
       },
-      { new: true }
+      { new: true },
     );
   }
 
-
-  private async getApprovers(level: string): Promise<UserDocument[]> {
+  private async getApprovers(
+    level: string,
+    department?: string,
+  ): Promise<UserDocument[]> {
     const requiredRole = ClaimsService.roleMap[level as ApprovalRole];
 
     if (!requiredRole) {
       throw new BadRequestException(`Invalid approval level: ${level}`);
     }
 
-    const approvers = await this.userModel
-      .find({
-        roles: { $in: [requiredRole] },
-        status: 'active',
-      })
-      .lean();
+    const query: any = {
+      roles: { $in: [requiredRole] },
+      status: 'active',
+    };
+
+    // Add department filter if provided
+    // SRCC roles (srcc_checker, srcc_finance) should only get SRCC department users
+    // Other roles should get users from the specific department
+    if (department) {
+      query.department = department;
+    }
+
+    const approvers = await this.userModel.find(query).lean();
 
     if (!approvers.length) {
       throw new BadRequestException(
-        `No active approvers found for level: ${level}. Please contact system administrator.`,
+        `No active approvers found for level: ${level}${department ? ` in department: ${department}` : ''}. Please contact system administrator.`,
       );
     }
 
     return approvers;
   }
 
-
-  async submit(claimId: string, userId: Types.ObjectId): Promise<ClaimDocument> {
+  async submit(
+    claimId: string,
+    userId: Types.ObjectId,
+  ): Promise<ClaimDocument> {
     const claim = await this.claimModel.findById(claimId);
     if (!claim) {
       throw new NotFoundException('Claim not found');
     }
 
-    if (claim.status !== CLAIM_STATUSES[0]) { // 'draft'
+    if (claim.status !== CLAIM_STATUSES[0]) {
+      // 'draft'
       throw new BadRequestException('Only draft claims can be submitted');
     }
 
@@ -400,7 +489,11 @@ export class ClaimsService {
     return savedClaim;
   }
 
-  async approve(id: string, comments: string, userId: Types.ObjectId): Promise<ClaimDocument> {
+  async approve(
+    id: string,
+    comments: string,
+    userId: Types.ObjectId,
+  ): Promise<ClaimDocument> {
     const claim = await this.claimModel.findById(id);
     if (!claim) {
       throw new NotFoundException('Claim not found');
@@ -418,18 +511,26 @@ export class ClaimsService {
 
     // Get next step in approval flow
     const next = await this.getNextApprovalStep(claim);
-console.log(next)
+    console.log(next);
 
     if (!next) {
       throw new BadRequestException('Invalid approval flow state');
     }
 
     // Extract current role from status (e.g., 'pending_claim_checker_approval' -> 'claim_checker')
-    const currentRole = claim.status.replace('pending_', '').replace('_approval', '');
+    const currentRole = claim.status
+      .replace('pending_', '')
+      .replace('_approval', '');
 
     // Check if user has the required role
-    if (!approver.roles?.includes(ClaimsService.roleMap[currentRole as ApprovalRole])) {
-      throw new BadRequestException(`User does not have ${currentRole} approval rights`);
+    if (
+      !approver.roles?.includes(
+        ClaimsService.roleMap[currentRole as ApprovalRole],
+      )
+    ) {
+      throw new BadRequestException(
+        `User does not have ${currentRole} approval rights`,
+      );
     }
 
     // Update claim status and approval details
@@ -441,11 +542,12 @@ console.log(next)
           approvedBy: userId,
           approvedAt: new Date(),
           comments,
-          department: next.department
+          department: next.department,
         },
-        currentLevelDeadline: next.nextStatus !== 'approved'
-          ? new Date(Date.now() + 24 * 60 * 60 * 1000)
-          : undefined,
+        currentLevelDeadline:
+          next.nextStatus !== 'approved'
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+            : undefined,
         $push: {
           auditTrail: {
             action: 'APPROVED',
@@ -455,12 +557,12 @@ console.log(next)
               role: currentRole,
               department: next.department,
               comments,
-              nextStatus: next.nextStatus
+              nextStatus: next.nextStatus,
             },
           },
         },
       },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedClaim) {
@@ -473,7 +575,11 @@ console.log(next)
     return updatedClaim;
   }
 
-  async reject(id: string, reason: string, userId: Types.ObjectId): Promise<ClaimDocument> {
+  async reject(
+    id: string,
+    reason: string,
+    userId: Types.ObjectId,
+  ): Promise<ClaimDocument> {
     const claim = await this.findOne(id, userId);
 
     if (!claim.status.startsWith('pending_') || claim.status === 'approved') {
@@ -481,11 +587,15 @@ console.log(next)
     }
 
     // Extract current role from status
-    const currentRole = claim.status.replace('pending_', '').replace('_approval', '') as ApprovalRole;
+    const currentRole = claim.status
+      .replace('pending_', '')
+      .replace('_approval', '') as ApprovalRole;
     const user = await this.userModel.findById(userId);
-    
+
     if (!user?.roles.includes(ClaimsService.roleMap[currentRole])) {
-      throw new BadRequestException(`Only users with ${currentRole} role can reject at this stage`);
+      throw new BadRequestException(
+        `Only users with ${currentRole} role can reject at this stage`,
+      );
     }
 
     const updateData = {
@@ -502,7 +612,7 @@ console.log(next)
           action: 'REJECTED',
           performedBy: userId,
           performedAt: new Date(),
-          details: { 
+          details: {
             reason,
             level: currentRole,
             status: 'rejected',
@@ -537,15 +647,21 @@ console.log(next)
     const claim = await this.findOne(id, userId);
 
     if (!claim.status.startsWith('pending_') || claim.status === 'approved') {
-      throw new BadRequestException('Only pending claims can be sent for revision');
+      throw new BadRequestException(
+        'Only pending claims can be sent for revision',
+      );
     }
 
     // Extract current role from status
-    const currentRole = claim.status.replace('pending_', '').replace('_approval', '') as ApprovalRole;
+    const currentRole = claim.status
+      .replace('pending_', '')
+      .replace('_approval', '') as ApprovalRole;
     const user = await this.userModel.findById(userId);
-    
+
     if (!user?.roles.includes(ClaimsService.roleMap[currentRole])) {
-      throw new BadRequestException(`Only users with ${currentRole} role can request revision at this stage`);
+      throw new BadRequestException(
+        `Only users with ${currentRole} role can request revision at this stage`,
+      );
     }
 
     const updateData = {
@@ -599,12 +715,14 @@ console.log(next)
       transactionId: string;
       reference: string;
     },
-    userId: Types.ObjectId
+    userId: Types.ObjectId,
   ): Promise<ClaimDocument> {
     const claim = await this.findOne(id, userId);
 
     if (claim.status !== 'approved') {
-      throw new BadRequestException('Only approved claims can be marked as paid');
+      throw new BadRequestException(
+        'Only approved claims can be marked as paid',
+      );
     }
 
     const updatedClaim = await this.claimModel.findByIdAndUpdate(
@@ -626,7 +744,7 @@ console.log(next)
           },
         },
       },
-      { new: true }
+      { new: true },
     );
 
     // Notify stakeholders
@@ -638,8 +756,17 @@ console.log(next)
   async cancel(id: string, userId: Types.ObjectId): Promise<ClaimDocument> {
     const claim = await this.findOne(id, userId);
 
-    if (!['draft', 'pending_checker_approval', 'pending_manager_approval', 'pending_finance_approval'].includes(claim.status)) {
-      throw new BadRequestException('Only draft or pending claims can be cancelled');
+    if (
+      ![
+        'draft',
+        'pending_checker_approval',
+        'pending_manager_approval',
+        'pending_finance_approval',
+      ].includes(claim.status)
+    ) {
+      throw new BadRequestException(
+        'Only draft or pending claims can be cancelled',
+      );
     }
 
     const updatedClaim = await this.claimModel.findByIdAndUpdate(
@@ -655,7 +782,7 @@ console.log(next)
           },
         },
       },
-      { new: true }
+      { new: true },
     );
 
     // Notify stakeholders
