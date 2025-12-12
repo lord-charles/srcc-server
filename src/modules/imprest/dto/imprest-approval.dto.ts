@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsArray, ValidateNested, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsBoolean,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ImprestApprovalDto {
@@ -71,4 +79,42 @@ export class ImprestAccountingDto {
   @IsString()
   @IsOptional()
   comments?: string;
+}
+
+export class ImprestAcknowledgmentDto {
+  @ApiProperty({
+    example: true,
+    description: 'Whether the user received the money',
+  })
+  @IsBoolean()
+  received: boolean;
+
+  @ApiProperty({
+    example: 'Money received successfully',
+    description: 'Acknowledgment comments',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  comments?: string;
+}
+
+export class ImprestDisputeResolutionDto {
+  @ApiProperty({
+    example: 'disbursed',
+    description: 'Resolution action',
+    enum: ['disbursed', 'cancelled'],
+  })
+  @IsString()
+  @IsIn(['disbursed', 'cancelled'])
+  resolution: string;
+
+  @ApiProperty({
+    example: 'Issue resolved, money re-disbursed',
+    description: 'Admin comments',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  adminComments?: string;
 }

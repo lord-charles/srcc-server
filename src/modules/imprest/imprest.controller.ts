@@ -27,6 +27,8 @@ import {
   ImprestAccountingDto,
   ReceiptDto,
   ImprestDisbursementDto,
+  ImprestAcknowledgmentDto,
+  ImprestDisputeResolutionDto,
 } from './dto/imprest-approval.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -315,5 +317,74 @@ export class ImprestController {
       req.user.sub,
       body.comments,
     );
+  }
+
+  @Post(':id/acknowledge')
+  @ApiOperation({ summary: 'Acknowledge receipt of imprest funds' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        received: {
+          type: 'boolean',
+          example: true,
+          description: 'Whether the user received the money',
+        },
+        comments: {
+          type: 'string',
+          example: 'Money received successfully',
+          description: 'Optional comments about the receipt',
+        },
+      },
+      required: ['received'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Receipt acknowledged successfully.',
+  })
+  async acknowledgeReceipt(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() acknowledgmentDto: ImprestAcknowledgmentDto,
+  ) {
+    return this.imprestService.acknowledgeReceipt(
+      id,
+      req.user.sub,
+      acknowledgmentDto,
+    );
+  }
+
+  @Post(':id/resolve-dispute')
+  // @Roles('admin')
+  @ApiOperation({
+    summary: 'Resolve imprest disbursement dispute (admin only)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        resolution: {
+          type: 'string',
+          enum: ['disbursed', 'cancelled'],
+          example: 'disbursed',
+          description: 'Resolution action',
+        },
+        adminComments: {
+          type: 'string',
+          example: 'Issue resolved, money re-disbursed',
+          description: 'Admin comments about the resolution',
+        },
+      },
+      required: ['resolution'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Dispute resolved successfully.' })
+  async resolveDispute(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() resolutionDto: ImprestDisputeResolutionDto,
+  ) {
+    return this.imprestService.resolveDispute(id, req.user.sub, resolutionDto);
   }
 }

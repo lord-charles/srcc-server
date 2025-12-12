@@ -72,6 +72,9 @@ export class Imprest {
       'approved',
       'rejected',
       'disbursed',
+      'pending_acknowledgment',
+      'disputed',
+      'pending_accounting_approval',
       'accounted',
       'overdue',
     ],
@@ -84,6 +87,8 @@ export class Imprest {
       'approved',
       'rejected',
       'disbursed',
+      'pending_acknowledgment',
+      'disputed',
       'pending_accounting_approval',
       'accounted',
       'overdue',
@@ -189,6 +194,40 @@ export class Imprest {
     totalAmount: number;
     balance: number;
     comments?: string;
+  };
+
+  @ApiProperty({ description: 'Money acknowledgment details' })
+  @Prop({
+    type: {
+      acknowledgedBy: { type: Types.ObjectId, ref: 'User' },
+      acknowledgedAt: Date,
+      received: Boolean,
+      comments: String,
+    },
+    _id: false,
+  })
+  acknowledgment?: {
+    acknowledgedBy: Types.ObjectId;
+    acknowledgedAt: Date;
+    received: boolean;
+    comments?: string;
+  };
+
+  @ApiProperty({ description: 'Dispute resolution details' })
+  @Prop({
+    type: {
+      resolvedBy: { type: Types.ObjectId, ref: 'User' },
+      resolvedAt: Date,
+      resolution: String,
+      adminComments: String,
+    },
+    _id: false,
+  })
+  disputeResolution?: {
+    resolvedBy: Types.ObjectId;
+    resolvedAt: Date;
+    resolution: string;
+    adminComments?: string;
   };
 
   @ApiProperty({
