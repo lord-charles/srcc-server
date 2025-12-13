@@ -348,14 +348,6 @@ export class ImprestController {
     @Req() req: any,
     @Body() acknowledgmentDto: ImprestAcknowledgmentDto,
   ) {
-    // Debug logging in controller
-    console.log('=== CONTROLLER ACKNOWLEDGMENT DEBUG ===');
-    console.log('Imprest ID:', id);
-    console.log('User from JWT:', req.user);
-    console.log('User ID (sub):', req.user.sub);
-    console.log('Acknowledgment DTO:', acknowledgmentDto);
-    console.log('======================================');
-
     return this.imprestService.acknowledgeReceipt(
       id,
       req.user.sub,

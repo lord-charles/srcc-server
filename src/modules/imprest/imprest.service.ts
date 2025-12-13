@@ -649,27 +649,18 @@ SRCC Finance Team`,
   ): Promise<ImprestDocument> {
     const imprest = await this.findOne(id);
 
-    // Debug logging to identify the issue
-    console.log('=== ACKNOWLEDGMENT DEBUG INFO ===');
-    console.log('Imprest ID:', id);
-    console.log('Current User ID:', userId);
-    console.log('Imprest Status:', imprest.status);
-    console.log('Imprest Requested By:', imprest.requestedBy.toString());
-    console.log('User ID Type:', typeof userId);
-    console.log('Requested By Type:', typeof imprest.requestedBy.toString());
-    console.log('Are they equal?:', imprest.requestedBy.toString() === userId);
-    console.log('Imprest object:', JSON.stringify(imprest, null, 2));
-    console.log('================================');
-
     if (imprest.status !== 'pending_acknowledgment') {
-      throw new BadRequestException(
-        `Imprest is not pending acknowledgment. Current status: ${imprest.status}`,
-      );
+      throw new BadRequestException('Imprest is not pending acknowledgment');
     }
 
-    if (imprest.requestedBy.toString() !== userId) {
+    // Fix: Access the _id field correctly when requestedBy is populated
+    const requestedById = imprest.requestedBy._id
+      ? imprest.requestedBy._id.toString()
+      : imprest.requestedBy.toString();
+
+    if (requestedById !== userId) {
       throw new BadRequestException(
-        `Only the requester can acknowledge receipt. Expected: ${imprest.requestedBy.toString()}, Got: ${userId}`,
+        'Only the requester can acknowledge receipt',
       );
     }
 
