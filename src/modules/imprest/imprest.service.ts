@@ -649,7 +649,9 @@ SRCC Finance Team`,
   ): Promise<ImprestDocument> {
     const imprest = await this.findOne(id);
 
-    if (imprest.status !== 'pending_acknowledgment') {
+    if (
+      !['pending_acknowledgment', 'resolved_dispute'].includes(imprest.status)
+    ) {
       throw new BadRequestException('Imprest is not pending acknowledgment');
     }
 
@@ -672,8 +674,10 @@ SRCC Finance Team`,
     };
 
     if (acknowledgmentDto.received) {
-      // Money received successfully
-      imprest.status = 'disbursed';
+      // Money received successfully - preserve dispute history if it exists
+      imprest.status = imprest.hasDisputeHistory
+        ? 'resolved_dispute'
+        : 'disbursed';
 
       const savedImprest = await imprest.save();
 
@@ -711,6 +715,7 @@ SRCC Finance Team`,
     } else {
       // Money not received - create dispute
       imprest.status = 'disputed';
+      imprest.hasDisputeHistory = true;
 
       const savedImprest = await imprest.save();
 
@@ -811,9 +816,12 @@ SRCC Finance Team`,
       adminComments: resolutionDto.adminComments,
     };
 
+    // Mark that this imprest has dispute history
+    imprest.hasDisputeHistory = true;
+
     if (resolutionDto.resolution === 'disbursed') {
-      // Issue resolved, money re-disbursed or confirmed
-      imprest.status = 'pending_acknowledgment';
+      // Issue resolved, money re-disbursed or confirmed - use special status
+      imprest.status = 'resolved_dispute';
     } else {
       // Cancelled - no money will be disbursed
       imprest.status = 'cancelled';

@@ -74,6 +74,7 @@ export class Imprest {
       'disbursed',
       'pending_acknowledgment',
       'disputed',
+      'resolved_dispute',
       'pending_accounting_approval',
       'accounted',
       'overdue',
@@ -89,6 +90,7 @@ export class Imprest {
       'disbursed',
       'pending_acknowledgment',
       'disputed',
+      'resolved_dispute',
       'pending_accounting_approval',
       'accounted',
       'overdue',
@@ -96,6 +98,12 @@ export class Imprest {
     default: 'pending_hod',
   })
   status: string;
+
+  @ApiProperty({
+    description: 'Flag to indicate if this imprest has ever been disputed',
+  })
+  @Prop({ default: false })
+  hasDisputeHistory?: boolean;
 
   @ApiProperty({ description: 'User who created the request' })
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })

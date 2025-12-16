@@ -407,6 +407,7 @@ export class ClaimsService {
       .populate('claimantId', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email')
+      .populate('payment.paidBy', 'firstName lastName email')
       .populate({
         path: 'auditTrail.performedBy',
         select: 'firstName lastName email',
@@ -477,6 +478,7 @@ export class ClaimsService {
         .populate('claimantId', 'firstName lastName email')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
+        .populate('payment.paidBy', 'firstName lastName email')
         .populate({
           path: 'auditTrail.performedBy',
           select: 'firstName lastName email',
@@ -561,6 +563,7 @@ export class ClaimsService {
         .populate('claimantId', 'firstName lastName email')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
+        .populate('payment.paidBy', 'firstName lastName email')
         .populate('milestones.milestoneId', 'title description')
         .populate({
           path: 'auditTrail.performedBy',
@@ -637,6 +640,7 @@ export class ClaimsService {
         .populate('claimantId', 'firstName lastName email')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
+        .populate('payment.paidBy', 'firstName lastName email')
         .populate({
           path: 'auditTrail.performedBy',
           select: 'firstName lastName email',
@@ -678,6 +682,7 @@ export class ClaimsService {
       .populate('claimantId', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email')
+      .populate('payment.paidBy', 'firstName lastName email')
       .populate({
         path: 'auditTrail.performedBy',
         select: 'firstName lastName email',
@@ -1051,27 +1056,31 @@ export class ClaimsService {
       `Marking claim ${id} as paid by user ${userId}. Transaction: ${paymentDetails.transactionId}`,
     );
 
-    const updatedClaim = await this.claimModel.findByIdAndUpdate(
-      id,
-      {
-        status: 'paid',
-        payment: {
-          paidBy: userId,
-          paidAt: new Date(),
-          ...paymentDetails,
-        },
-        updatedBy: userId,
-        $push: {
-          auditTrail: {
-            action: 'MARKED_AS_PAID',
-            performedBy: userId,
-            performedAt: new Date(),
-            details: { paymentDetails },
+    const updatedClaim = await this.claimModel
+      .findByIdAndUpdate(
+        id,
+        {
+          status: 'paid',
+          payment: {
+            paidBy: userId,
+            paidAt: new Date(),
+            ...paymentDetails,
+          },
+          updatedBy: userId,
+          $push: {
+            auditTrail: {
+              action: 'MARKED_AS_PAID',
+              performedBy: userId,
+              performedAt: new Date(),
+              details: { paymentDetails },
+            },
           },
         },
-      },
-      { new: true },
-    );
+        { new: true },
+      )
+      .populate('projectId', 'name description')
+      .populate('claimantId', 'firstName lastName email')
+      .populate('payment.paidBy', 'firstName lastName email');
 
     if (!updatedClaim) {
       throw new NotFoundException('Claim not found');
