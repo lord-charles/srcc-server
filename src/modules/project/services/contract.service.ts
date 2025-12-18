@@ -662,83 +662,20 @@ export class ContractService {
     user: any,
   ): Promise<void> {
     const subject = `Contract Accepted - ${contract.contractNumber}`;
-    const htmlMessage = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contract Acceptance Confirmation</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .header {
-      background-color: #003366;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    .content {
-      padding: 20px;
-      background-color: #f9f9f9;
-    }
-    .contract-details {
-      background-color: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-radius: 5px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    .button {
-      display: inline-block;
-      background-color: #003366;
-      color: white;
-      padding: 10px 20px;
-      text-decoration: none;
-      border-radius: 5px;
-      margin-top: 20px;
-    }
-    .footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 0.9em;
-      color: #666;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>Contract Acceptance Confirmation</h1>
-  </div>
-  <div class="content">
-    <p>Dear ${user.firstName} ${user.lastName},</p>
-    <p>Thank you for accepting your contract with Strathmore Research and Consultancy Centre Ltd (SRCC).</p>
-    <div class="contract-details">
-      <h2>Contract Details:</h2>
-      <ul>
-        <li><strong>Contract Number:</strong> ${contract.contractNumber}</li>
-        <li><strong>Description:</strong> ${contract.description}</li>
-        <li><strong>Contract Value:</strong> ${contract.contractValue} ${contract.currency}</li>
-        <li><strong>Start Date:</strong> ${contract.startDate.toLocaleDateString()}</li>
-        <li><strong>End Date:</strong> ${contract.endDate.toLocaleDateString()}</li>
-      </ul>
-    </div>
-    <p>Your contract is now active. Please log in to the SRCC portal for further details and to track your project progress.</p>
-  </div>
-  <div class="footer">
-    <p>Best regards,<br>SRCC Management Team</p>
-  </div>
-</body>
-</html>
-  `;
+    const message = `Dear ${user.firstName} ${user.lastName},
 
-    await this.notificationService.sendEmail(user.email, subject, htmlMessage);
+Your contract has been accepted successfully.
+
+Contract Details
+- Contract Number: ${contract.contractNumber}
+- Description: ${contract.description}
+- Contract Value: ${contract.contractValue} ${contract.currency}
+- Start Date: ${contract.startDate.toLocaleDateString()}
+- End Date: ${contract.endDate.toLocaleDateString()}
+
+You can view the full contract and track progress in the SRCC Portal.`;
+
+    await this.notificationService.sendEmail(user.email, subject, message);
 
     const smsMessage = `SRCC: Your contract (${contract.contractNumber}) has been successfully accepted and is now active.`;
     await this.notificationService.sendSMS(user.phoneNumber, smsMessage);
@@ -913,66 +850,18 @@ export class ContractService {
     contractedUser: User,
     level: string,
   ): (approver: User) => string {
-    return (approver: User) => `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
-          <h2 style="color: #2c3e50; margin-bottom: 20px;">Contract Review Required</h2>
-          
-          <div style="background-color: #e74c3c; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            <p style="margin: 0;"><strong>⚠️ Your approval is required as ${this.formatRole(level)}</strong></p>
-          </div>
+    return (approver: User) => `Dear ${approver.firstName} ${approver.lastName},
 
-          <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            <h3 style="color: #34495e; margin-top: 0;">Contract Details</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 8px 0;"><strong>Contract Number:</strong></td>
-                <td style="padding: 8px 0;">${contract.contractNumber}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0;"><strong>Project:</strong></td>
-                <td style="padding: 8px 0;">${project.name}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0;"><strong>Contractor:</strong></td>
-                <td style="padding: 8px 0;">${contractedUser.firstName} ${contractedUser.lastName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0;"><strong>Value:</strong></td>
-                <td style="padding: 8px 0;">${contract.currency} ${contract.contractValue.toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0;"><strong>Duration:</strong></td>
-                <td style="padding: 8px 0;">${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}</td>
-              </tr>
-            </table>
-          </div>
+A contract requires your review at the ${this.formatRole(level)} level.
 
-          <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            <h3 style="color: #34495e; margin-top: 0;">Required Actions</h3>
-            <p>Please review the contract details and take appropriate action based on:</p>
-            <ul style="color: #34495e;">
-              <li>Compliance with organizational policies</li>
-              <li>Budget allocation and financial viability</li>
-              <li>Contract terms and conditions</li>
-              <li>Project alignment and resource requirements</li>
-            </ul>
-          </div>
+Details
+- Contract: ${contract.contractNumber}
+- Project: ${project?.name}
+- Consultant: ${contractedUser?.firstName} ${contractedUser?.lastName}
+- Value: ${contract.currency} ${contract.contractValue.toLocaleString()}
+- Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}
 
-          <div style="text-align: center; margin-top: 20px;">
-            <a href="https://srcc.cognitron.co.ke/contracts" 
-               style="display: inline-block; background-color: #2ecc71; color: white; padding: 12px 24px; 
-                      text-decoration: none; border-radius: 5px; font-weight: bold;">
-              Review Contract
-            </a>
-          </div>
-
-          <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; font-size: 12px; color: #666;">
-            <p style="margin: 0;">This notification was sent to you because you are designated as a ${this.formatRole(level)} in the SRCC system.</p>
-          </div>
-        </div>
-      </div>
-    `;
+Please log in to the SRCC Portal to review and take action.`;
   }
 
   private formatRole(role: string): string {
@@ -1016,41 +905,20 @@ export class ContractService {
     }
 
     const subject = `Action Required: Contract Acceptance - ${contract.contractNumber}`;
-    const message = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
-          <h2 style="color: #2c3e50;">Contract Ready for Acceptance</h2>
-          
-          <div style="background-color: #e74c3c; color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>⚠️ Action Required: Please review and accept your contract</strong></p>
-          </div>
-          
-          <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p>Dear ${user.firstName} ${user.lastName},</p>
-            <p>Your contract for project "${project.name}" has been approved and is ready for your acceptance.</p>
-            
-            <div style="margin: 20px 0;">
-              <strong>Contract Details:</strong>
-              <ul>
-                <li>Contract Number: ${contract.contractNumber}</li>
-                <li>Project: ${project.name}</li>
-                <li>Value: ${contract.currency} ${contract.contractValue.toLocaleString()}</li>
-                <li>Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}</li>
-              </ul>
-            </div>
+    const message = `Dear ${user.firstName} ${user.lastName},
 
-            <div style="margin: 20px 0;">
-              <p><strong>Next Steps:</strong></p>
-              <ol>
-                <li>Review the contract details carefully</li>
-                <li>Generate an OTP for contract acceptance</li>
-                <li>Enter the OTP to formally accept the contract</li>
-              </ol>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
+Your contract for project "${project.name}" has been approved and is ready for your acceptance.
+
+Contract Details
+- Contract Number: ${contract.contractNumber}
+- Project: ${project.name}
+- Value: ${contract.currency} ${contract.contractValue.toLocaleString()}
+- Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}
+
+Next Steps
+1. Review the contract details
+2. Generate an OTP for acceptance
+3. Enter the OTP to accept the contract`;
 
     if (user.email) {
       await this.notificationService.sendEmail(user.email, subject, message);
@@ -1073,34 +941,17 @@ export class ContractService {
     }
 
     const subject = `New Contract Assignment - ${contract.contractNumber}`;
-    const message = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
-          <h2 style="color: #2c3e50;">New Contract Assignment</h2>
-          
-          <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <p>Dear ${user.firstName} ${user.lastName},</p>
-            <p>A new contract has been created for you in the project "${project.name}".</p>
-            
-            <div style="margin: 20px 0;">
-              <strong>Contract Details:</strong>
-              <ul>
-                <li>Contract Number: ${contract.contractNumber}</li>
-                <li>Description: ${contract.description}</li>
-                <li>Value: ${contract.currency} ${contract.contractValue.toLocaleString()}</li>
-                <li>Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}</li>
-              </ul>
-            </div>
+    const message = `Dear ${user.firstName} ${user.lastName},
 
-            <p>The contract is currently under review. You will be notified once it is ready for your acceptance.</p>
-          </div>
-          
-          <div style="font-size: 12px; color: #666; margin-top: 20px;">
-            <p>This is an automated message from the SRCC Contract Management System.</p>
-          </div>
-        </div>
-      </div>
-    `;
+A new contract has been created for you in the project "${project.name}".
+
+Contract Details
+- Contract Number: ${contract.contractNumber}
+- Description: ${contract.description}
+- Value: ${contract.currency} ${contract.contractValue.toLocaleString()}
+- Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}
+
+The contract is currently under review. You will be notified once it is ready for your acceptance.`;
 
     if (user.email) {
       await this.notificationService.sendEmail(user.email, subject, message);

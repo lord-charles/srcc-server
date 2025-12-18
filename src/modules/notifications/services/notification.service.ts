@@ -96,87 +96,40 @@ export class NotificationService {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${subject}</title>
         <style>
-          body, html {
-            margin: 0;
-            padding: 0;
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f4f7f9;
-          }
-          .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-          }
-          .header {
-            background-color: #003366;
-            color: #ffffff;
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px 5px 0 0;
-          }
-          .content {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 0 0 5px 5px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          }
-          .logo {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0;
-          }
-          .tagline {
-            font-size: 14px;
-            margin: 5px 0 0;
-            opacity: 0.8;
-          }
-          .message {
-            margin-bottom: 20px;
-          }
-          .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-          }
-          .cta {
-            display: inline-block;
-            margin-top: 16px;
-            padding: 10px 16px;
-            background-color: #003366;
-            color: #ffffff !important;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: bold;
-          }
-          @media only screen and (max-width: 600px) {
-            .container {
-              width: 100%;
-              padding: 10px;
-            }
-          }
+          body, html { margin:0; padding:0; background:#f6f8fa; color:#222; font-family: Arial, Helvetica, sans-serif; line-height:1.45; }
+          .wrap { max-width: 640px; margin: 0 auto; padding: 12px; }
+          .card { background:#ffffff; border:1px solid #e6e9ef; border-radius:6px; overflow:hidden; }
+          .header { background:#003366; color:#ffffff; padding:12px 16px; }
+          .brand { margin:0; font-size:18px; font-weight:700; letter-spacing:0.3px; }
+          .sub { margin:2px 0 0; font-size:12px; opacity:0.9; }
+          .content { padding:16px; }
+          .message { margin:0; font-size:14px; }
+          .cta-wrap { text-align:center; padding:12px 16px 16px; }
+          .cta { display:inline-block; padding:8px 14px; background:#003366; color:#fff !important; text-decoration:none; border-radius:4px; font-weight:600; font-size:13px; }
+          .footer { padding:10px 16px; border-top:1px solid #eef1f5; color:#6b7280; font-size:11px; text-align:center; }
+          @media (max-width:600px){ .wrap{ padding:8px; } .content{ padding:12px; } }
         </style>
       </head>
       <body>
-        <div class="container">
-          <div class="header">
-            <h1 class="logo">SRCC</h1>
-            <p class="tagline">Strathmore Research and Consultancy Centre</p>
-          </div>
-          <div class="content">
-            <div class="message">
-              ${message.replace(/\n/g, '<br>')}
+        <div class="wrap">
+          <div class="card">
+            <div class="header">
+              <h1 class="brand">SRCC</h1>
+              <p class="sub">Strathmore Research and Consultancy Centre</p>
             </div>
-            <div style="text-align:center;">
+            <div class="content">
+              <div class="message">${message.replace(/\n/g, '<br>')}</div>
+            </div>
+            <div class="cta-wrap">
               <a class="cta" href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener">Access SRCC Portal</a>
+            </div>
+            <div class="footer">
+              This is an automated message from SRCC. Please do not reply.
             </div>
           </div>
         </div>
       </body>
-      </html>
-    `;
+      </html>`;
 
       const mailOptions = {
         from: {
@@ -230,22 +183,27 @@ export class NotificationService {
         subject,
         text: message,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h1 style="color: #2c3e50; margin: 0;">SRCC</h1>
-              <p style="color: #7f8c8d; margin: 5px 0;">Strathmore Research and Consultancy Centre</p>
+          <!DOCTYPE html>
+          <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${subject}</title></head>
+          <body style="margin:0;padding:0;background:#f6f8fa;color:#222;font-family:Arial,Helvetica,sans-serif;line-height:1.45;">
+            <div style="max-width:640px;margin:0 auto;padding:12px;">
+              <div style="background:#ffffff;border:1px solid #e6e9ef;border-radius:6px;overflow:hidden;">
+                <div style="background:#003366;color:#fff;padding:12px 16px;">
+                  <h1 style="margin:0;font-size:18px;font-weight:700;letter-spacing:0.3px;">SRCC</h1>
+                  <p style="margin:2px 0 0;font-size:12px;opacity:0.9;">Strathmore Research and Consultancy Centre</p>
+                </div>
+                <div style="padding:16px;font-size:14px;">
+                  ${message.replace(/\n/g, '<br>')}
+                </div>
+                <div style="text-align:center;padding:12px 16px 16px;">
+                  <a href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener" style="display:inline-block;padding:8px 14px;background:#003366;color:#fff;text-decoration:none;border-radius:4px;font-weight:600;font-size:13px;">Access SRCC Portal</a>
+                </div>
+                <div style="padding:10px 16px;border-top:1px solid #eef1f5;color:#6b7280;font-size:11px;text-align:center;">
+                  This is an automated message from SRCC. Please do not reply.
+                </div>
+              </div>
             </div>
-            <div style="background-color: #ffffff; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              ${message.replace(/\n/g, '<br>')}
-            </div>
-            <div style="text-align:center; margin-top: 16px;">
-              <a href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener" style="display:inline-block;padding:10px 16px;background:#003366;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold;">Access SRCC Portal</a>
-            </div>
-            <div style="margin-top: 20px; padding: 20px; border-top: 1px solid #eee; color: #666; font-size: 12px;">
-              <p>This is an automated message from SRCC. Please do not reply to this email.</p>
-              <p>If you have any questions, please contact our support team.</p>
-            </div>
-          </div>
+          </body></html>
         `,
         attachments,
       };
