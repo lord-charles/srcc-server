@@ -1,24 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import * as nodemailer from 'nodemailer';
+import {
+  EmailClientHelper,
+  EmailPayload,
+} from '../helpers/email-client.helper';
 
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
-  private readonly transporter: nodemailer.Transporter;
+  private readonly emailClient: EmailClientHelper;
 
   constructor(private readonly configService: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      service: this.configService.get<string>('SMTP_SERVICE'),
-      host: this.configService.get<string>('SMTP_HOST'),
-      port: this.configService.get<number>('SMTP_PORT'),
-      secure: true, // true for port 465
-      auth: {
-        user: this.configService.get<string>('SMTP_USER'),
-        pass: this.configService.get<string>('SMTP_PASS'),
-      },
-    });
+    const emailServiceUrl = this.configService.get<string>('EMAIL_SERVICE_URL');
+    this.emailClient = new EmailClientHelper(emailServiceUrl);
+  }
+
+  private async callEmailService(payload: EmailPayload): Promise<boolean> {
+    const result = await this.emailClient.sendEmail(payload);
+    return result.success;
   }
 
   async sendRegistrationPin(
@@ -36,6 +36,8 @@ export class NotificationService {
         shortcode: process.env.SMS_SHORTCODE,
         mobile: phoneNumber,
       });
+
+      // Send email using the email service
       this.sendEmail(email, `SRCC OTP`, message);
 
       if (response.status === 200) {
@@ -86,8 +88,6 @@ export class NotificationService {
     message: string,
   ): Promise<boolean> {
     try {
-      await this.transporter.verify();
-
       const htmlTemplate = `
       <!DOCTYPE html>
       <html lang="en">
@@ -178,33 +178,25 @@ export class NotificationService {
       </html>
     `;
 
-      const mailOptions = {
-        from: {
-          name: 'SRCC',
-          address: this.configService.get<string>('SMTP_USER'),
+      const emailPayload: EmailPayload = {
+        config: {
+          service: 'gmail',
+          user: this.configService.get<string>('SMTP_USER'),
+          pass: this.configService.get<string>('SMTP_PASS'),
         },
         to,
         subject,
-        text: message,
+        message,
         html: htmlTemplate,
+        fromName: 'SRCC',
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(
-        `Email sent successfully to ${to} - MessageId: ${info.messageId}`,
-      );
-      return true;
+      return await this.callEmailService(emailPayload);
     } catch (error) {
       this.logger.error(
         `Error sending email to ${to}: ${error.message}`,
         error,
       );
-
-      if (error.code === 'ECONNECTION' || error.code === 'EAUTH') {
-        this.logger.error(
-          'SMTP connection or authentication error. Please check your SMTP settings.',
-        );
-      }
       return false;
     }
   }
@@ -219,17 +211,7 @@ export class NotificationService {
     }>,
   ): Promise<boolean> {
     try {
-      await this.transporter.verify();
-
-      const mailOptions = {
-        from: {
-          name: 'SRCC',
-          address: this.configService.get<string>('SMTP_USER'),
-        },
-        to,
-        subject,
-        text: message,
-        html: `
+      const htmlTemplate = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 20px;">
               <h1 style="color: #2c3e50; margin: 0;">SRCC</h1>
@@ -246,24 +228,35 @@ export class NotificationService {
               <p>If you have any questions, please contact our support team.</p>
             </div>
           </div>
-        `,
-        attachments,
+        `;
+
+      // Convert attachments to base64
+      const emailAttachments = attachments.map((att) => ({
+        filename: att.filename,
+        content: Buffer.isBuffer(att.content)
+          ? att.content.toString('base64')
+          : Buffer.from(att.content).toString('base64'),
+      }));
+
+      const emailPayload: EmailPayload = {
+        config: {
+          service: 'gmail',
+          user: this.configService.get<string>('SMTP_USER'),
+          pass: this.configService.get<string>('SMTP_PASS'),
+        },
+        to,
+        subject,
+        message,
+        html: htmlTemplate,
+        fromName: 'SRCC',
+        attachments: emailAttachments,
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(
-        `Email with attachments sent successfully to ${to} - MessageId: ${info.messageId}`,
-      );
-      return true;
+      return await this.callEmailService(emailPayload);
     } catch (error) {
       this.logger.error(
         `Error sending email with attachments to ${to}: ${error.message}`,
       );
-      if (error.code === 'ECONNECTION' || error.code === 'EAUTH') {
-        this.logger.error(
-          'SMTP connection or authentication error. Please check your SMTP settings.',
-        );
-      }
       return false;
     }
   }
