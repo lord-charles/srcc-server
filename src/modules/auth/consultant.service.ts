@@ -41,7 +41,6 @@ export class ConsultantService {
       consultantData;
 
     try {
-      // Validate input data
       if (
         !email ||
         !firstName ||
