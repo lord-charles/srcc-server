@@ -40,106 +40,229 @@ export class ConsultantService {
     const { email, firstName, lastName, phoneNumber, nationalId, password } =
       consultantData;
 
-    const existingUser = await this.userModel.findOne({
-      $or: [{ email }, { phoneNumber }, { nationalId }],
-    });
-
-    if (existingUser) {
-      // If user exists and has completed full registration, throw conflict
-      if (existingUser.registrationStatus === 'complete') {
-        throw new ConflictException(
-          'A user with these details already exists.',
-        );
-      }
-
-      // If user exists from a previous quick registration and is not fully verified
+    try {
       if (
-        existingUser.registrationStatus === 'quick' &&
-        (!existingUser.isEmailVerified || !existingUser.isPhoneVerified)
+        !email ||
+        !firstName ||
+        !lastName ||
+        !phoneNumber ||
+        !nationalId ||
+        !password
       ) {
-        const salt = await bcrypt.genSalt();
-        existingUser.password = await bcrypt.hash(password, salt);
-        existingUser.firstName = firstName;
-        existingUser.lastName = lastName;
-        existingUser.phoneNumber = phoneNumber;
-        existingUser.nationalId = nationalId;
-        existingUser.phoneVerificationPin = this.generatePin();
-        existingUser.emailVerificationPin = this.generatePin();
-        const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        existingUser.phoneVerificationPinExpires = pinExpiry;
-        existingUser.emailVerificationPinExpires = pinExpiry;
-
-        await existingUser.save();
-
-        // Resend notifications
-        (async () => {
-          try {
-            const phoneMsg = `Your new SRCC verification PIN is: ${existingUser.phoneVerificationPin}.`;
-            await this.notificationService.sendSMS(
-              existingUser.phoneNumber,
-              phoneMsg,
-            );
-            const emailMsg = `Your new SRCC verification PIN is: ${existingUser.emailVerificationPin}.`;
-            await this.notificationService.sendEmail(
-              existingUser.email,
-              'SRCC Account Verification',
-              emailMsg,
-            );
-          } catch (err) {
-            console.error('Failed to resend verification PINs:', err);
-          }
-        })();
-
-        return existingUser;
-      }
-    }
-
-    // Standard new quick registration
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const phoneVerificationPin = this.generatePin();
-    const emailVerificationPin = this.generatePin();
-    const pinExpiry = new Date(Date.now() + 10 * 60 * 1000);
-
-    const newUser = new this.userModel({
-      email,
-      firstName,
-      lastName,
-      phoneNumber,
-      nationalId,
-      password: hashedPassword,
-      status: 'pending_verification',
-      roles: ['consultant'],
-      registrationStatus: 'quick',
-      isPhoneVerified: false,
-      isEmailVerified: false,
-      phoneVerificationPin,
-      emailVerificationPin,
-      phoneVerificationPinExpires: pinExpiry,
-      emailVerificationPinExpires: pinExpiry,
-    });
-
-    const savedUser = await newUser.save();
-
-    // Fire-and-forget notifications
-    (async () => {
-      try {
-        const phoneMsg = `Your SRCC verification PIN is: ${phoneVerificationPin}.`;
-        await this.notificationService.sendSMS(savedUser.phoneNumber, phoneMsg);
-
-        const emailMsg = `Your SRCC verification PIN is: ${emailVerificationPin}.`;
-        await this.notificationService.sendEmail(
-          savedUser.email,
-          'SRCC Account Verification',
-          emailMsg,
+        throw new BadRequestException(
+          'All fields are required for quick registration',
         );
-      } catch (err) {
-        console.error('Failed to send verification PINs:', err);
       }
-    })();
 
-    return savedUser;
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new BadRequestException('Invalid email format');
+      }
+
+      // Validate phone number format
+      const phoneRegex = /^254\d{9}$/;
+      if (!phoneRegex.test(phoneNumber)) {
+        throw new BadRequestException(
+          'Invalid phone number format. Must be in format: 254XXXXXXXXX',
+        );
+      }
+
+      // Validate password strength
+      if (password.length < 8) {
+        throw new BadRequestException(
+          'Password must be at least 8 characters long',
+        );
+      }
+
+      const existingUser = await this.userModel.findOne({
+        $or: [{ email }, { phoneNumber }, { nationalId }],
+      });
+
+      if (existingUser) {
+        // If user exists and has completed full registration, throw conflict
+        if (existingUser.registrationStatus === 'complete') {
+          let conflictField = 'details';
+          if (existingUser.email === email) conflictField = 'email';
+          else if (existingUser.phoneNumber === phoneNumber)
+            conflictField = 'phone number';
+          else if (existingUser.nationalId === nationalId)
+            conflictField = 'national ID';
+
+          throw new ConflictException(
+            `A user with this ${conflictField} already exists.`,
+          );
+        }
+
+        // If user exists from a previous quick registration and is not fully verified
+        if (
+          existingUser.registrationStatus === 'quick' &&
+          (!existingUser.isEmailVerified || !existingUser.isPhoneVerified)
+        ) {
+          try {
+            const salt = await bcrypt.genSalt();
+            const hashedPassword = await bcrypt.hash(password, salt);
+
+            existingUser.password = hashedPassword;
+            existingUser.firstName = firstName;
+            existingUser.lastName = lastName;
+            existingUser.phoneNumber = phoneNumber;
+            existingUser.nationalId = nationalId;
+            existingUser.phoneVerificationPin = this.generatePin();
+            existingUser.emailVerificationPin = this.generatePin();
+            const pinExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+            existingUser.phoneVerificationPinExpires = pinExpiry;
+            existingUser.emailVerificationPinExpires = pinExpiry;
+
+            const savedUser = await existingUser.save();
+
+            // Resend notifications with error handling
+            this.sendVerificationPins(savedUser, 'resend').catch((err) => {
+              console.error('Failed to resend verification PINs:', err);
+              // Log the error but don't fail the registration
+              this.systemLogService
+                .createLog(
+                  'VERIFICATION_PIN_SEND_FAILED',
+                  `Failed to resend verification PINs for user ${savedUser.email}: ${err.message}`,
+                  LogSeverity.ERROR,
+                  savedUser._id?.toString(),
+                )
+                .catch((logErr) =>
+                  console.error('Failed to log error:', logErr),
+                );
+            });
+            return savedUser;
+          } catch (error) {
+            console.error(
+              'Error updating existing user for quick registration:',
+              error,
+            );
+            throw new InternalServerErrorException(
+              'Failed to update user registration',
+            );
+          }
+        }
+      }
+
+      // Standard new quick registration
+      try {
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const phoneVerificationPin = this.generatePin();
+        const emailVerificationPin = this.generatePin();
+        const pinExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+        const newUser = new this.userModel({
+          email,
+          firstName,
+          lastName,
+          phoneNumber,
+          nationalId,
+          password: hashedPassword,
+          status: 'pending_verification',
+          roles: ['consultant'],
+          registrationStatus: 'quick',
+          isPhoneVerified: false,
+          isEmailVerified: false,
+          phoneVerificationPin,
+          emailVerificationPin,
+          phoneVerificationPinExpires: pinExpiry,
+          emailVerificationPinExpires: pinExpiry,
+        });
+
+        const savedUser = await newUser.save();
+
+        // Send verification PINs with error handling
+        this.sendVerificationPins(savedUser, 'new').catch((err) => {
+          console.error('Failed to send verification PINs:', err);
+          // Log the error but don't fail the registration
+          this.systemLogService
+            .createLog(
+              'VERIFICATION_PIN_SEND_FAILED',
+              `Failed to send verification PINs for new user ${savedUser.email}: ${err.message}`,
+              LogSeverity.ERROR,
+              savedUser._id?.toString(),
+            )
+            .catch((logErr) => console.error('Failed to log error:', logErr));
+        });
+
+        // Log successful registration
+        this.systemLogService
+          .createLog(
+            'QUICK_REGISTRATION_SUCCESS',
+            `Quick registration successful for user: ${savedUser.firstName} ${savedUser.lastName} (${savedUser.email})`,
+            LogSeverity.INFO,
+            savedUser._id?.toString(),
+          )
+          .catch((err) => console.error('Failed to log registration:', err));
+
+        return savedUser;
+      } catch (error) {
+        console.error('Error creating new user for quick registration:', error);
+
+        // Log the error
+        this.systemLogService
+          .createLog(
+            'QUICK_REGISTRATION_FAILED',
+            `Quick registration failed for ${email}: ${error.message}`,
+            LogSeverity.ERROR,
+          )
+          .catch((logErr) => console.error('Failed to log error:', logErr));
+
+        if (error.code === 11000) {
+          // MongoDB duplicate key error
+          const duplicateField =
+            Object.keys(error.keyPattern || {})[0] || 'field';
+          throw new ConflictException(
+            `A user with this ${duplicateField} already exists`,
+          );
+        }
+
+        throw new InternalServerErrorException('Failed to create user account');
+      }
+    } catch (error) {
+      // Re-throw known exceptions
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ConflictException ||
+        error instanceof InternalServerErrorException
+      ) {
+        throw error;
+      }
+
+      // Handle unexpected errors
+      console.error('Unexpected error in quickRegister:', error);
+      throw new InternalServerErrorException(
+        'An unexpected error occurred during registration',
+      );
+    }
+  }
+
+  private async sendVerificationPins(
+    user: UserDocument,
+    type: 'new' | 'resend',
+  ): Promise<void> {
+    const phoneMsg =
+      type === 'new'
+        ? `Your SRCC verification PIN is: ${user.phoneVerificationPin}.`
+        : `Your new SRCC verification PIN is: ${user.phoneVerificationPin}.`;
+
+    const emailMsg =
+      type === 'new'
+        ? `Your SRCC verification PIN is: ${user.emailVerificationPin}.`
+        : `Your new SRCC verification PIN is: ${user.emailVerificationPin}.`;
+
+    const promises = [
+      this.notificationService.sendSMS(user.phoneNumber, phoneMsg),
+      this.notificationService.sendEmail(
+        user.email,
+        'SRCC Account Verification',
+        emailMsg,
+      ),
+    ];
+
+    await Promise.all(promises);
   }
 
   async resendVerificationPins(email: string): Promise<UserDocument> {
@@ -186,7 +309,9 @@ export class ConsultantService {
     return user;
   }
 
-  async quickCompanyRegister(companyData: QuickRegisterOrganizationDto): Promise<OrganizationDocument> {
+  async quickCompanyRegister(
+    companyData: QuickRegisterOrganizationDto,
+  ): Promise<OrganizationDocument> {
     const {
       businessEmail,
       businessPhone,
@@ -297,7 +422,9 @@ export class ConsultantService {
   async resendCompanyVerificationPins(
     businessEmail: string,
   ): Promise<OrganizationDocument> {
-    const organization = await this.organizationModel.findOne({ businessEmail });
+    const organization = await this.organizationModel.findOne({
+      businessEmail,
+    });
 
     if (!organization) {
       throw new NotFoundException('Organization not found.');
