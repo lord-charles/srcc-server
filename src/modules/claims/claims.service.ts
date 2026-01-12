@@ -325,30 +325,6 @@ export class ClaimsService {
     // Get the initial status from the first step in the approval flow
     const initialStatus = `pending_${approvalFlow.steps[0].role}_approval`;
 
-    // Before creating the claim, ensure cumulative claims do not exceed the contract value
-    // Sum all existing claims for this contract and claimant, excluding cancelled/rejected
-    const nonCountedStatuses: ClaimStatus[] = ['cancelled', 'rejected'];
-    const existingClaims = await this.claimModel
-      .find({
-        contractId: new Types.ObjectId(createClaimDto.contractId),
-        claimantId: claimantId,
-        status: { $nin: nonCountedStatuses },
-      })
-      .lean();
-
-    const existingTotal = existingClaims.reduce((sum, c: any) => sum + (Number(c.amount) || 0), 0);
-    const contractValue = Number((contract as any).contractValue) || 0;
-    const requestedAmount = Number((createClaimDto as any).amount) || 0;
-    const remaining = Math.max(contractValue - existingTotal, 0);
-
-    if (requestedAmount > remaining) {
-      throw new BadRequestException(
-        `Claim exceeds contract value. Remaining claimable for this contract is ${remaining.toLocaleString()} ${
-          (contract as any).currency || ''
-        }. You have already claimed ${existingTotal.toLocaleString()} out of ${contractValue.toLocaleString()}. Requested: ${requestedAmount.toLocaleString()}.`,
-      );
-    }
-
     // Create the claim
     const claim = new this.claimModel({
       ...createClaimDto,
