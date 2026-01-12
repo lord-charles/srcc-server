@@ -60,14 +60,6 @@ export class ConsultantService {
         throw new BadRequestException('Invalid email format');
       }
 
-      // Validate phone number format
-      const phoneRegex = /^254\d{9}$/;
-      if (!phoneRegex.test(phoneNumber)) {
-        throw new BadRequestException(
-          'Invalid phone number format. Must be in format: 254XXXXXXXXX',
-        );
-      }
-
       // Validate password strength
       if (password.length < 8) {
         throw new BadRequestException(
