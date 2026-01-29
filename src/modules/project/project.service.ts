@@ -81,6 +81,9 @@ export class ProjectService {
       .populate('assistantProjectManagers.userId', 'firstName lastName email')
       .populate('assistantProjectManagers.contractId')
       .populate('teamMembers.userId', 'firstName lastName email _id')
+      .populate('coachManagers.userId', 'firstName lastName email')
+      .populate('coachAssistants.userId', 'firstName lastName email')
+      .populate('coaches.userId', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email')
       .populate({
@@ -277,6 +280,197 @@ export class ProjectService {
         { new: true },
       )
       .exec();
+  }
+
+  // Coach Managers
+  async addCoachManager(
+    projectId: string,
+    data: { userId: MongooseSchema.Types.ObjectId; responsibilities: string[] },
+  ): Promise<Project> {
+    return this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        {
+          $push: {
+            coachManagers: {
+              userId: data.userId,
+              responsibilities: data.responsibilities || [],
+              assignedDate: new Date(),
+            },
+          },
+        },
+        { new: true },
+      )
+      .populate('coachManagers.userId', 'firstName lastName email')
+      .exec();
+  }
+
+  async updateCoachManager(
+    projectId: string,
+    managerUserId: string,
+    update: { responsibilities?: string[] },
+  ): Promise<Project> {
+    const updateFields: any = {};
+    if (update.responsibilities) {
+      updateFields['coachManagers.$.responsibilities'] = update.responsibilities;
+    }
+    const project = await this.projectModel
+      .findOneAndUpdate(
+        { _id: projectId, 'coachManagers.userId': managerUserId },
+        { $set: updateFields },
+        { new: true },
+      )
+      .populate('coachManagers.userId', 'firstName lastName email')
+      .exec();
+    if (!project) throw new NotFoundException('Project or coach manager not found');
+    return project;
+  }
+
+  async removeCoachManager(projectId: string, managerUserId: string): Promise<Project> {
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $pull: { coachManagers: { userId: managerUserId } } },
+        { new: true },
+      )
+      .populate('coachManagers.userId', 'firstName lastName email')
+      .exec();
+    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    return project;
+  }
+
+  // Coach Assistants
+  async addCoachAssistant(
+    projectId: string,
+    data: { userId: MongooseSchema.Types.ObjectId; responsibilities: string[] },
+  ): Promise<Project> {
+    return this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        {
+          $push: {
+            coachAssistants: {
+              userId: data.userId,
+              responsibilities: data.responsibilities || [],
+              assignedDate: new Date(),
+            },
+          },
+        },
+        { new: true },
+      )
+      .populate('coachAssistants.userId', 'firstName lastName email')
+      .exec();
+  }
+
+  async updateCoachAssistant(
+    projectId: string,
+    assistantUserId: string,
+    update: { responsibilities?: string[] },
+  ): Promise<Project> {
+    const updateFields: any = {};
+    if (update.responsibilities) {
+      updateFields['coachAssistants.$.responsibilities'] = update.responsibilities;
+    }
+    const project = await this.projectModel
+      .findOneAndUpdate(
+        { _id: projectId, 'coachAssistants.userId': assistantUserId },
+        { $set: updateFields },
+        { new: true },
+      )
+      .populate('coachAssistants.userId', 'firstName lastName email')
+      .exec();
+    if (!project) throw new NotFoundException('Project or coach assistant not found');
+    return project;
+  }
+
+  async removeCoachAssistant(
+    projectId: string,
+    assistantUserId: string,
+  ): Promise<Project> {
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $pull: { coachAssistants: { userId: assistantUserId } } },
+        { new: true },
+      )
+      .populate('coachAssistants.userId', 'firstName lastName email')
+      .exec();
+    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    return project;
+  }
+
+  // Coaches (milestone-scoped)
+  async addCoach(
+    projectId: string,
+    coach: {
+      userId: MongooseSchema.Types.ObjectId;
+      milestoneId: MongooseSchema.Types.ObjectId;
+      startDate?: Date;
+      endDate?: Date;
+      responsibilities: string[];
+      contract: { rate: number; rateUnit: 'per_session' | 'per_hour'; currency: 'KES' | 'USD'; notes?: string };
+    },
+  ): Promise<Project> {
+    return this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $push: { coaches: coach } },
+        { new: true },
+      )
+      .populate('coaches.userId', 'firstName lastName email')
+      .exec();
+  }
+
+  async updateCoach(
+    projectId: string,
+    coachUserId: string,
+    milestoneId: string,
+    update: {
+      startDate?: Date;
+      endDate?: Date;
+      responsibilities?: string[];
+      contract?: { rate?: number; rateUnit?: 'per_session' | 'per_hour'; currency?: 'KES' | 'USD'; notes?: string };
+    },
+  ): Promise<Project> {
+    const updateFields: any = {};
+    if (update.startDate !== undefined)
+      updateFields['coaches.$.startDate'] = update.startDate;
+    if (update.endDate !== undefined)
+      updateFields['coaches.$.endDate'] = update.endDate;
+    if (update.responsibilities)
+      updateFields['coaches.$.responsibilities'] = update.responsibilities;
+    if (update.contract) {
+      for (const key of Object.keys(update.contract)) {
+        updateFields[`coaches.$.contract.${key}`] = (update.contract as any)[key];
+      }
+    }
+    const project = await this.projectModel
+      .findOneAndUpdate(
+        { _id: projectId, 'coaches.userId': coachUserId, 'coaches.milestoneId': milestoneId },
+        { $set: updateFields },
+        { new: true },
+      )
+      .populate('coaches.userId', 'firstName lastName email')
+      .exec();
+    if (!project) throw new NotFoundException('Project or coach not found');
+    return project;
+  }
+
+  async removeCoach(
+    projectId: string,
+    coachUserId: string,
+    milestoneId: string,
+  ): Promise<Project> {
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $pull: { coaches: { userId: coachUserId as any, milestoneId: milestoneId as any } } },
+        { new: true },
+      )
+      .populate('coaches.userId', 'firstName lastName email')
+      .exec();
+    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    return project;
   }
 
   async addMilestone(projectId: string, milestoneData: any): Promise<Project> {

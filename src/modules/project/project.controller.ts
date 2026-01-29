@@ -674,4 +674,191 @@ export class ProjectController {
       assistantUserId,
     );
   }
+
+  // Coach Managers
+  @Post(':id/coach-managers')
+  @ApiOperation({ summary: 'Add coach manager to project' })
+  @ApiResponse({ status: 201, description: 'Coach manager added successfully.' })
+  @ApiResponse({ status: 404, description: 'Project not found.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['userId'],
+      properties: {
+        userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        responsibilities: { type: 'array', items: { type: 'string' } },
+      },
+    },
+  })
+  addCoachManager(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      userId: string;
+      responsibilities?: string[];
+    },
+  ) {
+    return this.projectService.addCoachManager(id, {
+      userId: body.userId as any,
+      responsibilities: body.responsibilities || [],
+    });
+  }
+
+  @Patch(':id/coach-managers/:managerUserId')
+  @ApiOperation({ summary: 'Update coach manager details' })
+  @ApiResponse({ status: 200, description: 'Coach manager updated successfully.' })
+  updateCoachManager(
+    @Param('id') id: string,
+    @Param('managerUserId') managerUserId: string,
+    @Body() update: { responsibilities?: string[] },
+  ) {
+    return this.projectService.updateCoachManager(id, managerUserId, update);
+  }
+
+  @Delete(':id/coach-managers/:managerUserId')
+  @ApiOperation({ summary: 'Remove coach manager from project' })
+  @ApiResponse({ status: 200, description: 'Coach manager removed successfully.' })
+  removeCoachManager(
+    @Param('id') id: string,
+    @Param('managerUserId') managerUserId: string,
+  ) {
+    return this.projectService.removeCoachManager(id, managerUserId);
+  }
+
+  // Coach Assistants
+  @Post(':id/coach-assistants')
+  @ApiOperation({ summary: 'Add coach assistant to project' })
+  @ApiResponse({ status: 201, description: 'Coach assistant added successfully.' })
+  @ApiResponse({ status: 404, description: 'Project not found.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['userId'],
+      properties: {
+        userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        responsibilities: { type: 'array', items: { type: 'string' } },
+      },
+    },
+  })
+  addCoachAssistant(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      userId: string;
+      responsibilities?: string[];
+    },
+  ) {
+    return this.projectService.addCoachAssistant(id, {
+      userId: body.userId as any,
+      responsibilities: body.responsibilities || [],
+    });
+  }
+
+  @Patch(':id/coach-assistants/:assistantUserId')
+  @ApiOperation({ summary: 'Update coach assistant details' })
+  @ApiResponse({ status: 200, description: 'Coach assistant updated successfully.' })
+  updateCoachAssistant(
+    @Param('id') id: string,
+    @Param('assistantUserId') assistantUserId: string,
+    @Body() update: { responsibilities?: string[] },
+  ) {
+    return this.projectService.updateCoachAssistant(id, assistantUserId, update);
+  }
+
+  @Delete(':id/coach-assistants/:assistantUserId')
+  @ApiOperation({ summary: 'Remove coach assistant from project' })
+  @ApiResponse({ status: 200, description: 'Coach assistant removed successfully.' })
+  removeCoachAssistant(
+    @Param('id') id: string,
+    @Param('assistantUserId') assistantUserId: string,
+  ) {
+    return this.projectService.removeCoachAssistant(id, assistantUserId);
+  }
+
+  // Coaches (milestone-scoped)
+  @Post(':id/milestones/:milestoneId/coaches')
+  @ApiOperation({ summary: 'Add coach to a project milestone' })
+  @ApiResponse({ status: 201, description: 'Coach added successfully.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['userId', 'contract'],
+      properties: {
+        userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        startDate: { type: 'string', format: 'date' },
+        endDate: { type: 'string', format: 'date' },
+        responsibilities: { type: 'array', items: { type: 'string' } },
+        contract: {
+          type: 'object',
+          required: ['rate', 'rateUnit'],
+          properties: {
+            rate: { type: 'number', example: 1000 },
+            rateUnit: { type: 'string', enum: ['per_session', 'per_hour'] },
+            currency: { type: 'string', enum: ['KES', 'USD'], default: 'KES' },
+            notes: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  addCoach(
+    @Param('id') id: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body()
+    body: {
+      userId: string;
+      startDate?: string;
+      endDate?: string;
+      responsibilities?: string[];
+      contract: { rate: number; rateUnit: 'per_session' | 'per_hour'; currency?: 'KES' | 'USD'; notes?: string };
+    },
+  ) {
+    return this.projectService.addCoach(id, {
+      userId: body.userId as any,
+      milestoneId: milestoneId as any,
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
+      responsibilities: body.responsibilities || [],
+      contract: {
+        rate: body.contract.rate,
+        rateUnit: body.contract.rateUnit,
+        currency: body.contract.currency || 'KES',
+        notes: body.contract.notes,
+      },
+    });
+  }
+
+  @Patch(':id/milestones/:milestoneId/coaches/:coachUserId')
+  @ApiOperation({ summary: 'Update coach assignment for a milestone' })
+  @ApiResponse({ status: 200, description: 'Coach updated successfully.' })
+  updateCoach(
+    @Param('id') id: string,
+    @Param('milestoneId') milestoneId: string,
+    @Param('coachUserId') coachUserId: string,
+    @Body()
+    body: {
+      startDate?: string;
+      endDate?: string;
+      responsibilities?: string[];
+      contract?: { rate?: number; rateUnit?: 'per_session' | 'per_hour'; currency?: 'KES' | 'USD'; notes?: string };
+    },
+  ) {
+    return this.projectService.updateCoach(id, coachUserId, milestoneId, {
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
+      responsibilities: body.responsibilities,
+      contract: body.contract,
+    });
+  }
+
+  @Delete(':id/milestones/:milestoneId/coaches/:coachUserId')
+  @ApiOperation({ summary: 'Remove coach from a milestone' })
+  @ApiResponse({ status: 200, description: 'Coach removed successfully.' })
+  removeCoach(
+    @Param('id') id: string,
+    @Param('milestoneId') milestoneId: string,
+    @Param('coachUserId') coachUserId: string,
+  ) {
+    return this.projectService.removeCoach(id, coachUserId, milestoneId);
+  }
 }

@@ -150,6 +150,73 @@ export class Project {
   })
   teamMemberContracts: MongooseSchema.Types.ObjectId[];
 
+  @ApiProperty({ description: 'Coach managers assigned to the project' })
+  @Prop({
+    type: [
+      {
+        userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        assignedDate: { type: Date, default: Date.now },
+        responsibilities: [String],
+      },
+    ],
+    default: [],
+  })
+  coachManagers?: {
+    userId: MongooseSchema.Types.ObjectId;
+    assignedDate: Date;
+    responsibilities: string[];
+  }[];
+
+  @ApiProperty({ description: 'Coach assistants for the project' })
+  @Prop({
+    type: [
+      {
+        userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        assignedDate: { type: Date, default: Date.now },
+        responsibilities: [String],
+      },
+    ],
+    default: [],
+  })
+  coachAssistants?: {
+    userId: MongooseSchema.Types.ObjectId;
+    assignedDate: Date;
+    responsibilities: string[];
+  }[];
+
+  @ApiProperty({ description: 'Coaches assigned to milestones within the project' })
+  @Prop({
+    type: [
+      {
+        userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        milestoneId: { type: MongooseSchema.Types.ObjectId },
+        startDate: { type: Date },
+        endDate: { type: Date },
+        responsibilities: [String],
+        contract: {
+          rate: { type: Number, required: true },
+          rateUnit: { type: String, enum: ['per_session', 'per_hour'], required: true },
+          currency: { type: String, enum: ['KES', 'USD'], default: 'KES' },
+          notes: { type: String },
+        },
+      },
+    ],
+    default: [],
+  })
+  coaches?: {
+    userId: MongooseSchema.Types.ObjectId;
+    milestoneId: MongooseSchema.Types.ObjectId;
+    startDate?: Date;
+    endDate?: Date;
+    responsibilities: string[];
+    contract: {
+      rate: number;
+      rateUnit: 'per_session' | 'per_hour';
+      currency: 'KES' | 'USD';
+      notes?: string;
+    };
+  }[];
+
   @ApiProperty({
     example: 'Public Procurement',
     description: 'The procurement method used',

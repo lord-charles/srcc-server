@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -741,6 +742,27 @@ You can view the full contract and track progress in the SRCC Portal.`;
     dto: ContractApprovalDto,
   ): Promise<Contract> {
     const contract = await this.findOne(id);
+    // Role-based guard: only specific roles can approve per stage
+    const approver = await this.userModel.findById(userId).lean();
+    if (!approver) {
+      throw new NotFoundException('Approver not found');
+    }
+
+    let requiredRole: string | null = null;
+    if (contract.status === 'pending_finance_approval') {
+      requiredRole = 'srcc_finance';
+    } else if (contract.status === 'pending_md_approval') {
+      requiredRole = 'managing_director';
+    }
+
+    if (
+      requiredRole &&
+      !(Array.isArray((approver as any).roles) && (approver as any).roles.includes(requiredRole))
+    ) {
+      throw new ForbiddenException(
+        `You are not authorized to approve at this level. Required role: ${requiredRole}`,
+      );
+    }
     let nextStatus: string;
     let nextLevel: string;
     let nextDeadline: Date | null;
