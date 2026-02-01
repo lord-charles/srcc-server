@@ -1,11 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsMongoId, IsString, IsDateString, IsArray, IsOptional } from 'class-validator';
+import {
+  IsMongoId,
+  IsString,
+  IsDateString,
+  IsArray,
+  IsOptional,
+} from 'class-validator';
 import { Schema as MongooseSchema } from 'mongoose';
 
 export class TeamMemberDto {
-  @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'Team member user ID' })
+  @ApiProperty({
+    example: '507f1f77bcf86cd799439011',
+    description: 'Team member user ID',
+  })
   @IsMongoId()
   userId: MongooseSchema.Types.ObjectId;
+
+  @ApiProperty({
+    example: '507f1f77bcf86cd799439012',
+    description: 'Milestone ID (optional)',
+    required: false,
+  })
+  @IsMongoId()
+  @IsOptional()
+  milestoneId?: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({ example: '2024-01-01', description: 'Start date' })
   @IsDateString()
@@ -16,7 +34,10 @@ export class TeamMemberDto {
   @IsOptional()
   endDate?: Date;
 
-  @ApiProperty({ example: ['Frontend Development', 'UI/UX Design'], description: 'List of responsibilities' })
+  @ApiProperty({
+    example: ['Frontend Development', 'UI/UX Design'],
+    description: 'List of responsibilities',
+  })
   @IsArray()
   @IsString({ each: true })
   responsibilities: string[];

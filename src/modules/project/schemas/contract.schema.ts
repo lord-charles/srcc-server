@@ -46,7 +46,7 @@ export class Contract extends Document {
       'suspended',
       'terminated',
       'completed',
-      'rejected'
+      'rejected',
     ],
   })
   @Prop({
@@ -60,7 +60,7 @@ export class Contract extends Document {
       'suspended',
       'terminated',
       'completed',
-      'rejected'
+      'rejected',
     ],
     default: 'draft',
   })
@@ -85,6 +85,12 @@ export class Contract extends Document {
   @ApiProperty({ description: 'Reference to the associated project' })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Project', required: true })
   projectId: MongooseSchema.Types.ObjectId;
+
+  @ApiProperty({
+    description: 'Optional reference to the milestone this contract is for',
+  })
+  @Prop({ type: MongooseSchema.Types.ObjectId, required: false })
+  milestoneId?: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({
     description:
@@ -118,17 +124,21 @@ export class Contract extends Document {
   @ApiProperty({ description: 'Approval workflow tracking' })
   @Prop({
     type: {
-      financeApprovals: [{
-        approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
-        approvedAt: Date,
-        comments: String
-      }],
-      mdApprovals: [{
-        approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
-        approvedAt: Date,
-        comments: String
-      }]
-    }
+      financeApprovals: [
+        {
+          approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+          approvedAt: Date,
+          comments: String,
+        },
+      ],
+      mdApprovals: [
+        {
+          approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+          approvedAt: Date,
+          comments: String,
+        },
+      ],
+    },
   })
   approvalFlow: {
     financeApprovals?: {
@@ -151,8 +161,8 @@ export class Contract extends Document {
   @Prop({
     type: {
       approvedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
-      approvedAt: Date
-    }
+      approvedAt: Date,
+    },
   })
   finalApproval?: {
     approvedBy: MongooseSchema.Types.ObjectId;
@@ -165,8 +175,8 @@ export class Contract extends Document {
       rejectedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
       rejectedAt: Date,
       reason: String,
-      level: String
-    }
+      level: String,
+    },
   })
   rejectionDetails?: {
     rejectedBy: MongooseSchema.Types.ObjectId;
@@ -175,18 +185,27 @@ export class Contract extends Document {
     level: string;
   };
 
-  @ApiProperty({ description: 'Reference to the selected template used for this contract' })
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'ContractTemplate', required: false })
+  @ApiProperty({
+    description: 'Reference to the selected template used for this contract',
+  })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'ContractTemplate',
+    required: false,
+  })
   templateId?: MongooseSchema.Types.ObjectId;
 
-  @ApiProperty({ description: 'Snapshot of the template content at the time of contract creation' })
+  @ApiProperty({
+    description:
+      'Snapshot of the template content at the time of contract creation',
+  })
   @Prop({
     type: {
       name: { type: String },
       version: { type: String },
       contentType: { type: String },
       content: { type: String },
-      variables: { type: [String], default: [] }
+      variables: { type: [String], default: [] },
     },
     required: false,
   })
@@ -198,12 +217,15 @@ export class Contract extends Document {
     variables?: string[];
   };
 
-  @ApiProperty({ description: 'Additional document attachments for the contract', type: [Object] })
+  @ApiProperty({
+    description: 'Additional document attachments for the contract',
+    type: [Object],
+  })
   @Prop({
     type: [
       {
-        name: { type: String},
-        url: { type: String},
+        name: { type: String },
+        url: { type: String },
         type: { type: String },
         uploadedAt: { type: Date, default: Date.now },
       },

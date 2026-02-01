@@ -549,6 +549,100 @@ export class ProjectController {
     return this.projectService.deleteMilestone(id, milestoneId);
   }
 
+  // Milestone-specific team member endpoints
+  @Post(':id/milestones/:milestoneId/team-members')
+  @ApiOperation({
+    summary: 'Add team member to a specific milestone',
+    description:
+      'Assigns a team member to work on a specific project milestone with defined responsibilities and timeline.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Team member added to milestone successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'Project or milestone not found.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['userId', 'startDate', 'responsibilities'],
+      properties: {
+        userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+        startDate: { type: 'string', format: 'date', example: '2024-01-01' },
+        endDate: { type: 'string', format: 'date', example: '2024-03-31' },
+        responsibilities: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['Frontend Development', 'Code Review'],
+        },
+      },
+    },
+  })
+  addTeamMemberToMilestone(
+    @Param('id') id: string,
+    @Param('milestoneId') milestoneId: string,
+    @Body() teamMemberDto: TeamMemberDto,
+  ) {
+    return this.projectService.addTeamMemberToMilestone(
+      id,
+      milestoneId,
+      teamMemberDto,
+    );
+  }
+
+  @Patch(':id/milestones/:milestoneId/team-members/:teamMemberId')
+  @ApiOperation({
+    summary: 'Update team member assignment for a specific milestone',
+    description:
+      'Updates team member details for their assignment to a specific milestone.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Team member updated successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Project, milestone, or team member not found.',
+  })
+  updateTeamMemberInMilestone(
+    @Param('id') id: string,
+    @Param('milestoneId') milestoneId: string,
+    @Param('teamMemberId') teamMemberId: string,
+    @Body() teamMemberDto: TeamMemberDto,
+  ) {
+    return this.projectService.updateTeamMemberInMilestone(
+      id,
+      milestoneId,
+      teamMemberId,
+      teamMemberDto,
+    );
+  }
+
+  @Delete(':id/milestones/:milestoneId/team-members/:teamMemberId')
+  @ApiOperation({
+    summary: 'Remove team member from a specific milestone',
+    description:
+      'Removes a team member from their assignment to a specific milestone.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Team member removed from milestone successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Project, milestone, or team member not found.',
+  })
+  removeTeamMemberFromMilestone(
+    @Param('id') id: string,
+    @Param('milestoneId') milestoneId: string,
+    @Param('teamMemberId') teamMemberId: string,
+  ) {
+    return this.projectService.removeTeamMemberFromMilestone(
+      id,
+      milestoneId,
+      teamMemberId,
+    );
+  }
+
   @Post(':id/assistant-project-managers')
   @ApiOperation({
     summary: 'Add assistant project manager to project',
@@ -678,7 +772,10 @@ export class ProjectController {
   // Coach Managers
   @Post(':id/coach-managers')
   @ApiOperation({ summary: 'Add coach manager to project' })
-  @ApiResponse({ status: 201, description: 'Coach manager added successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Coach manager added successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Project not found.' })
   @ApiBody({
     schema: {
@@ -706,7 +803,10 @@ export class ProjectController {
 
   @Patch(':id/coach-managers/:managerUserId')
   @ApiOperation({ summary: 'Update coach manager details' })
-  @ApiResponse({ status: 200, description: 'Coach manager updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Coach manager updated successfully.',
+  })
   updateCoachManager(
     @Param('id') id: string,
     @Param('managerUserId') managerUserId: string,
@@ -717,7 +817,10 @@ export class ProjectController {
 
   @Delete(':id/coach-managers/:managerUserId')
   @ApiOperation({ summary: 'Remove coach manager from project' })
-  @ApiResponse({ status: 200, description: 'Coach manager removed successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Coach manager removed successfully.',
+  })
   removeCoachManager(
     @Param('id') id: string,
     @Param('managerUserId') managerUserId: string,
@@ -728,7 +831,10 @@ export class ProjectController {
   // Coach Assistants
   @Post(':id/coach-assistants')
   @ApiOperation({ summary: 'Add coach assistant to project' })
-  @ApiResponse({ status: 201, description: 'Coach assistant added successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Coach assistant added successfully.',
+  })
   @ApiResponse({ status: 404, description: 'Project not found.' })
   @ApiBody({
     schema: {
@@ -756,18 +862,28 @@ export class ProjectController {
 
   @Patch(':id/coach-assistants/:assistantUserId')
   @ApiOperation({ summary: 'Update coach assistant details' })
-  @ApiResponse({ status: 200, description: 'Coach assistant updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Coach assistant updated successfully.',
+  })
   updateCoachAssistant(
     @Param('id') id: string,
     @Param('assistantUserId') assistantUserId: string,
     @Body() update: { responsibilities?: string[] },
   ) {
-    return this.projectService.updateCoachAssistant(id, assistantUserId, update);
+    return this.projectService.updateCoachAssistant(
+      id,
+      assistantUserId,
+      update,
+    );
   }
 
   @Delete(':id/coach-assistants/:assistantUserId')
   @ApiOperation({ summary: 'Remove coach assistant from project' })
-  @ApiResponse({ status: 200, description: 'Coach assistant removed successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Coach assistant removed successfully.',
+  })
   removeCoachAssistant(
     @Param('id') id: string,
     @Param('assistantUserId') assistantUserId: string,
@@ -810,7 +926,12 @@ export class ProjectController {
       startDate?: string;
       endDate?: string;
       responsibilities?: string[];
-      contract: { rate: number; rateUnit: 'per_session' | 'per_hour'; currency?: 'KES' | 'USD'; notes?: string };
+      contract: {
+        rate: number;
+        rateUnit: 'per_session' | 'per_hour';
+        currency?: 'KES' | 'USD';
+        notes?: string;
+      };
     },
   ) {
     return this.projectService.addCoach(id, {
@@ -840,7 +961,12 @@ export class ProjectController {
       startDate?: string;
       endDate?: string;
       responsibilities?: string[];
-      contract?: { rate?: number; rateUnit?: 'per_session' | 'per_hour'; currency?: 'KES' | 'USD'; notes?: string };
+      contract?: {
+        rate?: number;
+        rateUnit?: 'per_session' | 'per_hour';
+        currency?: 'KES' | 'USD';
+        notes?: string;
+      };
     },
   ) {
     return this.projectService.updateCoach(id, coachUserId, milestoneId, {

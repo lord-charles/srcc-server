@@ -249,6 +249,7 @@ export class ProjectService {
         { $push: { teamMembers: teamMember } },
         { new: true },
       )
+      .populate('teamMembers.userId', 'firstName lastName email')
       .exec();
   }
 
@@ -257,18 +258,23 @@ export class ProjectService {
     teamMemberId: string,
     teamMember: TeamMemberDto,
   ) {
+    const updateFields: any = {
+      'teamMembers.$.startDate': teamMember.startDate,
+      'teamMembers.$.endDate': teamMember.endDate,
+      'teamMembers.$.responsibilities': teamMember.responsibilities,
+    };
+
+    if (teamMember.milestoneId) {
+      updateFields['teamMembers.$.milestoneId'] = teamMember.milestoneId;
+    }
+
     return this.projectModel
       .findOneAndUpdate(
         { _id: id, 'teamMembers.userId': teamMemberId },
-        {
-          $set: {
-            'teamMembers.$.startDate': teamMember.startDate,
-            'teamMembers.$.endDate': teamMember.endDate,
-            'teamMembers.$.responsibilities': teamMember.responsibilities,
-          },
-        },
+        { $set: updateFields },
         { new: true },
       )
+      .populate('teamMembers.userId', 'firstName lastName email')
       .exec();
   }
 
@@ -279,6 +285,77 @@ export class ProjectService {
         { $pull: { teamMembers: { userId: teamMemberId } } },
         { new: true },
       )
+      .populate('teamMembers.userId', 'firstName lastName email')
+      .exec();
+  }
+
+  // Milestone-specific team member methods
+  async addTeamMemberToMilestone(
+    projectId: string,
+    milestoneId: string,
+    teamMember: TeamMemberDto,
+  ) {
+    const teamMemberWithMilestone = {
+      ...teamMember,
+      milestoneId: milestoneId as any,
+    };
+
+    return this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $push: { teamMembers: teamMemberWithMilestone } },
+        { new: true },
+      )
+      .populate('teamMembers.userId', 'firstName lastName email')
+      .exec();
+  }
+
+  async updateTeamMemberInMilestone(
+    projectId: string,
+    milestoneId: string,
+    teamMemberId: string,
+    teamMember: TeamMemberDto,
+  ) {
+    const updateFields: any = {
+      'teamMembers.$.startDate': teamMember.startDate,
+      'teamMembers.$.endDate': teamMember.endDate,
+      'teamMembers.$.responsibilities': teamMember.responsibilities,
+      'teamMembers.$.milestoneId': milestoneId,
+    };
+
+    return this.projectModel
+      .findOneAndUpdate(
+        {
+          _id: projectId,
+          'teamMembers.userId': teamMemberId,
+          'teamMembers.milestoneId': milestoneId,
+        },
+        { $set: updateFields },
+        { new: true },
+      )
+      .populate('teamMembers.userId', 'firstName lastName email')
+      .exec();
+  }
+
+  async removeTeamMemberFromMilestone(
+    projectId: string,
+    milestoneId: string,
+    teamMemberId: string,
+  ) {
+    return this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        {
+          $pull: {
+            teamMembers: {
+              userId: teamMemberId,
+              milestoneId: milestoneId,
+            },
+          },
+        },
+        { new: true },
+      )
+      .populate('teamMembers.userId', 'firstName lastName email')
       .exec();
   }
 
@@ -312,7 +389,8 @@ export class ProjectService {
   ): Promise<Project> {
     const updateFields: any = {};
     if (update.responsibilities) {
-      updateFields['coachManagers.$.responsibilities'] = update.responsibilities;
+      updateFields['coachManagers.$.responsibilities'] =
+        update.responsibilities;
     }
     const project = await this.projectModel
       .findOneAndUpdate(
@@ -322,11 +400,15 @@ export class ProjectService {
       )
       .populate('coachManagers.userId', 'firstName lastName email')
       .exec();
-    if (!project) throw new NotFoundException('Project or coach manager not found');
+    if (!project)
+      throw new NotFoundException('Project or coach manager not found');
     return project;
   }
 
-  async removeCoachManager(projectId: string, managerUserId: string): Promise<Project> {
+  async removeCoachManager(
+    projectId: string,
+    managerUserId: string,
+  ): Promise<Project> {
     const project = await this.projectModel
       .findByIdAndUpdate(
         projectId,
@@ -335,7 +417,8 @@ export class ProjectService {
       )
       .populate('coachManagers.userId', 'firstName lastName email')
       .exec();
-    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    if (!project)
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
     return project;
   }
 
@@ -369,7 +452,8 @@ export class ProjectService {
   ): Promise<Project> {
     const updateFields: any = {};
     if (update.responsibilities) {
-      updateFields['coachAssistants.$.responsibilities'] = update.responsibilities;
+      updateFields['coachAssistants.$.responsibilities'] =
+        update.responsibilities;
     }
     const project = await this.projectModel
       .findOneAndUpdate(
@@ -379,7 +463,8 @@ export class ProjectService {
       )
       .populate('coachAssistants.userId', 'firstName lastName email')
       .exec();
-    if (!project) throw new NotFoundException('Project or coach assistant not found');
+    if (!project)
+      throw new NotFoundException('Project or coach assistant not found');
     return project;
   }
 
@@ -395,7 +480,8 @@ export class ProjectService {
       )
       .populate('coachAssistants.userId', 'firstName lastName email')
       .exec();
-    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    if (!project)
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
     return project;
   }
 
@@ -408,7 +494,12 @@ export class ProjectService {
       startDate?: Date;
       endDate?: Date;
       responsibilities: string[];
-      contract: { rate: number; rateUnit: 'per_session' | 'per_hour'; currency: 'KES' | 'USD'; notes?: string };
+      contract: {
+        rate: number;
+        rateUnit: 'per_session' | 'per_hour';
+        currency: 'KES' | 'USD';
+        notes?: string;
+      };
     },
   ): Promise<Project> {
     return this.projectModel
@@ -429,7 +520,12 @@ export class ProjectService {
       startDate?: Date;
       endDate?: Date;
       responsibilities?: string[];
-      contract?: { rate?: number; rateUnit?: 'per_session' | 'per_hour'; currency?: 'KES' | 'USD'; notes?: string };
+      contract?: {
+        rate?: number;
+        rateUnit?: 'per_session' | 'per_hour';
+        currency?: 'KES' | 'USD';
+        notes?: string;
+      };
     },
   ): Promise<Project> {
     const updateFields: any = {};
@@ -441,12 +537,18 @@ export class ProjectService {
       updateFields['coaches.$.responsibilities'] = update.responsibilities;
     if (update.contract) {
       for (const key of Object.keys(update.contract)) {
-        updateFields[`coaches.$.contract.${key}`] = (update.contract as any)[key];
+        updateFields[`coaches.$.contract.${key}`] = (update.contract as any)[
+          key
+        ];
       }
     }
     const project = await this.projectModel
       .findOneAndUpdate(
-        { _id: projectId, 'coaches.userId': coachUserId, 'coaches.milestoneId': milestoneId },
+        {
+          _id: projectId,
+          'coaches.userId': coachUserId,
+          'coaches.milestoneId': milestoneId,
+        },
         { $set: updateFields },
         { new: true },
       )
@@ -464,12 +566,20 @@ export class ProjectService {
     const project = await this.projectModel
       .findByIdAndUpdate(
         projectId,
-        { $pull: { coaches: { userId: coachUserId as any, milestoneId: milestoneId as any } } },
+        {
+          $pull: {
+            coaches: {
+              userId: coachUserId as any,
+              milestoneId: milestoneId as any,
+            },
+          },
+        },
         { new: true },
       )
       .populate('coaches.userId', 'firstName lastName email')
       .exec();
-    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    if (!project)
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
     return project;
   }
 

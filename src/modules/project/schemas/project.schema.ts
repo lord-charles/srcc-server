@@ -127,6 +127,7 @@ export class Project {
     type: [
       {
         userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        milestoneId: { type: MongooseSchema.Types.ObjectId, required: false },
         startDate: { type: Date },
         endDate: { type: Date },
         responsibilities: [String],
@@ -137,6 +138,7 @@ export class Project {
   })
   teamMembers?: {
     userId: MongooseSchema.Types.ObjectId;
+    milestoneId?: MongooseSchema.Types.ObjectId;
     role: string;
     startDate: Date;
     endDate?: Date;
@@ -184,7 +186,9 @@ export class Project {
     responsibilities: string[];
   }[];
 
-  @ApiProperty({ description: 'Coaches assigned to milestones within the project' })
+  @ApiProperty({
+    description: 'Coaches assigned to milestones within the project',
+  })
   @Prop({
     type: [
       {
@@ -195,7 +199,11 @@ export class Project {
         responsibilities: [String],
         contract: {
           rate: { type: Number, required: true },
-          rateUnit: { type: String, enum: ['per_session', 'per_hour'], required: true },
+          rateUnit: {
+            type: String,
+            enum: ['per_session', 'per_hour'],
+            required: true,
+          },
           currency: { type: String, enum: ['KES', 'USD'], default: 'KES' },
           notes: { type: String },
         },

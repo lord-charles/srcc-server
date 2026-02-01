@@ -65,6 +65,15 @@ export class CreateContractDto {
   projectId: string;
 
   @ApiProperty({
+    description: 'Optional reference to the milestone this contract is for',
+    example: '60d21b4667d0d8992e610c86',
+    required: false,
+  })
+  @IsMongoId()
+  @IsOptional()
+  milestoneId?: string;
+
+  @ApiProperty({
     description:
       'Reference to the contracted user (team member or project manager)',
     example: '60d21b4667d0d8992e610c85',
