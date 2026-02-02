@@ -35,24 +35,24 @@ export class ProjectService {
   }
 
   async findAll(query: any = {}, userId?: string): Promise<Project[]> {
-    // Determine if the requester is an admin (can be a User or Organization)
-    let isAdmin = false;
+    // Determine if the requester has admin access (can be a User or Organization)
+    let hasAdminAccess = false;
     if (userId) {
       const user = await this.userModel.findById(userId).select('roles').lean();
       if (user && Array.isArray(user.roles) && user.roles.includes('admin')) {
-        isAdmin = true;
+        hasAdminAccess = true;
       } else {
         const org = await this.organizationModel
           .findById(userId)
           .select('roles')
           .lean();
         if (org && Array.isArray(org.roles) && org.roles.includes('admin')) {
-          isAdmin = true;
+          hasAdminAccess = true;
         }
       }
     }
 
-    const finalQuery = isAdmin
+    const finalQuery = hasAdminAccess
       ? { ...query }
       : {
           $and: [
@@ -63,6 +63,8 @@ export class ProjectService {
                 { projectManagerId: userId },
                 { 'assistantProjectManagers.userId': userId },
                 { 'teamMembers.userId': userId },
+                { 'coachManagers.userId': userId },
+                { 'coachAssistants.userId': userId },
               ],
             },
           ],
