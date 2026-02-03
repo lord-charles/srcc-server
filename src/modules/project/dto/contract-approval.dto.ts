@@ -21,9 +21,18 @@ export class ContractRejectionDto {
 
   @ApiProperty({
     description: 'Level at which the contract was rejected',
-    required: true,
-    enum: ['finance', 'md'],
+    required: false,
+    enum: [
+      'finance',
+      'md',
+      'coach_admin',
+      'coach_manager',
+      'coach_finance',
+      'srcc_checker',
+      'srcc_finance',
+    ],
   })
   @IsString()
-  level: string;
+  @IsOptional()
+  level?: string;
 }

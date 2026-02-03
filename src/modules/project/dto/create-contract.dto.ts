@@ -23,6 +23,15 @@ export class CreateContractDto {
   description: string;
 
   @ApiProperty({
+    description: 'Type of contract',
+    example: 'coach',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  type?: string;
+
+  @ApiProperty({
     description: 'The total value of the contract',
     example: 50000,
   })

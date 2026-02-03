@@ -15,7 +15,7 @@ import { UpdateContractDto } from '../dto/update-contract.dto';
 import * as crypto from 'crypto';
 import { User } from 'src/modules/auth/schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
-import { Project } from 'project';
+import { Project } from '../schemas/project.schema';
 import {
   ContractApprovalDto,
   ContractRejectionDto,
@@ -44,11 +44,21 @@ export class ContractService {
   private readonly roleMap = {
     finance: 'finance_approver',
     md: 'managing_director',
+    coach_admin: 'coach_admin',
+    coach_manager: 'coach_manager',
+    coach_finance: 'coach_finance',
+    srcc_checker: 'srcc_checker',
+    srcc_finance: 'srcc_finance',
   } as const;
 
   private readonly approvalDeadlines = {
     finance: 48,
     md: 72,
+    coach_admin: 24,
+    coach_manager: 24,
+    coach_finance: 48,
+    srcc_checker: 48,
+    srcc_finance: 72,
   } as const;
 
   constructor(
@@ -154,12 +164,20 @@ export class ContractService {
         };
       }
 
+      const isCoach = createContractDto.type === 'coach';
+      const initialStatus = isCoach
+        ? 'pending_coach_admin_review'
+        : 'pending_finance_approval';
+      const initialLevel = isCoach ? 'coach_admin' : 'finance';
+      const deadlineHours = this.approvalDeadlines[initialLevel];
+
       const newContract = new this.contractModel({
         ...createContractDto,
         contractNumber,
         createdBy: new Types.ObjectId(currentUserId),
         updatedBy: new Types.ObjectId(currentUserId),
-        status: 'pending_finance_approval',
+        status: initialStatus,
+        currentLevelDeadline: this.calculateDeadline(deadlineHours),
         ...(createContractDto.templateId && {
           templateId: new Types.ObjectId(createContractDto.templateId),
         }),
@@ -170,6 +188,10 @@ export class ContractService {
       await this.projectModel.findByIdAndUpdate(createContractDto.projectId, {
         $push: { teamMemberContracts: savedContract._id },
       });
+
+      // Fetch approvers and notify
+      // const approvers = await this.getApprovers(initialLevel, savedContract);
+      // await this.notifyApprovers(savedContract, approvers, initialLevel);
 
       // Send notification if user has contact details
       // if (user.email && user.phoneNumber) {
@@ -697,10 +719,14 @@ You can view the full contract and track progress in the SRCC Portal.`;
         'Contract must be in draft status to initiate approval workflow',
       );
     }
+    const isCoach = contract.type === 'coach';
+    const nextStatus = isCoach
+      ? 'pending_coach_admin_review'
+      : 'pending_finance_approval';
+    const nextLevel = isCoach ? 'coach_admin' : 'finance';
+    const deadlineHours = this.approvalDeadlines[nextLevel];
 
-    const nextStatus = 'pending_finance_approval';
-    const nextLevel = 'finance';
-    const approvers = await this.getApprovers(nextLevel);
+    const approvers = await this.getApprovers(nextLevel, contract);
 
     const updatedContract = await this.contractModel
       .findByIdAndUpdate(
@@ -708,14 +734,11 @@ You can view the full contract and track progress in the SRCC Portal.`;
         {
           status: nextStatus,
           updatedBy: userId,
-          currentLevelDeadline: this.calculateDeadline(
-            this.approvalDeadlines.finance,
-          ),
+          currentLevelDeadline: this.calculateDeadline(deadlineHours),
           $push: {
             amendments: {
               date: new Date(),
-              description:
-                'Contract submitted for financial review and approval',
+              description: `Contract submitted for ${this.formatRole(nextLevel)} review`,
               changedFields: ['status'],
               approvedBy: userId,
             },
@@ -742,55 +765,139 @@ You can view the full contract and track progress in the SRCC Portal.`;
     dto: ContractApprovalDto,
   ): Promise<Contract> {
     const contract = await this.findOne(id);
-    // Role-based guard: only specific roles can approve per stage
     const approver = await this.userModel.findById(userId).lean();
     if (!approver) {
       throw new NotFoundException('Approver not found');
     }
 
     let requiredRole: string | null = null;
-    if (contract.status === 'pending_finance_approval') {
-      requiredRole = 'srcc_finance';
-    } else if (contract.status === 'pending_md_approval') {
-      requiredRole = 'managing_director';
-    }
-
-    if (
-      requiredRole &&
-      !(Array.isArray((approver as any).roles) && (approver as any).roles.includes(requiredRole))
-    ) {
-      throw new ForbiddenException(
-        `You are not authorized to approve at this level. Required role: ${requiredRole}`,
-      );
-    }
     let nextStatus: string;
-    let nextLevel: string;
-    let nextDeadline: Date | null;
+    let nextLevel: string | null;
+    let nextDeadlineHours: number | null = null;
+    let approvalField: string;
 
-    switch (contract.status) {
-      case 'pending_finance_approval':
-        nextStatus = 'pending_md_approval';
-        nextLevel = 'md';
-        nextDeadline = this.calculateDeadline(this.approvalDeadlines.md);
-        break;
-      case 'pending_md_approval':
-        nextStatus = 'pending_acceptance';
-        nextLevel = null;
-        nextDeadline = null;
-        break;
-      default:
-        throw new BadRequestException(
-          'Contract is not in an appropriate status for approval',
-        );
+    if (contract.type === 'coach') {
+      switch (contract.status) {
+        case 'pending_coach_admin_review':
+          requiredRole = 'coach_admin';
+          nextStatus = 'pending_coach_manager_approval';
+          nextLevel = 'coach_manager';
+          nextDeadlineHours = this.approvalDeadlines.coach_manager;
+          approvalField = 'coachAdminApprovals';
+          break;
+        case 'pending_coach_manager_approval':
+          requiredRole = 'coach_manager';
+          nextStatus = 'pending_coach_finance_approval';
+          nextLevel = 'coach_finance';
+          nextDeadlineHours = this.approvalDeadlines.coach_finance;
+          approvalField = 'coachManagerApprovals';
+          break;
+        case 'pending_coach_finance_approval':
+          requiredRole = 'coach_finance';
+          nextStatus = 'pending_srcc_checker_approval';
+          nextLevel = 'srcc_checker';
+          nextDeadlineHours = this.approvalDeadlines.srcc_checker;
+          approvalField = 'coachFinanceApprovals';
+          break;
+        case 'pending_srcc_checker_approval':
+          requiredRole = 'srcc_checker';
+          nextStatus = 'pending_srcc_finance_approval';
+          nextLevel = 'srcc_finance';
+          nextDeadlineHours = this.approvalDeadlines.srcc_finance;
+          approvalField = 'srccCheckerApprovals';
+          break;
+        case 'pending_srcc_finance_approval':
+          requiredRole = 'srcc_finance';
+          nextStatus = 'pending_acceptance';
+          nextLevel = null;
+          approvalField = 'srccFinanceApprovals';
+          break;
+        default:
+          throw new BadRequestException(
+            'Contract is not in an appropriate status for coach approval',
+          );
+      }
+    } else {
+      switch (contract.status) {
+        case 'pending_finance_approval':
+          requiredRole = 'finance';
+          nextStatus = 'pending_md_approval';
+          nextLevel = 'md';
+          nextDeadlineHours = this.approvalDeadlines.md;
+          approvalField = 'financeApprovals';
+          break;
+        case 'pending_md_approval':
+          requiredRole = 'md';
+          nextStatus = 'pending_acceptance';
+          nextLevel = null;
+          approvalField = 'mdApprovals';
+          break;
+        default:
+          throw new BadRequestException(
+            'Contract is not in an appropriate status for regular approval',
+          );
+      }
     }
 
-    const currentLevel = contract.status.split('_')[1];
-    const approvalField = `${currentLevel}Approvals`;
+    // Role-based guard
+    if (requiredRole === 'coach_admin' || requiredRole === 'coach_manager') {
+      const projectId = (contract.projectId as any)._id || contract.projectId;
+      const project = await this.projectModel.findById(projectId).lean();
+      if (!project) throw new NotFoundException('Project not found');
+
+      let allowedUserIds: string[] = [];
+      if (requiredRole === 'coach_admin') {
+        // Hierarchical approval: Allow both assistants AND managers to approve admin review
+        const assistants = (project.coachAssistants || []).map((ca) =>
+          ca.userId.toString(),
+        );
+        const managers = (project.coachManagers || []).map((cm) =>
+          cm.userId.toString(),
+        );
+        allowedUserIds = [...assistants, ...managers];
+      } else {
+        allowedUserIds = (project.coachManagers || []).map((cm) =>
+          cm.userId.toString(),
+        );
+      }
+
+      if (!allowedUserIds.includes(userId)) {
+        throw new ForbiddenException(
+          `You are not an authorized ${this.formatRole(requiredRole)} for this project.`,
+        );
+      }
+    } else {
+      const requiredGlobalRole = this.roleMap[requiredRole];
+      const userRoles = (approver as any).roles || [];
+
+      if (!userRoles.includes(requiredGlobalRole)) {
+        throw new ForbiddenException(
+          `You are not authorized to approve at this level. Required role: ${requiredGlobalRole}`,
+        );
+      }
+
+      // Department check for coach_finance
+      if (requiredRole === 'coach_finance') {
+        const project = await this.projectModel
+          .findById(contract.projectId)
+          .lean();
+        if (
+          project?.department &&
+          (approver as any).department !== project.department
+        ) {
+          throw new ForbiddenException(
+            `You are not authorized for ${project.department} finance approval.`,
+          );
+        }
+      }
+    }
 
     const update: any = {
       status: nextStatus,
       updatedBy: userId,
-      currentLevelDeadline: nextDeadline,
+      currentLevelDeadline: nextDeadlineHours
+        ? this.calculateDeadline(nextDeadlineHours)
+        : null,
       $push: {
         [`approvalFlow.${approvalField}`]: {
           approverId: userId,
@@ -799,7 +906,7 @@ You can view the full contract and track progress in the SRCC Portal.`;
         },
         amendments: {
           date: new Date(),
-          description: `Contract approved by ${this.formatRole(currentLevel)}`,
+          description: `Contract approved by ${this.formatRole(requiredRole)}`,
           changedFields: ['status'],
           approvedBy: userId,
         },
@@ -825,11 +932,31 @@ You can view the full contract and track progress in the SRCC Portal.`;
         'approvalFlow.mdApprovals.approverId',
         'firstName lastName email',
       )
+      .populate(
+        'approvalFlow.coachAdminApprovals.approverId',
+        'firstName lastName email',
+      )
+      .populate(
+        'approvalFlow.coachManagerApprovals.approverId',
+        'firstName lastName email',
+      )
+      .populate(
+        'approvalFlow.coachFinanceApprovals.approverId',
+        'firstName lastName email',
+      )
+      .populate(
+        'approvalFlow.srccCheckerApprovals.approverId',
+        'firstName lastName email',
+      )
+      .populate(
+        'approvalFlow.srccFinanceApprovals.approverId',
+        'firstName lastName email',
+      )
       .populate('finalApproval.approvedBy', 'firstName lastName email');
 
     // Notify relevant parties based on approval stage
     if (nextLevel) {
-      const nextApprovers = await this.getApprovers(nextLevel);
+      const nextApprovers = await this.getApprovers(nextLevel, updatedContract);
       await this.notifyApprovers(updatedContract, nextApprovers, nextLevel);
     } else {
       await this.notifyContractActivation(updatedContract);
@@ -895,27 +1022,78 @@ Please log in to the SRCC Portal to review and take action.`;
           .join(' ');
   }
 
-  private async getApprovers(level: string): Promise<User[]> {
+  private async getApprovers(
+    level: string,
+    contract?: Contract,
+  ): Promise<User[]> {
     const requiredRole = this.roleMap[level];
 
     if (!requiredRole) {
       throw new BadRequestException(`Invalid approval level: ${level}`);
     }
 
-    const approvers = await this.userModel
-      .find({
-        roles: { $in: [requiredRole] },
-        status: 'active',
-      })
-      .lean();
+    // Special cases: coach_admin and coach_manager are assigned in the project
+    if (level === 'coach_admin' || level === 'coach_manager') {
+      if (!contract) {
+        throw new BadRequestException(
+          `Contract context required for level: ${level}`,
+        );
+      }
+      const projectId = (contract.projectId as any)._id || contract.projectId;
+      const project = await this.projectModel.findById(projectId).lean();
+      if (!project) throw new NotFoundException('Project not found');
+
+      let userIds: any[] = [];
+      if (level === 'coach_admin') {
+        const assistants = (project.coachAssistants || []).map(
+          (ca) => ca.userId,
+        );
+        const managers = (project.coachManagers || []).map((cm) => cm.userId);
+        userIds = [...assistants, ...managers];
+      } else {
+        userIds = (project.coachManagers || []).map((cm) => cm.userId);
+      }
+
+      if (userIds.length === 0) {
+        throw new BadRequestException(
+          `No ${level === 'coach_admin' ? 'Coach Assistants or Managers' : 'Coach Managers'} assigned to this project.`,
+        );
+      }
+
+      return this.userModel
+        .find({ _id: { $in: userIds }, status: 'active' })
+        .exec();
+    }
+
+    // Regular global roles
+    const query: any = {
+      roles: { $in: [requiredRole] },
+      status: 'active',
+    };
+
+    // For coach_finance, we also filter by department
+    if (level === 'coach_finance') {
+      if (!contract)
+        throw new BadRequestException(
+          'Contract context required for coach_finance',
+        );
+      const projectId = (contract.projectId as any)._id || contract.projectId;
+      const project = await this.projectModel.findById(projectId).lean();
+      if (!project) throw new NotFoundException('Project not found');
+      if (project.department) {
+        query.department = project.department;
+      }
+    }
+
+    const approvers = await this.userModel.find(query).lean();
 
     if (!approvers.length) {
       throw new BadRequestException(
-        `No active approvers found for level: ${level}. Please contact system administrator.`,
+        `No active approvers found for level: ${level}${level === 'coach_finance' ? ' in project department' : ''}. Please contact system administrator.`,
       );
     }
 
-    return approvers;
+    return approvers as any[];
   }
 
   private async notifyContractActivation(contract: Contract): Promise<void> {
@@ -952,49 +1130,111 @@ Next Steps
     }
   }
 
-  private async sendContractNotification(
-    contract: Contract,
-    user: User,
-  ): Promise<void> {
-    const project = await this.projectModel.findById(contract.projectId);
-
-    if (!project) {
-      throw new NotFoundException('Project not found');
-    }
-
-    const subject = `New Contract Assignment - ${contract.contractNumber}`;
-    const message = `Dear ${user.firstName} ${user.lastName},
-
-A new contract has been created for you in the project "${project.name}".
-
-Contract Details
-- Contract Number: ${contract.contractNumber}
-- Description: ${contract.description}
-- Value: ${contract.currency} ${contract.contractValue.toLocaleString()}
-- Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}
-
-The contract is currently under review. You will be notified once it is ready for your acceptance.`;
-
-    if (user.email) {
-      await this.notificationService.sendEmail(user.email, subject, message);
-    }
-
-    if (user.phoneNumber) {
-      const smsMessage = `SRCC: A new contract (${contract.contractNumber}) has been created for you. Please check your email for details.`;
-      await this.notificationService.sendSMS(user.phoneNumber, smsMessage);
-    }
-  }
-
   async reject(
     id: string,
     userId: string,
     dto: ContractRejectionDto,
   ): Promise<Contract> {
     const contract = await this.findOne(id);
+    const approver = await this.userModel.findById(userId).lean();
+    if (!approver) {
+      throw new NotFoundException('Approver not found');
+    }
 
     if (!contract.status.startsWith('pending_')) {
       throw new BadRequestException('Contract is not in an approvable status');
     }
+
+    let requiredRole: string | null = null;
+
+    // Determine required role from current status
+    if (contract.type === 'coach') {
+      switch (contract.status) {
+        case 'pending_coach_admin_review':
+          requiredRole = 'coach_admin';
+          break;
+        case 'pending_coach_manager_approval':
+          requiredRole = 'coach_manager';
+          break;
+        case 'pending_coach_finance_approval':
+          requiredRole = 'coach_finance';
+          break;
+        case 'pending_srcc_checker_approval':
+          requiredRole = 'srcc_checker';
+          break;
+        case 'pending_srcc_finance_approval':
+          requiredRole = 'srcc_finance';
+          break;
+      }
+    } else {
+      switch (contract.status) {
+        case 'pending_finance_approval':
+          requiredRole = 'finance';
+          break;
+        case 'pending_md_approval':
+          requiredRole = 'md';
+          break;
+      }
+    }
+
+    if (!requiredRole) {
+      throw new BadRequestException('Invalid contract status for rejection');
+    }
+
+    // Role-based guard (similar to approve)
+    if (requiredRole === 'coach_admin' || requiredRole === 'coach_manager') {
+      const projectId = (contract.projectId as any)._id || contract.projectId;
+      const project = await this.projectModel.findById(projectId).lean();
+      if (!project) throw new NotFoundException('Project not found');
+
+      let allowedUserIds: string[] = [];
+      if (requiredRole === 'coach_admin') {
+        // Hierarchical rejection: Allow both assistants AND managers to reject admin review
+        const assistants = (project.coachAssistants || []).map((ca) =>
+          ca.userId.toString(),
+        );
+        const managers = (project.coachManagers || []).map((cm) =>
+          cm.userId.toString(),
+        );
+        allowedUserIds = [...assistants, ...managers];
+      } else {
+        allowedUserIds = (project.coachManagers || []).map((cm) =>
+          cm.userId.toString(),
+        );
+      }
+
+      if (!allowedUserIds.includes(userId)) {
+        throw new ForbiddenException(
+          `You are not an authorized ${this.formatRole(requiredRole)} for this project.`,
+        );
+      }
+    } else {
+      const requiredGlobalRole = this.roleMap[requiredRole];
+      const userRoles = (approver as any).roles || [];
+
+      if (!userRoles.includes(requiredGlobalRole)) {
+        throw new ForbiddenException(
+          `You are not authorized to reject at this level. Required role: ${requiredGlobalRole}`,
+        );
+      }
+
+      // Department check for coach_finance
+      if (requiredRole === 'coach_finance') {
+        const project = await this.projectModel
+          .findById(contract.projectId)
+          .lean();
+        if (
+          project?.department &&
+          (approver as any).department !== project.department
+        ) {
+          throw new ForbiddenException(
+            `You are not authorized for ${project.department} finance rejection.`,
+          );
+        }
+      }
+    }
+
+    const rejectionLevel = dto.level || requiredRole;
 
     const updatedContract = await this.contractModel
       .findByIdAndUpdate(
@@ -1007,12 +1247,12 @@ The contract is currently under review. You will be notified once it is ready fo
             rejectedBy: userId,
             rejectedAt: new Date(),
             reason: dto.reason,
-            level: dto.level,
+            level: rejectionLevel,
           },
           $push: {
             amendments: {
               date: new Date(),
-              description: `Contract rejected by ${this.formatRole(dto.level)}`,
+              description: `Contract rejected by ${this.formatRole(rejectionLevel)}`,
               changedFields: ['status'],
               approvedBy: userId,
             },
@@ -1020,10 +1260,8 @@ The contract is currently under review. You will be notified once it is ready fo
         },
         { new: true },
       )
-      .populate('projectId contractedUserId');
-
-    // Notify stakeholders of rejection
-    // const user = await this.userModel.findById(contract.contractedUserId);
+      .populate('projectId contractedUserId')
+      .populate('rejectionDetails.rejectedBy', 'firstName lastName email');
 
     return updatedContract;
   }

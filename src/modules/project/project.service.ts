@@ -522,6 +522,7 @@ export class ProjectService {
       startDate?: Date;
       endDate?: Date;
       responsibilities?: string[];
+      milestoneId?: string;
       contract?: {
         rate?: number;
         rateUnit?: 'per_session' | 'per_hour';
@@ -537,6 +538,8 @@ export class ProjectService {
       updateFields['coaches.$.endDate'] = update.endDate;
     if (update.responsibilities)
       updateFields['coaches.$.responsibilities'] = update.responsibilities;
+    if (update.milestoneId)
+      updateFields['coaches.$.milestoneId'] = update.milestoneId;
     if (update.contract) {
       for (const key of Object.keys(update.contract)) {
         updateFields[`coaches.$.contract.${key}`] = (update.contract as any)[

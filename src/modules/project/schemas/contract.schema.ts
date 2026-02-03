@@ -21,6 +21,14 @@ export class Contract extends Document {
   description: string;
 
   @ApiProperty({
+    example: 'coach',
+    description: 'Type of contract',
+    required: false,
+  })
+  @Prop({ required: false, trim: true })
+  type?: string;
+
+  @ApiProperty({
     example: 50000,
     description: 'The total value of the contract',
   })
@@ -41,6 +49,11 @@ export class Contract extends Document {
       'draft',
       'pending_finance_approval',
       'pending_md_approval',
+      'pending_coach_admin_review',
+      'pending_coach_manager_approval',
+      'pending_coach_finance_approval',
+      'pending_srcc_checker_approval',
+      'pending_srcc_finance_approval',
       'pending_acceptance',
       'active',
       'suspended',
@@ -55,6 +68,11 @@ export class Contract extends Document {
       'draft',
       'pending_finance_approval',
       'pending_md_approval',
+      'pending_coach_admin_review',
+      'pending_coach_manager_approval',
+      'pending_coach_finance_approval',
+      'pending_srcc_checker_approval',
+      'pending_srcc_finance_approval',
       'pending_acceptance',
       'active',
       'suspended',
@@ -138,6 +156,41 @@ export class Contract extends Document {
           comments: String,
         },
       ],
+      coachAdminApprovals: [
+        {
+          approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+          approvedAt: Date,
+          comments: String,
+        },
+      ],
+      coachManagerApprovals: [
+        {
+          approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+          approvedAt: Date,
+          comments: String,
+        },
+      ],
+      coachFinanceApprovals: [
+        {
+          approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+          approvedAt: Date,
+          comments: String,
+        },
+      ],
+      srccCheckerApprovals: [
+        {
+          approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+          approvedAt: Date,
+          comments: String,
+        },
+      ],
+      srccFinanceApprovals: [
+        {
+          approverId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+          approvedAt: Date,
+          comments: String,
+        },
+      ],
     },
   })
   approvalFlow: {
@@ -147,6 +200,31 @@ export class Contract extends Document {
       comments?: string;
     }[];
     mdApprovals?: {
+      approverId: MongooseSchema.Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+    }[];
+    coachAdminApprovals?: {
+      approverId: MongooseSchema.Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+    }[];
+    coachManagerApprovals?: {
+      approverId: MongooseSchema.Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+    }[];
+    coachFinanceApprovals?: {
+      approverId: MongooseSchema.Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+    }[];
+    srccCheckerApprovals?: {
+      approverId: MongooseSchema.Types.ObjectId;
+      approvedAt: Date;
+      comments?: string;
+    }[];
+    srccFinanceApprovals?: {
       approverId: MongooseSchema.Types.ObjectId;
       approvedAt: Date;
       comments?: string;

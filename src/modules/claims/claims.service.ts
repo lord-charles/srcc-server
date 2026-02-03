@@ -617,7 +617,7 @@ export class ClaimsService {
         .find({
           projectId: new Types.ObjectId(projectId),
         })
-        .populate('projectId', 'name description')
+        .populate('projectId', 'name description department')
         .populate({
           path: 'contractId',
           select:
@@ -625,7 +625,7 @@ export class ClaimsService {
           populate: [
             {
               path: 'projectId',
-              select: 'name description',
+              select: 'name description department',
             },
             {
               path: 'createdBy',
