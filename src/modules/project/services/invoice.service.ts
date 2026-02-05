@@ -56,6 +56,114 @@ export class InvoiceService {
     };
   }
 
+  private async notifyInvoiceRequestHandlers(invoice: Invoice): Promise<void> {
+    try {
+      // Find all users with srcc_invoice_request role
+      const invoiceRequestHandlers = await this.userModel.find({
+        roles: { $in: ['srcc_invoice_request'] },
+        status: 'active', // Only notify active users
+      });
+
+      if (invoiceRequestHandlers.length === 0) {
+        console.log('No users found with srcc_invoice_request role');
+        return;
+      }
+
+      const project = await this.projectModel.findById(invoice.projectId);
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+
+      const formattedDate = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      const emailSubject = `New Invoice Request - ${project.name}`;
+      const emailMessage = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+            <h2 style="color: #2c3e50; margin-bottom: 20px;">New Invoice Request Submitted</h2>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Invoice Details</h3>
+              <p><strong>Project Name:</strong> ${project.name}</p>
+              <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
+              <p><strong>Date Submitted:</strong> ${formattedDate}</p>
+              <p><strong>Status:</strong> PENDING APPROVAL</p>
+            </div>
+
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Financial Summary</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;"><strong>Subtotal:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;">${invoice.currency} ${invoice.subtotal.toLocaleString()}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;"><strong>Tax:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;">${invoice.currency} ${invoice.totalTax.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0;"><strong>Total Amount:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;"><strong>${invoice.currency} ${invoice.totalAmount.toLocaleString()}</strong></td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background-color: white; padding: 15px; border-radius: 5px;">
+              <p style="color: #7f8c8d; font-size: 12px; margin: 0;">
+                This is an automated message from the SRCC Invoice Management System. Please do not reply to this email.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const smsMessage = `SRCC: New invoice request submitted for ${project.name} (${invoice.invoiceNumber}) - ${invoice.currency} ${invoice.totalAmount.toLocaleString()}. Please review in the portal.`;
+
+      // Send notifications to all invoice request handlers
+      const notificationPromises = invoiceRequestHandlers.map(
+        async (handler) => {
+          try {
+            // Send email
+            const emailPromise = this.notificationService.sendEmail(
+              handler.email,
+              emailSubject,
+              emailMessage,
+            );
+
+            // Send SMS if phone number is available
+            const smsPromise = handler.phoneNumber
+              ? this.notificationService.sendSMS(
+                  handler.phoneNumber,
+                  smsMessage,
+                )
+              : Promise.resolve(true);
+
+            await Promise.all([emailPromise, smsPromise]);
+
+            console.log(
+              `Notified invoice request handler: ${handler.firstName} ${handler.lastName} (${handler.email})`,
+            );
+          } catch (error) {
+            console.error(`Failed to notify ${handler.email}:`, error.message);
+          }
+        },
+      );
+
+      await Promise.all(notificationPromises);
+      console.log(
+        `Successfully notified ${invoiceRequestHandlers.length} invoice request handlers`,
+      );
+    } catch (error) {
+      console.error('Error notifying invoice request handlers:', error.message);
+      // Don't throw error to prevent invoice submission from failing
+    }
+  }
+
   private async notifyStakeholders(
     invoice: Invoice,
     action: string,
@@ -122,7 +230,6 @@ export class InvoiceService {
           }
 
           <div style="background-color: white; padding: 15px; border-radius: 5px;">
-            <p style="margin-bottom: 20px;">You can view the complete invoice details in the <a href="https://srcc.strathmore.edu/invoices/${invoice._id.toString()}" style="color: #3498db; text-decoration: none;">SRCC Portal</a>.</p>
             
             <p style="color: #7f8c8d; font-size: 12px; margin-top: 20px;">
               This is an automated message from the SRCC Invoice Management System. Please do not reply to this email.
@@ -289,6 +396,9 @@ export class InvoiceService {
 
     // Notify stakeholders
     await this.notifyStakeholders(updatedInvoice, 'Submitted for Approval');
+
+    // Notify users with srcc_invoice_request role
+    await this.notifyInvoiceRequestHandlers(updatedInvoice);
 
     return updatedInvoice;
   }
