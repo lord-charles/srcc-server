@@ -92,7 +92,7 @@ export class InvoiceService {
               <p><strong>Project Name:</strong> ${project.name}</p>
               <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
               <p><strong>Date Submitted:</strong> ${formattedDate}</p>
-              <p><strong>Status:</strong> PENDING APPROVAL</p>
+              <p><strong>Status:</strong> PENDING INVOICE ATTACHMENT</p>
             </div>
 
             <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
@@ -160,6 +160,119 @@ export class InvoiceService {
       );
     } catch (error) {
       console.error('Error notifying invoice request handlers:', error.message);
+      // Don't throw error to prevent invoice submission from failing
+    }
+  }
+
+  private async notifyInvoiceAttachmentHandlers(
+    invoice: Invoice,
+  ): Promise<void> {
+    try {
+      // Find all users with srcc_invoice_request role
+      const invoiceAttachmentHandlers = await this.userModel.find({
+        roles: { $in: ['srcc_invoice_request'] },
+        status: 'active', // Only notify active users
+      });
+
+      if (invoiceAttachmentHandlers.length === 0) {
+        console.log('No users found with srcc_invoice_request role');
+        return;
+      }
+
+      const project = await this.projectModel.findById(invoice.projectId);
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+
+      const formattedDate = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      const emailSubject = `Invoice Pending Attachment - ${project.name}`;
+      const emailMessage = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+            <h2 style="color: #2c3e50; margin-bottom: 20px;">Invoice Pending Actual Document Attachment</h2>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Invoice Details</h3>
+              <p><strong>Project Name:</strong> ${project.name}</p>
+              <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
+              <p><strong>Date Submitted:</strong> ${formattedDate}</p>
+              <p><strong>Status:</strong> PENDING INVOICE ATTACHMENT</p>
+            </div>
+
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Financial Summary</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;"><strong>Subtotal:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;">${invoice.currency} ${invoice.subtotal.toLocaleString()}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;"><strong>Tax:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;">${invoice.currency} ${invoice.totalTax.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0;"><strong>Total Amount:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;"><strong>${invoice.currency} ${invoice.totalAmount.toLocaleString()}</strong></td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background-color: white; padding: 15px; border-radius: 5px;">
+              <p style="color: #7f8c8d; font-size: 12px; margin: 0;">
+                Please attach the actual invoice document in the portal. This is an automated message from the SRCC Invoice Management System.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const smsMessage = `SRCC: Invoice ${invoice.invoiceNumber} for ${project.name} is pending actual document attachment - ${invoice.currency} ${invoice.totalAmount.toLocaleString()}. Please attach in the portal.`;
+
+      // Send notifications to all invoice attachment handlers
+      const notificationPromises = invoiceAttachmentHandlers.map(
+        async (handler) => {
+          try {
+            // Send email
+            const emailPromise = this.notificationService.sendEmail(
+              handler.email,
+              emailSubject,
+              emailMessage,
+            );
+
+            // Send SMS if phone number is available
+            const smsPromise = handler.phoneNumber
+              ? this.notificationService.sendSMS(
+                  handler.phoneNumber,
+                  smsMessage,
+                )
+              : Promise.resolve(true);
+
+            await Promise.all([emailPromise, smsPromise]);
+
+            console.log(
+              `Notified invoice attachment handler: ${handler.firstName} ${handler.lastName} (${handler.email})`,
+            );
+          } catch (error) {
+            console.error(`Failed to notify ${handler.email}:`, error.message);
+          }
+        },
+      );
+
+      await Promise.all(notificationPromises);
+      console.log(
+        `Successfully notified ${invoiceAttachmentHandlers.length} invoice attachment handlers`,
+      );
+    } catch (error) {
+      console.error(
+        'Error notifying invoice attachment handlers:',
+        error.message,
+      );
       // Don't throw error to prevent invoice submission from failing
     }
   }
@@ -339,8 +452,11 @@ export class InvoiceService {
   ): Promise<Invoice> {
     const invoice = await this.findOne(id);
 
-    if (invoice.status !== 'draft') {
-      throw new BadRequestException('Only draft invoices can be updated');
+    // Allow editing in draft or revision_requested status
+    if (invoice.status !== 'draft' && invoice.status !== 'revision_requested') {
+      throw new BadRequestException(
+        'Only draft or revision-requested invoices can be updated',
+      );
     }
 
     const totals = this.calculateTotals(dto.items);
@@ -356,7 +472,10 @@ export class InvoiceService {
             action: 'UPDATED',
             performedBy: userId,
             performedAt: new Date(),
-            details: { items: dto.items },
+            details: {
+              items: dto.items,
+              previousStatus: invoice.status,
+            },
           },
         },
       },
@@ -374,18 +493,18 @@ export class InvoiceService {
 
     if (invoice.status !== 'draft' && invoice.status !== 'revision_requested') {
       throw new BadRequestException(
-        'Only drafts can be submitted for approval',
+        'Only drafts or revised invoices can be submitted',
       );
     }
 
     const updatedInvoice = await this.invoiceModel.findByIdAndUpdate(
       id,
       {
-        status: 'pending_approval',
+        status: 'pending_invoice_attachment',
         updatedBy: userId,
         $push: {
           auditTrail: {
-            action: 'SUBMITTED_FOR_APPROVAL',
+            action: 'SUBMITTED_FOR_INVOICE_ATTACHMENT',
             performedBy: userId,
             performedAt: new Date(),
           },
@@ -395,10 +514,13 @@ export class InvoiceService {
     );
 
     // Notify stakeholders
-    await this.notifyStakeholders(updatedInvoice, 'Submitted for Approval');
+    await this.notifyStakeholders(
+      updatedInvoice,
+      'Submitted - Pending Invoice Attachment',
+    );
 
     // Notify users with srcc_invoice_request role
-    await this.notifyInvoiceRequestHandlers(updatedInvoice);
+    await this.notifyInvoiceAttachmentHandlers(updatedInvoice);
 
     return updatedInvoice;
   }
@@ -410,8 +532,13 @@ export class InvoiceService {
   ): Promise<Invoice> {
     const invoice = await this.findOne(id);
 
-    if (invoice.status !== 'pending_approval') {
-      throw new BadRequestException('Invoice is not pending approval');
+    if (
+      invoice.status !== 'pending_invoice_attachment' &&
+      invoice.status !== 'approved'
+    ) {
+      throw new BadRequestException(
+        'Invoice is not in a valid state for approval',
+      );
     }
 
     const updatedInvoice = await this.invoiceModel.findByIdAndUpdate(
@@ -449,8 +576,10 @@ export class InvoiceService {
   ): Promise<Invoice> {
     const invoice = await this.findOne(id);
 
-    if (invoice.status !== 'pending_approval') {
-      throw new BadRequestException('Invoice is not pending approval');
+    if (invoice.status !== 'pending_invoice_attachment') {
+      throw new BadRequestException(
+        'Invoice is not pending invoice attachment',
+      );
     }
 
     const updatedInvoice = await this.invoiceModel.findByIdAndUpdate(
@@ -486,50 +615,70 @@ export class InvoiceService {
     userId: Types.ObjectId,
     dto: InvoiceRevisionDto,
   ): Promise<Invoice> {
-    const invoice = await this.findOne(id);
+    // Check if user has the required role
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
-    if (!invoice.status.startsWith('pending_')) {
+    if (!user.roles.includes('srcc_invoice_request')) {
       throw new BadRequestException(
-        'Invoice must be in pending approval status to request revision',
+        'You do not have permission to request invoice revisions. Required role: srcc_invoice_request',
       );
     }
 
-    // Store the current status and level to return to after revision
-    const currentStatus = invoice.status;
-    const currentLevel = this.getApprovalLevel(currentStatus);
+    const invoice = await this.findOne(id);
 
-    const updatedInvoice = await this.invoiceModel.findByIdAndUpdate(
-      id,
-      {
-        status: 'revision_requested',
-        updatedBy: userId,
-        revisionRequest: {
-          requestedBy: userId,
-          requestedAt: new Date(),
-          comments: dto.comments,
-          changes: dto.changes,
-          returnToStatus: currentStatus,
-          returnToLevel: currentLevel,
-        },
-        $push: {
-          auditTrail: {
-            action: 'REVISION_REQUESTED',
-            performedBy: userId,
-            performedAt: new Date(),
-            details: {
-              from: currentStatus,
-              comments: dto.comments,
-              changes: dto.changes,
-              returnToStatus: currentStatus,
-              returnToLevel: currentLevel,
+    if (invoice.status !== 'pending_invoice_attachment') {
+      throw new BadRequestException(
+        'Invoice must be pending invoice attachment to request revision',
+      );
+    }
+
+    // Store the current status to return to after revision
+    const currentStatus = invoice.status;
+
+    const updatedInvoice = await this.invoiceModel
+      .findByIdAndUpdate(
+        id,
+        {
+          status: 'revision_requested',
+          updatedBy: userId,
+          revisionRequest: {
+            requestedBy: userId,
+            requestedAt: new Date(),
+            comments: dto.comments,
+            changes: dto.changes,
+            returnToStatus: currentStatus,
+            returnToLevel: 'invoice_attachment',
+          },
+          $push: {
+            auditTrail: {
+              action: 'REVISION_REQUESTED',
+              performedBy: userId,
+              performedAt: new Date(),
+              details: {
+                from: currentStatus,
+                comments: dto.comments,
+                changes: dto.changes,
+                returnToStatus: currentStatus,
+                returnToLevel: 'invoice_attachment',
+              },
             },
           },
         },
-      },
-      { new: true },
+        { new: true },
+      )
+      .populate('createdBy');
+
+    // Notify the invoice creator about the revision request
+    await this.notifyInvoiceCreatorOfRevision(
+      updatedInvoice,
+      dto.comments,
+      dto.changes,
     );
 
-    // Notify stakeholders
+    // Notify other stakeholders
     await this.notifyStakeholders(
       updatedInvoice,
       'Revision Requested',
@@ -539,12 +688,113 @@ export class InvoiceService {
     return updatedInvoice;
   }
 
-  private getApprovalLevel(status: string): string {
-    const statusToLevel = {
-      pending_approval: 'approver',
-      pending_payment: 'finance',
-    };
-    return statusToLevel[status] || 'approver';
+  private async notifyInvoiceCreatorOfRevision(
+    invoice: Invoice,
+    comments: string,
+    changes: string[],
+  ): Promise<void> {
+    try {
+      const creator = await this.userModel.findById(invoice.createdBy);
+      if (!creator) {
+        console.log('Invoice creator not found');
+        return;
+      }
+
+      const project = await this.projectModel.findById(invoice.projectId);
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+
+      const formattedDate = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      const emailSubject = `Invoice Revision Requested - ${project.name}`;
+      const emailMessage = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+            <h2 style="color: #2c3e50; margin-bottom: 20px;">Invoice Revision Requested</h2>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Invoice Details</h3>
+              <p><strong>Project Name:</strong> ${project.name}</p>
+              <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
+              <p><strong>Date:</strong> ${formattedDate}</p>
+              <p><strong>Status:</strong> REVISION REQUESTED</p>
+            </div>
+
+            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+              <h3 style="color: #856404; margin-top: 0;">Revision Comments</h3>
+              <p style="color: #856404;">${comments}</p>
+            </div>
+
+            ${
+              changes && changes.length > 0
+                ? `
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Requested Changes</h3>
+              <ul style="color: #495057;">
+                ${changes.map((change) => `<li>${change}</li>`).join('')}
+              </ul>
+            </div>
+            `
+                : ''
+            }
+
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Financial Summary</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;"><strong>Subtotal:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;">${invoice.currency} ${invoice.subtotal.toLocaleString()}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;"><strong>Tax:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;">${invoice.currency} ${invoice.totalTax.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0;"><strong>Total Amount:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;"><strong>${invoice.currency} ${invoice.totalAmount.toLocaleString()}</strong></td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background-color: white; padding: 15px; border-radius: 5px;">
+              <p style="color: #7f8c8d; font-size: 12px; margin: 0;">
+                Please review the requested changes and resubmit the invoice. This is an automated message from the SRCC Invoice Management System.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const smsMessage = `SRCC: Revision requested for invoice ${invoice.invoiceNumber} (${project.name}). Comments: ${comments.substring(0, 100)}${comments.length > 100 ? '...' : ''}. Please check your email for details.`;
+
+      // Send email
+      await this.notificationService.sendEmail(
+        creator.email,
+        emailSubject,
+        emailMessage,
+      );
+
+      // Send SMS if phone number is available
+      if (creator.phoneNumber) {
+        await this.notificationService.sendSMS(creator.phoneNumber, smsMessage);
+      }
+
+      console.log(
+        `Notified invoice creator: ${creator.firstName} ${creator.lastName} (${creator.email}) about revision request`,
+      );
+    } catch (error) {
+      console.error(
+        'Error notifying invoice creator of revision:',
+        error.message,
+      );
+      // Don't throw error to prevent revision request from failing
+    }
   }
 
   async recordPayment(
@@ -600,25 +850,50 @@ export class InvoiceService {
 
   /**
    * Attach or update the actualInvoice URL for an invoice
+   * Only users with 'srcc_invoice_request' role can perform this action
    */
   async attachOrUpdateActualInvoice(
     id: Types.ObjectId,
     url: string,
     userId: any,
   ): Promise<Invoice> {
+    // Check if user has the required role
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.roles.includes('srcc_invoice_request')) {
+      throw new BadRequestException(
+        'You do not have permission to attach invoice documents. Required role: srcc_invoice_request',
+      );
+    }
+
     const invoice = await this.invoiceModel.findById(id);
     if (!invoice) {
       throw new NotFoundException('Invoice not found');
     }
+
+    // Update status to approved when actual invoice is attached
     invoice.actualInvoice = url;
+    invoice.status = 'approved';
     invoice.updatedBy = userId;
     invoice.auditTrail.push({
-      action: 'ACTUAL_INVOICE_UPDATED',
+      action: 'ACTUAL_INVOICE_ATTACHED',
       performedBy: userId,
       performedAt: new Date(),
       details: { actualInvoice: url },
     });
+
     await invoice.save();
+
+    // Notify stakeholders that invoice has been approved with document attached
+    await this.notifyStakeholders(
+      invoice,
+      'Approved - Invoice Document Attached',
+      `The actual invoice document has been attached and the invoice is now approved.`,
+    );
+
     return invoice;
   }
 

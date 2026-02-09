@@ -107,7 +107,10 @@ export class Contract extends Document {
   @ApiProperty({
     description: 'Optional reference to the milestone this contract is for',
   })
-  @Prop({ type: MongooseSchema.Types.ObjectId, required: false })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    required: false,
+  })
   milestoneId?: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({

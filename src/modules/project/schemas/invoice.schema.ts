@@ -6,7 +6,10 @@ export type InvoiceDocument = Invoice & Document;
 
 @Schema({ _id: false })
 class InvoiceItem {
-  @ApiProperty({ description: 'Description of the item or service', example: 'Software Development Services - Sprint 1' })
+  @ApiProperty({
+    description: 'Description of the item or service',
+    example: 'Software Development Services - Sprint 1',
+  })
   @Prop({ required: true })
   description: string;
 
@@ -14,12 +17,14 @@ class InvoiceItem {
   @Prop({ required: true, min: 0 })
   quantity: number;
 
-
   @ApiProperty({ description: 'Total amount for this item', example: 800000 })
   @Prop({ required: true, min: 0 })
   amount: number;
 
-  @ApiProperty({ description: 'Tax rate applied to this item (%)', example: 16 })
+  @ApiProperty({
+    description: 'Tax rate applied to this item (%)',
+    example: 16,
+  })
   @Prop({ required: true, default: 0, min: 0, max: 100 })
   taxRate: number;
 
@@ -31,26 +36,38 @@ class InvoiceItem {
 @Schema({ _id: false })
 class PaymentDetails {
   @ApiProperty({ description: 'Payment method', example: 'bank_transfer' })
-  @Prop({ 
+  @Prop({
     required: true,
-    enum: ['bank_transfer', 'cheque', 'mpesa', 'cash'],
-    default: 'bank_transfer'
+    enum: ['bank_transfer', 'cheque', 'mpesa', 'cash', 'wht', 'wht_vat'],
+    default: 'bank_transfer',
   })
   method: string;
 
-  @ApiProperty({ description: 'Bank name if applicable', example: 'Equity Bank' })
+  @ApiProperty({
+    description: 'Bank name if applicable',
+    example: 'Equity Bank',
+  })
   @Prop()
   bankName?: string;
 
-  @ApiProperty({ description: 'Account number if applicable', example: '1234567890' })
+  @ApiProperty({
+    description: 'Account number if applicable',
+    example: '1234567890',
+  })
   @Prop()
   accountNumber?: string;
 
-  @ApiProperty({ description: 'Bank branch code if applicable', example: '001' })
+  @ApiProperty({
+    description: 'Bank branch code if applicable',
+    example: '001',
+  })
   @Prop()
   branchCode?: string;
 
-  @ApiProperty({ description: 'Payment reference number', example: 'TRX123456' })
+  @ApiProperty({
+    description: 'Payment reference number',
+    example: 'TRX123456',
+  })
   @Prop()
   referenceNumber?: string;
 
@@ -66,9 +83,36 @@ class PaymentDetails {
   @Prop()
   receiptUrl?: string;
 
-  @ApiProperty({ description: 'Comments about the payment', example: 'Payment for milestone 1' })
+  @ApiProperty({
+    description: 'Comments about the payment',
+    example: 'Payment for milestone 1',
+  })
   @Prop()
   comments?: string;
+
+  @ApiProperty({
+    description: 'WHT Certificate Reference Number (for WHT payments)',
+  })
+  @Prop()
+  whtCertificateRefNo?: string;
+
+  @ApiProperty({
+    description: 'WHT Certificate Attachment URL (for WHT payments)',
+  })
+  @Prop()
+  whtCertificateUrl?: string;
+
+  @ApiProperty({
+    description: 'WHT-VAT Certificate Reference Number (for WHT-VAT payments)',
+  })
+  @Prop()
+  whtVatCertificateRefNo?: string;
+
+  @ApiProperty({
+    description: 'WHT-VAT Certificate Attachment URL (for WHT-VAT payments)',
+  })
+  @Prop()
+  whtVatCertificateUrl?: string;
 }
 
 @Schema()
@@ -105,7 +149,9 @@ export class Invoice extends Document {
   @Prop({ required: true, unique: true })
   invoiceNumber: string;
 
-  @ApiProperty({ description: 'Reference to the organization/consultant raising the invoice' })
+  @ApiProperty({
+    description: 'Reference to the organization/consultant raising the invoice',
+  })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   issuedBy: MongooseSchema.Types.ObjectId;
 
@@ -142,16 +188,17 @@ export class Invoice extends Document {
     required: true,
     enum: [
       'draft',
-      'pending_approval',
+      'pending_invoice_attachment',
+      'revision_requested',
       'approved',
       'rejected',
       'sent',
       'partially_paid',
       'paid',
       'overdue',
-      'cancelled'
+      'cancelled',
     ],
-    default: 'draft'
+    default: 'draft',
   })
   status: string;
 
@@ -199,9 +246,9 @@ export class Invoice extends Document {
     type: {
       approvedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
       approvedAt: Date,
-      comments: String
+      comments: String,
     },
-    _id: false
+    _id: false,
   })
   approval?: {
     approvedBy: MongooseSchema.Types.ObjectId;
@@ -214,9 +261,9 @@ export class Invoice extends Document {
     type: {
       rejectedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
       rejectedAt: Date,
-      reason: String
+      reason: String,
     },
-    _id: false
+    _id: false,
   })
   rejection?: {
     rejectedBy: MongooseSchema.Types.ObjectId;
@@ -241,12 +288,18 @@ export class Invoice extends Document {
   sentAt?: Date;
 
   @ApiProperty({ description: 'Audit trail of invoice changes' })
-  @Prop([{
-    action: { type: String, required: true },
-    performedBy: { type: MongooseSchema.Types.ObjectId, ref: 'User', required: true },
-    performedAt: { type: Date, required: true },
-    details: { type: Object }
-  }])
+  @Prop([
+    {
+      action: { type: String, required: true },
+      performedBy: {
+        type: MongooseSchema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+      },
+      performedAt: { type: Date, required: true },
+      details: { type: Object },
+    },
+  ])
   auditTrail: {
     action: string;
     performedBy: MongooseSchema.Types.ObjectId;

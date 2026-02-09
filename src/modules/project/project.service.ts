@@ -113,12 +113,70 @@ export class ProjectService {
           { path: 'contractedUserId', select: 'firstName lastName email' },
         ],
       })
+      .lean()
       .exec();
 
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
-    return project;
+
+    // Manually populate milestoneId for contracts
+    if (project.teamMemberContracts && project.milestones) {
+      project.teamMemberContracts = project.teamMemberContracts.map(
+        (contract: any) => {
+          if (contract.milestoneId) {
+            const milestone = project.milestones.find(
+              (m: any) => m._id.toString() === contract.milestoneId.toString(),
+            );
+            if (milestone) {
+              return {
+                ...contract,
+                milestoneId: milestone,
+              };
+            }
+          }
+          return contract;
+        },
+      );
+    }
+
+    // Manually populate milestoneId for team members
+    if (project.teamMembers && project.milestones) {
+      project.teamMembers = project.teamMembers.map((member: any) => {
+        if (member.milestoneId) {
+          const milestone = project.milestones.find(
+            (m: any) => m._id.toString() === member.milestoneId.toString(),
+          );
+          if (milestone) {
+            return {
+              ...member,
+              milestoneId: milestone,
+            };
+          }
+        }
+        return member;
+      });
+    }
+
+    // Manually populate milestoneId for coaches
+    if (project.coaches && project.milestones) {
+      project.coaches = project.coaches.map((coach: any) => {
+        if (coach.milestoneId) {
+          const milestone = project.milestones.find(
+            (m: any) => m._id.toString() === coach.milestoneId.toString(),
+          );
+          if (milestone) {
+            return {
+              ...coach,
+              milestoneId: milestone,
+            };
+          }
+        }
+        return coach;
+      });
+    }
+
+    return project as any;
   }
 
   async update(

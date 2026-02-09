@@ -1,18 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsDate, IsArray, ValidateNested, IsOptional, IsEnum, Min, IsMongoId, ArrayMinSize, IsUrl } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsDate,
+  IsArray,
+  ValidateNested,
+  IsOptional,
+  IsEnum,
+  Min,
+  IsMongoId,
+  ArrayMinSize,
+  IsUrl,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class InvoiceItemDto {
   @ApiProperty({
     example: 'Professional Consulting Services - January 2025',
-    description: 'Description of the invoice item'
+    description: 'Description of the invoice item',
   })
   @IsString()
   description: string;
 
   @ApiProperty({
     example: 160,
-    description: 'Quantity of items'
+    description: 'Quantity of items',
   })
   @IsNumber()
   @Min(0)
@@ -20,7 +32,7 @@ export class InvoiceItemDto {
 
   @ApiProperty({
     example: 150000,
-    description: 'Amount for the item (without tax)'
+    description: 'Amount for the item (without tax)',
   })
   @IsNumber()
   @Min(0)
@@ -28,7 +40,7 @@ export class InvoiceItemDto {
 
   @ApiProperty({
     example: 16,
-    description: 'Tax rate percentage for the item'
+    description: 'Tax rate percentage for the item',
   })
   @IsNumber()
   @Min(0)
@@ -38,14 +50,14 @@ export class InvoiceItemDto {
 export class CreateInvoiceDto {
   @ApiProperty({
     example: '65c4a7890d2d3a1b3c5e8f9a',
-    description: 'ID of the project this invoice belongs to'
+    description: 'ID of the project this invoice belongs to',
   })
   @IsMongoId()
   projectId: string;
 
   @ApiProperty({
     example: '2025-02-20',
-    description: 'Date when the invoice was issued'
+    description: 'Date when the invoice was issued',
   })
   @Type(() => Date)
   @IsDate()
@@ -53,7 +65,7 @@ export class CreateInvoiceDto {
 
   @ApiProperty({
     example: '2025-03-20',
-    description: 'Due date for payment'
+    description: 'Due date for payment',
   })
   @Type(() => Date)
   @IsDate()
@@ -61,31 +73,34 @@ export class CreateInvoiceDto {
 
   @ApiProperty({
     example: 'KES',
-    description: 'Currency code for the invoice'
+    description: 'Currency code for the invoice',
   })
   @IsString()
   currency: string;
 
   @ApiProperty({
     example: 'Net 30',
-    description: 'Payment terms for the invoice'
+    description: 'Payment terms for the invoice',
   })
   @IsString()
   paymentTerms: string;
 
   @ApiProperty({
-    example: [{
-      description: 'Professional Consulting Services - January 2025',
-      quantity: 160,
-      amount: 150000,
-      taxRate: 16
-    }, {
-      description: 'Project Management Services - January 2025',
-      quantity: 80,
-      amount: 75000,
-      taxRate: 16
-    }],
-    description: 'Array of invoice items'
+    example: [
+      {
+        description: 'Professional Consulting Services - January 2025',
+        quantity: 160,
+        amount: 150000,
+        taxRate: 16,
+      },
+      {
+        description: 'Project Management Services - January 2025',
+        quantity: 80,
+        amount: 75000,
+        taxRate: 16,
+      },
+    ],
+    description: 'Array of invoice items',
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -95,7 +110,7 @@ export class CreateInvoiceDto {
 
   @ApiProperty({
     example: 'Net 30 payment terms apply',
-    description: 'Additional notes for the invoice'
+    description: 'Additional notes for the invoice',
   })
   @IsOptional()
   @IsString()
@@ -116,33 +131,53 @@ export class CreateInvoiceDto {
 export class UpdateInvoiceDto extends CreateInvoiceDto {}
 
 export class CreatePaymentDto {
-  @ApiProperty({ example: 100000, description: 'Amount paid in this transaction' })
+  @ApiProperty({
+    example: 100000,
+    description: 'Amount paid in this transaction',
+  })
   @IsOptional()
   @IsNumber()
   @Min(0)
   amountPaid: number;
 
-  @ApiProperty({ description: 'Payment method', enum: ['bank_transfer', 'cheque', 'mpesa', 'cash'], required: false })
+  @ApiProperty({
+    description: 'Payment method',
+    enum: ['bank_transfer', 'cheque', 'mpesa', 'cash'],
+    required: false,
+  })
   @IsOptional()
   @IsString()
   method?: string;
 
-  @ApiProperty({ example: 'TRX123456', description: 'Payment reference number', required: false })
+  @ApiProperty({
+    example: 'TRX123456',
+    description: 'Payment reference number',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   referenceNumber?: string;
 
-  @ApiProperty({ example: '2025-02-20', description: 'Date when the payment was made' })
+  @ApiProperty({
+    example: '2025-02-20',
+    description: 'Date when the payment was made',
+    required: false,
+  })
+  @IsOptional()
   @Type(() => Date)
   @IsDate()
-  paidAt: Date;
+  paidAt?: Date;
 
   @ApiProperty({ description: 'Payment receipt URL', required: false })
   @IsOptional()
   @IsUrl()
   receiptUrl?: string;
 
-  @ApiProperty({ example: 'Payment for milestone 1', description: 'Comments about this payment', required: false })
+  @ApiProperty({
+    example: 'Payment for milestone 1',
+    description: 'Comments about this payment',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   comments?: string;
@@ -153,7 +188,10 @@ export class AttachmentDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'https://res.cloudinary.com/.../file.pdf', description: 'Attachment URL' })
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/.../file.pdf',
+    description: 'Attachment URL',
+  })
   @IsUrl()
   url: string;
 
@@ -166,7 +204,7 @@ export class AttachmentDto {
 export class InvoiceApprovalDto {
   @ApiProperty({
     example: 'Invoice approved. All items and calculations verified.',
-    description: 'Comments regarding the approval'
+    description: 'Comments regarding the approval',
   })
   @IsOptional()
   @IsString()
@@ -176,7 +214,7 @@ export class InvoiceApprovalDto {
 export class InvoiceRejectionDto {
   @ApiProperty({
     example: 'Invoice amounts do not match the agreed contract terms.',
-    description: 'Reason for rejecting the invoice'
+    description: 'Reason for rejecting the invoice',
   })
   @IsString()
   reason: string;
@@ -184,15 +222,16 @@ export class InvoiceRejectionDto {
 
 export class InvoiceRevisionDto {
   @ApiProperty({
-    example: 'Please update the payment terms and add missing item descriptions',
-    description: 'Comments explaining why revision is needed'
+    example:
+      'Please update the payment terms and add missing item descriptions',
+    description: 'Comments explaining why revision is needed',
   })
   @IsString()
   comments: string;
 
   @ApiProperty({
     example: ['Update payment terms', 'Add item descriptions'],
-    description: 'List of specific changes requested'
+    description: 'List of specific changes requested',
   })
   @IsArray()
   @IsString({ each: true })

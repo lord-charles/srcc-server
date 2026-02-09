@@ -540,11 +540,11 @@ export class ClaimsService {
           contractId: new Types.ObjectId(contractId),
           claimantId: new Types.ObjectId(claimantId),
         })
-        .populate('projectId', 'name description')
+        .populate('projectId', 'name description milestones')
         .populate({
           path: 'contractId',
           select:
-            'contractNumber contractValue currency status startDate endDate description',
+            'contractNumber contractValue currency status startDate endDate description milestoneId',
           populate: [
             {
               path: 'projectId',
@@ -557,6 +557,10 @@ export class ClaimsService {
             {
               path: 'contractedUserId',
               select: 'firstName lastName email',
+            },
+            {
+              path: 'milestoneId',
+              select: 'title description budget dueDate',
             },
           ],
         })
@@ -617,11 +621,11 @@ export class ClaimsService {
         .find({
           projectId: new Types.ObjectId(projectId),
         })
-        .populate('projectId', 'name description department')
+        .populate('projectId', 'name description department milestones')
         .populate({
           path: 'contractId',
           select:
-            'contractNumber contractValue currency status startDate endDate description',
+            'contractNumber contractValue currency status startDate endDate description milestoneId',
           populate: [
             {
               path: 'projectId',
@@ -634,6 +638,10 @@ export class ClaimsService {
             {
               path: 'contractedUserId',
               select: 'firstName lastName email',
+            },
+            {
+              path: 'milestoneId',
+              select: 'title description budget dueDate',
             },
           ],
         })

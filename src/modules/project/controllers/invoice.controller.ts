@@ -78,7 +78,11 @@ export class InvoiceController {
 
     @Body() dto: UpdateInvoiceDto,
   ): Promise<Invoice> {
-    return this.invoiceService.update(new Types.ObjectId(id), req.user.sub, dto);
+    return this.invoiceService.update(
+      new Types.ObjectId(id),
+      req.user.sub,
+      dto,
+    );
   }
 
   @Post(':id/submit')
@@ -123,7 +127,11 @@ export class InvoiceController {
 
     @Body() dto: InvoiceRejectionDto,
   ): Promise<Invoice> {
-    return this.invoiceService.reject(new Types.ObjectId(id), req.user.sub, dto);
+    return this.invoiceService.reject(
+      new Types.ObjectId(id),
+      req.user.sub,
+      dto,
+    );
   }
 
   @Post(':id/payments')
@@ -146,15 +154,21 @@ export class InvoiceController {
   }
 
   @Patch(':id/actual-invoice')
-  @ApiOperation({ summary: 'Attach or update the actual invoice document (URL only)' })
+  @ApiOperation({
+    summary: 'Attach or update the actual invoice document (URL only)',
+  })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        url: { type: 'string', format: 'url', example: 'https://res.cloudinary.com/.../invoice.pdf' },
+        url: {
+          type: 'string',
+          format: 'url',
+          example: 'https://res.cloudinary.com/.../invoice.pdf',
+        },
       },
-      required: ['url']
-    }
+      required: ['url'],
+    },
   })
   async attachActualInvoice(
     @Param('id') id: string,
@@ -168,6 +182,7 @@ export class InvoiceController {
     );
   }
 
+  @Post(':id/request-revision')
   @ApiOperation({ summary: 'Request revision for an invoice' })
   @ApiResponse({
     status: 200,

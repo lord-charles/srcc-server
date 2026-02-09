@@ -242,6 +242,7 @@ export class ContractService {
         .find(query)
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('projectId', 'name')
+        .populate('milestoneId', 'title description budget dueDate')
         .populate('amendments.approvedBy', 'firstName lastName email')
         .populate(
           'approvalFlow.financeApprovals.approverId',
@@ -270,6 +271,7 @@ export class ContractService {
         .find({ contractedUserId: new Types.ObjectId(userId) })
         .populate('projectId', 'name milestones')
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
+        .populate('milestoneId', 'title description budget dueDate')
         .populate('amendments.approvedBy', 'firstName lastName email')
         .populate(
           'approvalFlow.financeApprovals.approverId',
@@ -296,6 +298,7 @@ export class ContractService {
       return await this.contractModel
         .find({ projectId: new Types.ObjectId(projectId) })
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
+        .populate('milestoneId', 'title description budget dueDate')
         .populate('amendments.approvedBy', 'firstName lastName email')
         .populate(
           'approvalFlow.financeApprovals.approverId',
@@ -323,6 +326,7 @@ export class ContractService {
         .findById(id)
         .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('projectId', 'name')
+        .populate('milestoneId', 'title description budget dueDate')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
         .populate('amendments.approvedBy', 'firstName lastName email')
@@ -820,7 +824,7 @@ You can view the full contract and track progress in the SRCC Portal.`;
     } else {
       switch (contract.status) {
         case 'pending_finance_approval':
-          requiredRole = 'finance';
+          requiredRole = 'srcc_finance';
           nextStatus = 'pending_md_approval';
           nextLevel = 'md';
           nextDeadlineHours = this.approvalDeadlines.md;
