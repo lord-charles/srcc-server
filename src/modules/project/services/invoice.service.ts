@@ -804,17 +804,38 @@ export class InvoiceService {
   ): Promise<Invoice> {
     const invoice = await this.findOne(id);
 
-    // if (invoice.status !== 'approved' && invoice.status !== 'partially_paid') {
-    //   throw new BadRequestException(
-    //     'Invoice must be approved before recording payment',
-    //   );
-    // }
 
-    const totalPaid =
-      invoice.payments.reduce((sum, payment) => sum + payment.amountPaid, 0) +
-      dto.amountPaid;
-    const newStatus =
-      totalPaid >= invoice.totalAmount ? 'paid' : 'partially_paid';
+    const previousPaid = invoice.payments.reduce(
+      (sum, payment) => sum + Number(payment.amountPaid || 0),
+      0,
+    );
+    const currentPaymentAmount = Number(dto.amountPaid || 0);
+    const totalPaid = previousPaid + currentPaymentAmount;
+
+    // Use a small tolerance to account for potential rounding issues when
+    // comparing totals that include tax.
+    const epsilon = 0.01;
+    let newStatus: Invoice['status'];
+
+    if (Math.abs(totalPaid - invoice.totalAmount) <= epsilon) {
+      // Fully settled: requested amount (including tax) is covered
+      newStatus = 'paid';
+    } else if (totalPaid > 0 && totalPaid < invoice.totalAmount - epsilon) {
+      // Some payment has been made, but less than requested amount
+      newStatus = 'partially_paid';
+    } else if (totalPaid > invoice.totalAmount + epsilon) {
+      // Overpayment scenario – still treat as paid
+      newStatus = 'paid';
+    } else {
+      // No effective payment recorded; keep existing status
+      newStatus = invoice.status as Invoice['status'];
+    }
+
+    // Ensure we persist a numeric amountPaid in the payments array
+    const paymentToStore = {
+      ...dto,
+      amountPaid: currentPaymentAmount,
+    } as any;
 
     const updatedInvoice = await this.invoiceModel.findByIdAndUpdate(
       id,
@@ -822,12 +843,12 @@ export class InvoiceService {
         status: newStatus,
         updatedBy: userId,
         $push: {
-          payments: dto,
+          payments: paymentToStore,
           auditTrail: {
             action: 'PAYMENT_RECORDED',
             performedBy: userId,
             performedAt: new Date(),
-            details: { payment: dto },
+            details: { payment: paymentToStore },
           },
         },
       },
