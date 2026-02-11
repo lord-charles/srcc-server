@@ -67,6 +67,7 @@ export class Imprest {
   @ApiProperty({
     description: 'Status of the imprest request',
     enum: [
+      'revision_requested',
       'pending_hod',
       'pending_accountant',
       'approved',
@@ -83,6 +84,7 @@ export class Imprest {
   @Prop({
     required: true,
     enum: [
+      'revision_requested',
       'pending_hod',
       'pending_accountant',
       'approved',
@@ -236,6 +238,36 @@ export class Imprest {
     resolvedAt: Date;
     resolution: string;
     adminComments?: string;
+  };
+
+  @ApiProperty({ description: 'Revision request details' })
+  @Prop({
+    type: {
+      requestedBy: { type: Types.ObjectId, ref: 'User' },
+      requestedAt: Date,
+      reason: String,
+    },
+    _id: false,
+  })
+  revision?: {
+    requestedBy: Types.ObjectId;
+    requestedAt: Date;
+    reason: string;
+  };
+
+  @ApiProperty({ description: 'Accounting revision request details' })
+  @Prop({
+    type: {
+      requestedBy: { type: Types.ObjectId, ref: 'User' },
+      requestedAt: Date,
+      reason: String,
+    },
+    _id: false,
+  })
+  accountingRevision?: {
+    requestedBy: Types.ObjectId;
+    requestedAt: Date;
+    reason: string;
   };
 
   @ApiProperty({

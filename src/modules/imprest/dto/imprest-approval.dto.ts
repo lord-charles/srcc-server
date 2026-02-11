@@ -118,3 +118,21 @@ export class ImprestDisputeResolutionDto {
   @IsString()
   adminComments?: string;
 }
+
+export class ImprestRevisionDto {
+  @ApiProperty({
+    example: 'Please provide more details on the payment breakdown',
+    description: 'Reason for requesting revision',
+  })
+  @IsString()
+  reason: string;
+}
+
+export class ImprestAccountingRevisionDto {
+  @ApiProperty({
+    example: 'Receipts do not match the claimed amounts, please resubmit',
+    description: 'Reason for requesting accounting revision',
+  })
+  @IsString()
+  reason: string;
+}

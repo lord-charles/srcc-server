@@ -14,6 +14,8 @@ import {
   ImprestDisbursementDto,
   ImprestAcknowledgmentDto,
   ImprestDisputeResolutionDto,
+  ImprestRevisionDto,
+  ImprestAccountingRevisionDto,
 } from './dto/imprest-approval.dto';
 import { NotificationService } from '../notifications/services/notification.service';
 import { User } from '../auth/schemas/user.schema';
@@ -977,5 +979,296 @@ SRCC Finance Team`,
         }
       }
     }
+  }
+
+  async requestRevision(
+    id: string,
+    userId: string,
+    revisionDto: ImprestRevisionDto,
+  ): Promise<ImprestDocument> {
+    const imprest = await this.findOne(id);
+    const reviewer = await this.userModel.findById(userId);
+
+    if (
+      !reviewer ||
+      !reviewer.roles.some((r) => ['admin', 'hod', 'accountant'].includes(r))
+    ) {
+      throw new BadRequestException(
+        'Only admins, HODs, or accountants can request revisions',
+      );
+    }
+
+    if (!['pending_hod', 'pending_accountant'].includes(imprest.status)) {
+      throw new BadRequestException(
+        'Imprest can only be sent for revision when pending approval',
+      );
+    }
+
+    // Store revision info
+    imprest.revision = {
+      requestedBy: new Types.ObjectId(userId),
+      requestedAt: new Date(),
+      reason: revisionDto.reason,
+    };
+
+    // Clear previous approvals so it goes through the full flow on resubmission
+    imprest.hodApproval = undefined;
+    imprest.accountantApproval = undefined;
+    imprest.status = 'revision_requested';
+
+    const savedImprest = await imprest.save();
+
+    // Notify the requester about the revision request
+    const requester = await this.userModel.findById(imprest.requestedBy);
+    if (requester) {
+      await this.notificationService.sendEmail(
+        requester.email,
+        'Imprest Request Requires Revision',
+        `Dear ${imprest.employeeName},
+
+Your imprest request has been sent back for revision by ${reviewer.firstName} ${reviewer.lastName}:
+
+Request Details:
+- Amount: ${imprest.currency} ${imprest.amount.toFixed(2)}
+- Purpose: ${imprest.paymentReason}
+
+Revision Reason:
+${revisionDto.reason}
+
+Please log into the SRCC portal, review the feedback, update your request, and resubmit.
+
+Best regards,
+SRCC Finance Team`,
+      );
+
+      if (requester.phoneNumber) {
+        await this.notificationService.sendSMS(
+          requester.phoneNumber,
+          `SRCC: Your imprest request (${imprest.currency} ${imprest.amount.toFixed(2)}) needs revision. Please log in to update and resubmit.`,
+        );
+      }
+    }
+
+    return savedImprest;
+  }
+
+  async updateAndResubmit(
+    id: string,
+    userId: string,
+    updateDto: CreateImprestDto,
+    attachments: { fileName: string; fileUrl: string; uploadedAt: Date }[] = [],
+  ): Promise<ImprestDocument> {
+    const imprest = await this.findOne(id);
+
+    if (imprest.status !== 'revision_requested') {
+      throw new BadRequestException(
+        'Only imprests with revision requested can be updated and resubmitted',
+      );
+    }
+
+    // Verify the user is the original creator
+    const requestedById = imprest.requestedBy._id
+      ? imprest.requestedBy._id.toString()
+      : imprest.requestedBy.toString();
+
+    if (requestedById !== userId) {
+      throw new BadRequestException(
+        'Only the original requester can update and resubmit',
+      );
+    }
+
+    // Update editable fields
+    imprest.paymentReason = updateDto.paymentReason;
+    imprest.currency = updateDto.currency;
+    imprest.amount = updateDto.amount;
+    imprest.paymentType = updateDto.paymentType;
+    imprest.explanation = updateDto.explanation;
+
+    // Update attachments if provided
+    if (attachments.length > 0) {
+      imprest.attachments = attachments;
+    }
+
+    // Reset due date (72 hours from now)
+    const dueDate = new Date();
+    dueDate.setHours(dueDate.getHours() + 72);
+    imprest.dueDate = dueDate.toISOString().split('T')[0];
+    imprest.requestDate = new Date().toISOString().split('T')[0];
+
+    // Clear revision info and set status back to pending_hod
+    imprest.revision = undefined;
+    imprest.status = 'pending_hod';
+
+    const savedImprest = await imprest.save();
+
+    // Notify HOD about the resubmitted request
+    const user = await this.userModel.findById(userId);
+    const hod = await this.userModel.findOne({
+      roles: { $in: ['hod'] },
+      status: 'active',
+    });
+
+    if (hod) {
+      await this.notificationService.sendEmail(
+        hod.email,
+        'Revised Imprest Request Pending Approval',
+        `Dear ${hod.firstName} ${hod.lastName},
+
+A revised imprest request requires your approval:
+
+Request Details:
+- Employee: ${user.firstName} ${user.lastName}
+- Department: ${user.department}
+- Amount: ${updateDto.currency} ${updateDto.amount}
+- Purpose: ${updateDto.paymentReason}
+- Type: ${updateDto.paymentType}
+
+Note: This is a resubmission after revision was requested.
+
+Please review and take appropriate action through the SRCC portal.
+
+Best regards,
+SRCC Finance Team`,
+      );
+
+      if (hod.phoneNumber) {
+        await this.notificationService.sendSMS(
+          hod.phoneNumber,
+          `SRCC: Revised imprest request from ${user.firstName} ${user.lastName} (${updateDto.currency} ${updateDto.amount}) pending your approval.`,
+        );
+      }
+    }
+
+    return savedImprest;
+  }
+
+  async acceptResolvedDispute(
+    id: string,
+    userId: string,
+  ): Promise<ImprestDocument> {
+    const imprest = await this.findOne(id);
+
+    if (imprest.status !== 'resolved_dispute') {
+      throw new BadRequestException(
+        'Imprest is not in resolved dispute status',
+      );
+    }
+
+    // Only the requester can accept
+    const requestedById = imprest.requestedBy._id
+      ? imprest.requestedBy._id.toString()
+      : imprest.requestedBy.toString();
+
+    if (requestedById !== userId) {
+      throw new BadRequestException(
+        'Only the original requester can accept the dispute resolution',
+      );
+    }
+
+    imprest.status = 'disbursed';
+    const savedImprest = await imprest.save();
+
+    // Notify admins/accountants that user accepted the resolution
+    const admins = await this.userModel.find({
+      roles: { $in: ['admin', 'accountant'] },
+      status: 'active',
+    });
+
+    for (const admin of admins) {
+      await this.notificationService.sendEmail(
+        admin.email,
+        'Dispute Resolution Accepted',
+        `Dear ${admin.firstName} ${admin.lastName},
+
+${imprest.employeeName} has accepted the dispute resolution for their imprest request.
+
+Request Details:
+- Amount: ${imprest.currency} ${imprest.disbursement?.amount?.toFixed(2) || imprest.amount.toFixed(2)}
+- Purpose: ${imprest.paymentReason}
+- Status: Now disbursed — awaiting accounting submission
+
+Best regards,
+SRCC Finance Team`,
+      );
+
+      if (admin.phoneNumber) {
+        await this.notificationService.sendSMS(
+          admin.phoneNumber,
+          `SRCC: ${imprest.employeeName} accepted dispute resolution for imprest (${imprest.currency} ${imprest.amount.toFixed(2)}). Now awaiting accounting.`,
+        );
+      }
+    }
+
+    return savedImprest;
+  }
+
+  async requestAccountingRevision(
+    id: string,
+    userId: string,
+    revisionDto: ImprestAccountingRevisionDto,
+  ): Promise<ImprestDocument> {
+    const imprest = await this.findOne(id);
+    const reviewer = await this.userModel.findById(userId);
+
+    if (
+      !reviewer ||
+      !reviewer.roles.some((r) => ['admin', 'accountant'].includes(r))
+    ) {
+      throw new BadRequestException(
+        'Only admins or accountants can request accounting revisions',
+      );
+    }
+
+    if (imprest.status !== 'pending_accounting_approval') {
+      throw new BadRequestException(
+        'Imprest is not in pending accounting approval status',
+      );
+    }
+
+    // Store revision details
+    imprest.accountingRevision = {
+      requestedBy: new Types.ObjectId(userId),
+      requestedAt: new Date(),
+      reason: revisionDto.reason,
+    };
+
+    // Clear accounting so user can re-submit
+    imprest.accounting = undefined;
+    imprest.status = 'disbursed';
+
+    const savedImprest = await imprest.save();
+
+    // Notify requester about accounting revision
+    const requester = await this.userModel.findById(imprest.requestedBy);
+    if (requester) {
+      await this.notificationService.sendEmail(
+        requester.email,
+        'Imprest Accounting Requires Revision',
+        `Dear ${imprest.employeeName},
+
+Your imprest accounting has been sent back for revision by ${reviewer.firstName} ${reviewer.lastName}.
+
+Request Details:
+- Amount: ${imprest.currency} ${imprest.amount.toFixed(2)}
+- Purpose: ${imprest.paymentReason}
+
+Revision Reason:
+${revisionDto.reason}
+
+Please log into the SRCC portal, update your accounting details (receipts and amounts), and resubmit.
+
+Best regards,
+SRCC Finance Team`,
+      );
+
+      if (requester.phoneNumber) {
+        await this.notificationService.sendSMS(
+          requester.phoneNumber,
+          `SRCC: Your imprest accounting (${imprest.currency} ${imprest.amount.toFixed(2)}) needs revision. Please log in to update and resubmit.`,
+        );
+      }
+    }
+
+    return savedImprest;
   }
 }

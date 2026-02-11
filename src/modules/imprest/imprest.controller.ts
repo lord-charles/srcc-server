@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   UseGuards,
@@ -29,6 +30,8 @@ import {
   ImprestDisbursementDto,
   ImprestAcknowledgmentDto,
   ImprestDisputeResolutionDto,
+  ImprestRevisionDto,
+  ImprestAccountingRevisionDto,
 } from './dto/imprest-approval.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -386,5 +389,141 @@ export class ImprestController {
     @Body() resolutionDto: ImprestDisputeResolutionDto,
   ) {
     return this.imprestService.resolveDispute(id, req.user.sub, resolutionDto);
+  }
+
+  @Post(':id/request-revision')
+  @ApiOperation({
+    summary: 'Request revision for an imprest request (admin/HOD/accountant)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        reason: {
+          type: 'string',
+          example: 'Please provide more details on the payment breakdown',
+          description: 'Reason for requesting revision',
+        },
+      },
+      required: ['reason'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Revision requested successfully.',
+  })
+  async requestRevision(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() revisionDto: ImprestRevisionDto,
+  ) {
+    return this.imprestService.requestRevision(id, req.user.sub, revisionDto);
+  }
+
+  @Patch(':id/update')
+  @ApiOperation({ summary: 'Update and resubmit a draft imprest request' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        paymentReason: {
+          type: 'string',
+          example: 'Updated Google Cloud Payment',
+        },
+        currency: { type: 'string', example: 'USD' },
+        amount: { type: 'number', example: 1048.59 },
+        paymentType: {
+          type: 'string',
+          enum: ['Contingency Cash', 'Travel Cash', 'Purchase Cash', 'Others'],
+          example: 'Contingency Cash',
+        },
+        explanation: { type: 'string', example: 'Updated explanation' },
+        attachmentUrls: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['https://res.cloudinary.com/...'],
+        },
+      },
+      required: [
+        'paymentReason',
+        'currency',
+        'amount',
+        'paymentType',
+        'explanation',
+      ],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Imprest request updated and resubmitted successfully.',
+  })
+  async updateAndResubmit(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() updateDto: CreateImprestDto,
+  ) {
+    const attachments = [];
+
+    if (updateDto.attachmentUrls?.length) {
+      for (let i = 0; i < updateDto.attachmentUrls.length; i++) {
+        attachments.push({
+          fileName: `Attachment ${i + 1}`,
+          fileUrl: updateDto.attachmentUrls[i],
+          uploadedAt: new Date(),
+        });
+      }
+    }
+
+    return this.imprestService.updateAndResubmit(
+      id,
+      req.user.sub,
+      updateDto,
+      attachments,
+    );
+  }
+
+  @Post(':id/accept-dispute-resolution')
+  @ApiOperation({
+    summary: 'Accept a resolved dispute (requester only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Dispute resolution accepted, status set to disbursed.',
+  })
+  async acceptDisputeResolution(@Param('id') id: string, @Req() req: any) {
+    return this.imprestService.acceptResolvedDispute(id, req.user.sub);
+  }
+
+  @Post(':id/request-accounting-revision')
+  @ApiOperation({
+    summary: 'Request revision on submitted accounting (admin/accountant only)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        reason: {
+          type: 'string',
+          example: 'Receipts do not match the claimed amounts',
+          description: 'Reason for requesting accounting revision',
+        },
+      },
+      required: ['reason'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Accounting revision requested, status set to disbursed.',
+  })
+  async requestAccountingRevision(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() revisionDto: ImprestAccountingRevisionDto,
+  ) {
+    return this.imprestService.requestAccountingRevision(
+      id,
+      req.user.sub,
+      revisionDto,
+    );
   }
 }
