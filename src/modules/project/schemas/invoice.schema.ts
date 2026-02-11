@@ -188,6 +188,7 @@ export class Invoice extends Document {
     required: true,
     enum: [
       'draft',
+      'pending_invoice_approver',
       'pending_invoice_attachment',
       'revision_requested',
       'approved',

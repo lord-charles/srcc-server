@@ -56,6 +56,113 @@ export class InvoiceService {
     };
   }
 
+  // Notify invoice approvers (invoice_approver role) for the project's department
+  private async notifyInvoiceApprovers(invoice: Invoice): Promise<void> {
+    try {
+      const project = await this.projectModel.findById(invoice.projectId);
+      if (!project) {
+        throw new NotFoundException('Project not found');
+      }
+
+      // Find all active users with invoice_approver role for this department
+      const approvers = await this.userModel.find({
+        roles: { $in: ['invoice_approver'] },
+        status: 'active',
+        department: project.department,
+      });
+
+      if (approvers.length === 0) {
+        console.log(
+          `No invoice approvers found for department ${project.department}`,
+        );
+        return;
+      }
+
+      const formattedDate = new Date().toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+
+      const emailSubject = `Invoice Pending Approval - ${project.name}`;
+      const emailMessage = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+            <h2 style="color: #2c3e50; margin-bottom: 20px;">Invoice Pending Department Approval</h2>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Invoice Details</h3>
+              <p><strong>Project Name:</strong> ${project.name}</p>
+              <p><strong>Project Department:</strong> ${project.department}</p>
+              <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
+              <p><strong>Date Submitted:</strong> ${formattedDate}</p>
+              <p><strong>Status:</strong> PENDING INVOICE APPROVER</p>
+            </div>
+
+            <div style="background-color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+              <h3 style="color: #34495e; margin-top: 0;">Financial Summary</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;"><strong>Subtotal:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;">${invoice.currency} ${invoice.subtotal.toLocaleString()}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 8px 0;"><strong>Tax:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;">${invoice.currency} ${invoice.totalTax.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0;"><strong>Total Amount:</strong></td>
+                  <td style="padding: 8px 0; text-align: right;"><strong>${invoice.currency} ${invoice.totalAmount.toLocaleString()}</strong></td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background-color: white; padding: 15px; border-radius: 5px;">
+              <p style="color: #7f8c8d; font-size: 12px; margin: 0;">
+                This is an automated message from the SRCC Invoice Management System. Please do not reply to this email.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const smsMessage = `SRCC: Invoice ${invoice.invoiceNumber} for ${project.name} is pending department approval - ${invoice.currency} ${invoice.totalAmount.toLocaleString()}. Please review in the portal.`;
+
+      const notificationPromises = approvers.map(async (approver) => {
+        try {
+          const emailPromise = this.notificationService.sendEmail(
+            approver.email,
+            emailSubject,
+            emailMessage,
+          );
+
+          const smsPromise = approver.phoneNumber
+            ? this.notificationService.sendSMS(
+                approver.phoneNumber,
+                smsMessage,
+              )
+            : Promise.resolve(true);
+
+          await Promise.all([emailPromise, smsPromise]);
+
+          console.log(
+            `Notified invoice approver: ${approver.firstName} ${approver.lastName} (${approver.email}) for department ${project.department}`,
+          );
+        } catch (error) {
+          console.error(`Failed to notify ${approver.email}:`, error.message);
+        }
+      });
+
+      await Promise.all(notificationPromises);
+      console.log(
+        `Successfully notified ${approvers.length} invoice approvers for department ${project.department}`,
+      );
+    } catch (error) {
+      console.error('Error notifying invoice approvers:', error.message);
+    }
+  }
+
   private async notifyInvoiceRequestHandlers(invoice: Invoice): Promise<void> {
     try {
       // Find all users with srcc_invoice_request role
@@ -497,14 +604,32 @@ export class InvoiceService {
       );
     }
 
+    // Ensure there is at least one active invoice approver for this project's department
+    const project = await this.projectModel.findById(invoice.projectId);
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const departmentApprovers = await this.userModel.countDocuments({
+      roles: { $in: ['invoice_approver'] },
+      status: 'active',
+      department: project.department,
+    });
+
+    if (departmentApprovers === 0) {
+      throw new BadRequestException(
+        `No invoice approver available for department ${project.department}. Please assign at least one approver before submitting the invoice.`,
+      );
+    }
+
     const updatedInvoice = await this.invoiceModel.findByIdAndUpdate(
       id,
       {
-        status: 'pending_invoice_attachment',
+        status: 'pending_invoice_approver',
         updatedBy: userId,
         $push: {
           auditTrail: {
-            action: 'SUBMITTED_FOR_INVOICE_ATTACHMENT',
+            action: 'SUBMITTED_FOR_APPROVAL',
             performedBy: userId,
             performedAt: new Date(),
           },
@@ -516,11 +641,11 @@ export class InvoiceService {
     // Notify stakeholders
     await this.notifyStakeholders(
       updatedInvoice,
-      'Submitted - Pending Invoice Attachment',
+      'Submitted - Pending Invoice Approver',
     );
 
-    // Notify users with srcc_invoice_request role
-    await this.notifyInvoiceAttachmentHandlers(updatedInvoice);
+    // Notify department-specific invoice approvers
+    await this.notifyInvoiceApprovers(updatedInvoice);
 
     return updatedInvoice;
   }
@@ -532,6 +657,49 @@ export class InvoiceService {
   ): Promise<Invoice> {
     const invoice = await this.findOne(id);
 
+    // Stage 1: Department invoice approver moves invoice to pending_invoice_attachment
+    if (invoice.status === 'pending_invoice_approver') {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (!user.roles.includes('invoice_approver')) {
+        throw new BadRequestException(
+          'You do not have permission to approve invoices. Required role: invoice_approver',
+        );
+      }
+
+      const updatedInvoice = await this.invoiceModel.findByIdAndUpdate(
+        id,
+        {
+          status: 'pending_invoice_attachment',
+          updatedBy: userId,
+          $push: {
+            auditTrail: {
+              action: 'APPROVAL_GRANTED',
+              performedBy: userId,
+              performedAt: new Date(),
+              details: { level: 'business_approval', comments: dto.comments },
+            },
+          },
+        },
+        { new: true },
+      );
+
+      await this.notifyStakeholders(
+        updatedInvoice,
+        'Approved by Invoice Approver - Pending Attachment',
+        dto.comments,
+      );
+
+      // Notify srcc_invoice_request handlers to attach the invoice
+      await this.notifyInvoiceAttachmentHandlers(updatedInvoice);
+
+      return updatedInvoice;
+    }
+
+    // Stage 2: Final approval from pending_invoice_attachment to approved
     if (
       invoice.status !== 'pending_invoice_attachment' &&
       invoice.status !== 'approved'
@@ -563,8 +731,78 @@ export class InvoiceService {
       { new: true },
     );
 
-    // Notify stakeholders
     await this.notifyStakeholders(updatedInvoice, 'Approved', dto.comments);
+
+    return updatedInvoice;
+  }
+
+  /**
+   * Allow an invoice approver to request changes at the approver stage.
+   * This sends the invoice back to draft with an audit entry and notifies the creator.
+   */
+  async approverRequestChanges(
+    id: Types.ObjectId,
+    userId: Types.ObjectId,
+    comments: string,
+  ): Promise<Invoice> {
+    const invoice = await this.findOne(id);
+
+    if (invoice.status !== 'pending_invoice_approver') {
+      throw new BadRequestException(
+        'Invoice must be pending invoice approver to request changes at this level',
+      );
+    }
+
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.roles.includes('invoice_approver')) {
+      throw new BadRequestException(
+        'You do not have permission to request changes at this stage. Required role: invoice_approver',
+      );
+    }
+
+    const updatedInvoice = await this.invoiceModel.findByIdAndUpdate(
+      id,
+      {
+        status: 'revision_requested',
+        updatedBy: userId,
+        revisionRequest: {
+          requestedBy: userId,
+          requestedAt: new Date(),
+          comments,
+          changes: [],
+          returnToStatus: 'pending_invoice_approver',
+          returnToLevel: 'approver',
+        },
+        $push: {
+          auditTrail: {
+            action: 'REVISION_REQUESTED_BY_APPROVER',
+            performedBy: userId,
+            performedAt: new Date(),
+            details: {
+              comments,
+              from: 'pending_invoice_approver',
+              returnToStatus: 'pending_invoice_approver',
+              level: 'approver',
+            },
+          },
+        },
+      },
+      { new: true },
+    );
+
+    // Notify the invoice creator using the existing revision notification style
+    await this.notifyInvoiceCreatorOfRevision(updatedInvoice, comments, []);
+
+    // Notify other stakeholders as well
+    await this.notifyStakeholders(
+      updatedInvoice,
+      'Revision Requested by Approver',
+      comments,
+    );
 
     return updatedInvoice;
   }

@@ -85,6 +85,25 @@ export class InvoiceController {
     );
   }
 
+  @Post(':id/approver-request-changes')
+  @ApiOperation({ summary: 'Approver requests changes at approver stage' })
+  @ApiResponse({
+    status: 200,
+    description: 'Changes requested and invoice returned to draft',
+    type: Invoice,
+  })
+  async approverRequestChanges(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body('comments') comments: string,
+  ): Promise<Invoice> {
+    return this.invoiceService.approverRequestChanges(
+      new Types.ObjectId(id),
+      req.user.sub,
+      comments,
+    );
+  }
+
   @Post(':id/submit')
   @ApiOperation({ summary: 'Submit invoice for approval' })
   @ApiResponse({
