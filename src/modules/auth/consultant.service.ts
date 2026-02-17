@@ -1262,6 +1262,51 @@ SRCC Team
     return user.save();
   }
 
+  async manualVerifyConsultant(
+    id: string,
+    requestingUserId: string,
+  ): Promise<UserDocument> {
+    // Check if requesting user has super_admin role
+    const requestingUser = await this.userModel.findById(requestingUserId);
+
+    if (!requestingUser) {
+      throw new NotFoundException('Requesting user not found');
+    }
+
+    if (
+      !requestingUser.roles ||
+      !requestingUser.roles.includes('super_admin')
+    ) {
+      throw new BadRequestException(
+        'Only users with super_admin role can manually verify consultants',
+      );
+    }
+
+    // Find the consultant to verify
+    const user = await this.userModel.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Manually verify both email and phone
+    user.isEmailVerified = true;
+    user.isPhoneVerified = true;
+    user.status = 'pending'; // Set to pending for admin approval
+
+    const updatedUser = await user.save();
+
+    // Log the manual verification with admin details
+    await this.systemLogService.createLog(
+      'MANUAL_VERIFICATION',
+      `User ${updatedUser.firstName} ${updatedUser.lastName} (${updatedUser.email}) was manually verified by ${requestingUser.firstName} ${requestingUser.lastName} (${requestingUser.email})`,
+      LogSeverity.INFO,
+      updatedUser._id?.toString(),
+    );
+
+    return updatedUser;
+  }
+
   private generatePin(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
   }

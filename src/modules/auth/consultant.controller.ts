@@ -173,14 +173,13 @@ export class ConsultantController {
         error instanceof BadRequestException ||
         error instanceof NotFoundException
       ) {
-      console.log(error.message);
+        console.log(error.message);
 
         throw new BadRequestException(error.message);
       }
       console.log(error.message);
 
       throw new BadRequestException(`Failed to verify OTP: ${error.message}`);
-
     }
   }
 
@@ -1284,6 +1283,49 @@ export class ConsultantController {
       }
       throw new HttpException(
         'An unexpected error occurred.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch(':id/manual-verify')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Manually verify consultant email and phone',
+    description:
+      'Allows super admin to manually verify both email and phone for a consultant. Sets status to pending for approval. Only users with super_admin role can perform this action.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Consultant verified successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'Consultant not found.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request - Only super_admin can perform this action.',
+  })
+  @ApiParam({ name: 'id', description: 'Consultant ID' })
+  async manualVerifyConsultant(@Param('id') id: string, @Req() req: any) {
+    try {
+      const requestingUserId = req.user.sub;
+      const verifiedUser = await this.consultantService.manualVerifyConsultant(
+        id,
+        requestingUserId,
+      );
+      return {
+        message:
+          'Consultant email and phone verified successfully. Status set to pending.',
+        user: verifiedUser,
+      };
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new HttpException(
+        'An unexpected error occurred during manual verification.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
