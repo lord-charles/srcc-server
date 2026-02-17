@@ -88,6 +88,7 @@ export class ProjectService {
       .populate('coaches.userId', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email')
       .populate('updatedBy', 'firstName lastName email')
+      .populate('updateAuditTrail.updatedBy', 'firstName lastName email')
       .populate({
         path: 'budgetId',
         populate: [
@@ -784,5 +785,110 @@ export class ProjectService {
       throw new NotFoundException(`Project with ID ${projectId} not found`);
     }
     return project;
+  }
+
+  async updateProjectDetails(
+    projectId: string,
+    updateData: any,
+    userId: string,
+  ): Promise<Project> {
+    const project = await this.projectModel.findById(projectId);
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    // Track changes for audit trail
+    const changes: { field: string; oldValue: any; newValue: any }[] = [];
+    const updatableFields = [
+      'department',
+      'description',
+      'currency',
+      'contractStartDate',
+      'contractEndDate',
+      'totalProjectValue',
+      'client',
+      'status',
+      'procurementMethod',
+      'riskAssessment',
+      'reportingFrequency',
+      'actualCompletionDate',
+      'amountSpent',
+    ];
+
+    // Build update object and track changes
+    const updateFields: any = {};
+    for (const field of updatableFields) {
+      if (updateData[field] !== undefined) {
+        const oldValue = project[field];
+        const newValue = updateData[field];
+
+        // Only track if value actually changed
+        if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+          changes.push({
+            field,
+            oldValue,
+            newValue,
+          });
+          updateFields[field] = newValue;
+        }
+      }
+    }
+
+    // If no changes, return the project as is
+    if (changes.length === 0) {
+      return project;
+    }
+
+    // Add audit trail entry
+    const auditEntry = {
+      updatedBy: userId as any,
+      updatedAt: new Date(),
+      changes,
+      reason: updateData.reason || undefined,
+    };
+
+    updateFields.updatedBy = userId;
+    updateFields.$push = { updateAuditTrail: auditEntry };
+
+    const updatedProject = await this.projectModel
+      .findByIdAndUpdate(projectId, updateFields, { new: true })
+      .populate('updatedBy', 'firstName lastName email')
+      .populate('updateAuditTrail.updatedBy', 'firstName lastName email')
+      .populate('projectManagerId', 'firstName lastName email')
+      .populate('assistantProjectManagers.userId', 'firstName lastName email')
+      .populate('assistantProjectManagers.contractId')
+      .populate('teamMembers.userId', 'firstName lastName email _id')
+      .populate('coachManagers.userId', 'firstName lastName email')
+      .populate('coachAssistants.userId', 'firstName lastName email')
+      .populate('coaches.userId', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email')
+      .populate({
+        path: 'budgetId',
+        populate: [
+          {
+            path: 'auditTrail.performedBy',
+            select: 'firstName lastName email',
+          },
+        ],
+      })
+      .populate({
+        path: 'invoices',
+        populate: [
+          { path: 'issuedBy', select: 'firstName lastName email' },
+          {
+            path: 'auditTrail.performedBy',
+            select: 'firstName lastName email',
+          },
+        ],
+      })
+      .populate({
+        path: 'teamMemberContracts',
+        populate: [
+          { path: 'contractedUserId', select: 'firstName lastName email' },
+        ],
+      })
+      .exec();
+
+    return updatedProject;
   }
 }

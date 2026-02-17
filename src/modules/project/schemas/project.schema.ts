@@ -428,6 +428,42 @@ export class Project {
     default: [],
   })
   invoices: MongooseSchema.Types.ObjectId[];
+
+  @ApiProperty({ description: 'Project update audit trail' })
+  @Prop({
+    type: [
+      {
+        updatedBy: {
+          type: MongooseSchema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        updatedAt: { type: Date, default: Date.now },
+        changes: {
+          type: [
+            {
+              field: { type: String, required: true },
+              oldValue: { type: MongooseSchema.Types.Mixed },
+              newValue: { type: MongooseSchema.Types.Mixed },
+            },
+          ],
+          required: true,
+        },
+        reason: { type: String },
+      },
+    ],
+    default: [],
+  })
+  updateAuditTrail?: {
+    updatedBy: MongooseSchema.Types.ObjectId;
+    updatedAt: Date;
+    changes: {
+      field: string;
+      oldValue: any;
+      newValue: any;
+    }[];
+    reason?: string;
+  }[];
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

@@ -439,6 +439,46 @@ export class ProjectController {
     return this.projectService.updateProjectStatus(id, status);
   }
 
+  @Patch(':id/details')
+  @ApiOperation({
+    summary: 'Update project details with audit trail',
+    description: `Updates non-critical project details and maintains an audit trail of changes.
+    
+    Updatable fields:
+    - department
+    - description
+    - currency
+    - contractStartDate
+    - contractEndDate
+    - totalProjectValue
+    - client
+    - status
+    - procurementMethod
+    - riskAssessment
+    - reportingFrequency
+    - actualCompletionDate
+    - amountSpent
+    
+    All changes are tracked with user information and timestamp.`,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Project details updated successfully with audit trail.',
+  })
+  @ApiResponse({ status: 404, description: 'Project not found.' })
+  @ApiResponse({ status: 400, description: 'Invalid update data.' })
+  async updateProjectDetails(
+    @Param('id') id: string,
+    @Body() updateData: any,
+    @Req() req: any,
+  ) {
+    return this.projectService.updateProjectDetails(
+      id,
+      updateData,
+      req.user.sub,
+    );
+  }
+
   @Post(':id/team-members')
   @ApiOperation({ summary: 'Add team member to project' })
   @ApiResponse({ status: 201, description: 'Team member added successfully.' })
