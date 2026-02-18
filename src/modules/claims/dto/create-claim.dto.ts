@@ -78,6 +78,37 @@ class BankAccountDto {
   branchName: string;
 }
 
+class CoachClaimDto {
+  @ApiProperty({ description: 'Number of sessions or hours claimed' })
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  units: number;
+
+  @ApiProperty({ description: 'Rate per unit (hour/session)' })
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  rate: number;
+
+  @ApiProperty({ enum: ['per_session', 'per_hour'], description: 'Rate unit' })
+  @IsNotEmpty()
+  @IsEnum(['per_session', 'per_hour'])
+  rateUnit: 'per_session' | 'per_hour';
+
+  @ApiProperty({ description: 'Computed unit amount (usually equals rate)' })
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  unitAmount: number;
+
+  @ApiProperty({ description: 'Computed total amount (units * unitAmount)' })
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  totalAmount: number;
+}
+
 export class CreateClaimDto {
   @ApiProperty({ description: 'Project ID' })
   @IsNotEmpty()
@@ -94,6 +125,18 @@ export class CreateClaimDto {
   @IsNumber()
   @Min(0)
   amount: number;
+
+  @ApiProperty({
+    description:
+      'Coach claim details (units, rate, and totals) for coach-type contracts',
+    required: false,
+    type: CoachClaimDto,
+  })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => CoachClaimDto)
+  coachClaim?: CoachClaimDto;
 
   @ApiProperty({ example: 'USD', description: 'Currency of the claim' })
   @IsNotEmpty()

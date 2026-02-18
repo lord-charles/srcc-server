@@ -36,6 +36,30 @@ export class Claim {
   claimantId: Types.ObjectId;
 
   @ApiProperty({
+    description:
+      'Coach claim details (units, rate, and totals) for coach-type contracts',
+    required: false,
+  })
+  @Prop({
+    type: {
+      units: { type: Number },
+      rate: { type: Number },
+      rateUnit: { type: String, enum: ['per_session', 'per_hour'] },
+      unitAmount: { type: Number },
+      totalAmount: { type: Number },
+    },
+    _id: false,
+    required: false,
+  })
+  coachClaim?: {
+    units: number;
+    rate: number;
+    rateUnit: 'per_session' | 'per_hour';
+    unitAmount: number;
+    totalAmount: number;
+  };
+
+  @ApiProperty({
     example: 50000,
     description: 'Amount being claimed',
   })

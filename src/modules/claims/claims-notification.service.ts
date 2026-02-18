@@ -58,7 +58,6 @@ export class ClaimsNotificationService {
     claimant: User,
     approvers: User[],
   ) {
-    this.logger.log(`notifyClaimSubmitted called for claim ${claim}`);
     this.logger.log(`Number of approvers to notify: ${approvers.length}`);
 
     const subject = `Claim Pending Approval - ${project.name}`;

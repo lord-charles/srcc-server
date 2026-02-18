@@ -164,11 +164,8 @@ export class ContractService {
         };
       }
 
-      const isCoach = createContractDto.type === 'coach';
-      const initialStatus = isCoach
-        ? 'pending_coach_admin_review'
-        : 'pending_finance_approval';
-      const initialLevel = isCoach ? 'coach_admin' : 'finance';
+      const initialStatus =  'pending_finance_approval';
+      const initialLevel = 'finance';
       const deadlineHours = this.approvalDeadlines[initialLevel];
 
       const newContract = new this.contractModel({
@@ -723,11 +720,8 @@ You can view the full contract and track progress in the SRCC Portal.`;
         'Contract must be in draft status to initiate approval workflow',
       );
     }
-    const isCoach = contract.type === 'coach';
-    const nextStatus = isCoach
-      ? 'pending_coach_admin_review'
-      : 'pending_finance_approval';
-    const nextLevel = isCoach ? 'coach_admin' : 'finance';
+    const nextStatus = 'pending_finance_approval';
+    const nextLevel = 'finance';
     const deadlineHours = this.approvalDeadlines[nextLevel];
 
     const approvers = await this.getApprovers(nextLevel, contract);
@@ -780,48 +774,48 @@ You can view the full contract and track progress in the SRCC Portal.`;
     let nextDeadlineHours: number | null = null;
     let approvalField: string;
 
-    if (contract.type === 'coach') {
-      switch (contract.status) {
-        case 'pending_coach_admin_review':
-          requiredRole = 'coach_admin';
-          nextStatus = 'pending_coach_manager_approval';
-          nextLevel = 'coach_manager';
-          nextDeadlineHours = this.approvalDeadlines.coach_manager;
-          approvalField = 'coachAdminApprovals';
-          break;
-        case 'pending_coach_manager_approval':
-          requiredRole = 'coach_manager';
-          nextStatus = 'pending_coach_finance_approval';
-          nextLevel = 'coach_finance';
-          nextDeadlineHours = this.approvalDeadlines.coach_finance;
-          approvalField = 'coachManagerApprovals';
-          break;
-        case 'pending_coach_finance_approval':
-          requiredRole = 'coach_finance';
-          nextStatus = 'pending_srcc_checker_approval';
-          nextLevel = 'srcc_checker';
-          nextDeadlineHours = this.approvalDeadlines.srcc_checker;
-          approvalField = 'coachFinanceApprovals';
-          break;
-        case 'pending_srcc_checker_approval':
-          requiredRole = 'srcc_checker';
-          nextStatus = 'pending_srcc_finance_approval';
-          nextLevel = 'srcc_finance';
-          nextDeadlineHours = this.approvalDeadlines.srcc_finance;
-          approvalField = 'srccCheckerApprovals';
-          break;
-        case 'pending_srcc_finance_approval':
-          requiredRole = 'srcc_finance';
-          nextStatus = 'pending_acceptance';
-          nextLevel = null;
-          approvalField = 'srccFinanceApprovals';
-          break;
-        default:
-          throw new BadRequestException(
-            'Contract is not in an appropriate status for coach approval',
-          );
-      }
-    } else {
+    // if (contract.type === 'coach') {
+    //   switch (contract.status) {
+    //     case 'pending_coach_admin_review':
+    //       requiredRole = 'coach_admin';
+    //       nextStatus = 'pending_coach_manager_approval';
+    //       nextLevel = 'coach_manager';
+    //       nextDeadlineHours = this.approvalDeadlines.coach_manager;
+    //       approvalField = 'coachAdminApprovals';
+    //       break;
+    //     case 'pending_coach_manager_approval':
+    //       requiredRole = 'coach_manager';
+    //       nextStatus = 'pending_coach_finance_approval';
+    //       nextLevel = 'coach_finance';
+    //       nextDeadlineHours = this.approvalDeadlines.coach_finance;
+    //       approvalField = 'coachManagerApprovals';
+    //       break;
+    //     case 'pending_coach_finance_approval':
+    //       requiredRole = 'coach_finance';
+    //       nextStatus = 'pending_srcc_checker_approval';
+    //       nextLevel = 'srcc_checker';
+    //       nextDeadlineHours = this.approvalDeadlines.srcc_checker;
+    //       approvalField = 'coachFinanceApprovals';
+    //       break;
+    //     case 'pending_srcc_checker_approval':
+    //       requiredRole = 'srcc_checker';
+    //       nextStatus = 'pending_srcc_finance_approval';
+    //       nextLevel = 'srcc_finance';
+    //       nextDeadlineHours = this.approvalDeadlines.srcc_finance;
+    //       approvalField = 'srccCheckerApprovals';
+    //       break;
+    //     case 'pending_srcc_finance_approval':
+    //       requiredRole = 'srcc_finance';
+    //       nextStatus = 'pending_acceptance';
+    //       nextLevel = null;
+    //       approvalField = 'srccFinanceApprovals';
+    //       break;
+    //     default:
+    //       throw new BadRequestException(
+    //         'Contract is not in an appropriate status for coach approval',
+    //       );
+    //   }
+    // } else {
       switch (contract.status) {
         case 'pending_finance_approval':
           requiredRole = 'srcc_finance';
@@ -840,37 +834,10 @@ You can view the full contract and track progress in the SRCC Portal.`;
           throw new BadRequestException(
             'Contract is not in an appropriate status for regular approval',
           );
-      }
+      // }
     }
 
-    // Role-based guard
-    if (requiredRole === 'coach_admin' || requiredRole === 'coach_manager') {
-      const projectId = (contract.projectId as any)._id || contract.projectId;
-      const project = await this.projectModel.findById(projectId).lean();
-      if (!project) throw new NotFoundException('Project not found');
 
-      let allowedUserIds: string[] = [];
-      if (requiredRole === 'coach_admin') {
-        // Hierarchical approval: Allow both assistants AND managers to approve admin review
-        const assistants = (project.coachAssistants || []).map((ca) =>
-          ca.userId.toString(),
-        );
-        const managers = (project.coachManagers || []).map((cm) =>
-          cm.userId.toString(),
-        );
-        allowedUserIds = [...assistants, ...managers];
-      } else {
-        allowedUserIds = (project.coachManagers || []).map((cm) =>
-          cm.userId.toString(),
-        );
-      }
-
-      if (!allowedUserIds.includes(userId)) {
-        throw new ForbiddenException(
-          `You are not an authorized ${this.formatRole(requiredRole)} for this project.`,
-        );
-      }
-    } else {
       const requiredGlobalRole = this.roleMap[requiredRole];
       const userRoles = (approver as any).roles || [];
 
@@ -879,22 +846,7 @@ You can view the full contract and track progress in the SRCC Portal.`;
           `You are not authorized to approve at this level. Required role: ${requiredGlobalRole}`,
         );
       }
-
-      // Department check for coach_finance
-      if (requiredRole === 'coach_finance') {
-        const project = await this.projectModel
-          .findById(contract.projectId)
-          .lean();
-        if (
-          project?.department &&
-          (approver as any).department !== project.department
-        ) {
-          throw new ForbiddenException(
-            `You are not authorized for ${project.department} finance approval.`,
-          );
-        }
-      }
-    }
+    
 
     const update: any = {
       status: nextStatus,

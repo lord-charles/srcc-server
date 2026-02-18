@@ -72,6 +72,98 @@ export class ClaimsService {
     approver: 'approver',
   } as const;
 
+  private isCoachContract(
+    contract: ContractDocument | null | undefined,
+  ): boolean {
+    return (contract?.type || '').toLowerCase() === 'coach';
+  }
+
+  private getCoachManagersForRole(
+    project: ProjectDocument,
+    role: 'reviewer' | 'approver',
+  ): Types.ObjectId[] {
+    const coachManagers = (project.coachManagers || [])
+      .map((cm) => cm.userId)
+      .filter(Boolean) as unknown as Types.ObjectId[];
+
+    const candidates = (project.coachManagers || []).filter((cm) => {
+      const responsibilities = (cm.responsibilities || [])
+        .map((r) => (r || '').toLowerCase())
+        .join(' ');
+      if (!responsibilities) return false;
+      if (role === 'reviewer') {
+        return responsibilities.includes('admin');
+      }
+      return responsibilities.includes('manager');
+    });
+
+    const candidateIds = candidates
+      .map((cm) => cm.userId)
+      .filter(Boolean) as unknown as Types.ObjectId[];
+
+    return candidateIds.length ? candidateIds : coachManagers;
+  }
+
+  private async isCoachManagerAuthorized(
+    projectId: Types.ObjectId,
+    userId: Types.ObjectId,
+    role: 'reviewer' | 'approver',
+  ): Promise<boolean> {
+    const project = await this.projectModel.findById(projectId);
+    if (!project) return false;
+    const ids = this.getCoachManagersForRole(project, role);
+    return ids.some((id) => id.toString() === userId.toString());
+  }
+
+  private getCoachNextApprovalStep(currentStatus: string): {
+    nextStatus: string;
+    role: string;
+    department: string;
+  } | null {
+    if (currentStatus === 'draft') {
+      return {
+        nextStatus: 'pending_reviewer_approval',
+        role: 'reviewer',
+        department: 'SBS',
+      };
+    }
+
+    switch (currentStatus) {
+      case 'pending_reviewer_approval':
+        return {
+          nextStatus: 'pending_approver_approval',
+          role: 'approver',
+          department: 'SBS',
+        };
+      case 'pending_approver_approval':
+        return {
+          nextStatus: 'pending_finance_approval',
+          role: 'finance',
+          department: 'SBS',
+        };
+      case 'pending_finance_approval':
+        return {
+          nextStatus: 'pending_srcc_checker_approval',
+          role: 'srcc_checker',
+          department: 'SRCC',
+        };
+      case 'pending_srcc_checker_approval':
+        return {
+          nextStatus: 'pending_srcc_finance_approval',
+          role: 'srcc_finance',
+          department: 'SRCC',
+        };
+      case 'pending_srcc_finance_approval':
+        return {
+          nextStatus: 'approved',
+          role: 'srcc_finance',
+          department: 'SRCC',
+        };
+      default:
+        return null;
+    }
+  }
+
   private getApprovalLevel(status: ClaimStatus): string | null {
     const level = status.split('_')[1];
     if (level && Object.keys(ClaimsService.roleMap).includes(level)) {
@@ -89,13 +181,14 @@ export class ClaimsService {
       `notifyStakeholders called for claim ${claim._id} with status: ${claim.status}`,
     );
 
-    const [project, claimant, updatedBy] = await Promise.all([
+    const [project, contract, claimant, updatedBy] = await Promise.all([
       this.projectModel.findById(claim.projectId),
+      this.contractModel.findById(claim.contractId),
       this.userModel.findById(claim.claimantId),
       this.userModel.findById(userId),
     ]);
 
-    if (!project || !claimant || !updatedBy) {
+    if (!project || !contract || !claimant || !updatedBy) {
       throw new NotFoundException('Required references not found');
     }
 
@@ -117,24 +210,45 @@ export class ClaimsService {
 
       this.logger.log(`Extracted role: ${currentRole}`);
 
-      // Find the current step in the approval flow to get the correct department
-      const currentStep = approvalFlow.steps.find(
-        (step) => `pending_${step.role}_approval` === claim.status,
-      );
+      let approvers: UserDocument[] = [];
 
-      this.logger.log(
-        `Current step found: ${currentStep ? JSON.stringify(currentStep) : 'Not found'}`,
-      );
+      if (
+        this.isCoachContract(contract) &&
+        (currentRole === 'reviewer' || currentRole === 'approver')
+      ) {
+        const coachIds = this.getCoachManagersForRole(project, currentRole);
+        approvers = await this.userModel
+          .find({ _id: { $in: coachIds }, status: 'active' })
+          .lean();
+      } else {
+        // Find the current step in the approval flow to get the correct department
+        const currentStep = approvalFlow.steps.find(
+          (step) => `pending_${step.role}_approval` === claim.status,
+        );
 
-      const departmentForApprovers =
-        currentStep?.department || project.department;
+        this.logger.log(
+          `Current step found: ${currentStep ? JSON.stringify(currentStep) : 'Not found'}`,
+        );
 
-      this.logger.log(`Department for approvers: ${departmentForApprovers}`);
+        const departmentForApprovers =
+          currentStep?.department || project.department;
 
-      const approvers = await this.getApprovers(
-        currentRole,
-        departmentForApprovers,
-      );
+        this.logger.log(`Department for approvers: ${departmentForApprovers}`);
+
+        // For coach claims, finance step is SBS regardless of project department
+        const effectiveDepartment =
+          this.isCoachContract(contract) && currentRole === 'finance'
+            ? 'SBS'
+            : departmentForApprovers;
+
+        approvers = await this.getApprovers(currentRole, effectiveDepartment);
+      }
+
+      if (!approvers.length) {
+        throw new BadRequestException(
+          `No active approvers found for role: ${currentRole}. Please contact system administrator.`,
+        );
+      }
 
       this.logger.log(`Sending notification to ${approvers.length} approvers`);
 
@@ -210,11 +324,20 @@ export class ClaimsService {
         const firstStep = approvalFlow.steps[0];
         const departmentForApprovers =
           firstStep?.department || project.department;
+
+        const initialApprovers = this.isCoachContract(contract)
+          ? await this.userModel
+              .find({
+                _id: { $in: this.getCoachManagersForRole(project, 'reviewer') },
+                status: 'active',
+              })
+              .lean()
+          : await this.getApprovers('claim_checker', departmentForApprovers);
         await this.claimsNotificationService.notifyClaimCreated(
           claim,
           project,
           claimant,
-          await this.getApprovers('claim_checker', departmentForApprovers),
+          initialApprovers,
         );
         break;
       }
@@ -228,10 +351,21 @@ export class ClaimsService {
     role: string;
     department: string;
   } | null> {
-    const project = await this.projectModel.findById(claim.projectId);
+    const [project, contract] = await Promise.all([
+      this.projectModel.findById(claim.projectId),
+      this.contractModel.findById(claim.contractId),
+    ]);
     if (!project) {
       throw new NotFoundException('Project not found');
     }
+    if (!contract) {
+      throw new NotFoundException('Contract not found');
+    }
+
+    if (this.isCoachContract(contract)) {
+      return this.getCoachNextApprovalStep(claim.status);
+    }
+
     return this.approvalFlowService.getNextApprovalStep(
       project.department,
       claim.status,
@@ -312,18 +446,35 @@ export class ClaimsService {
       );
     }
 
-    // Get the approval flow for the project's department
-    const approvalFlow = await this.approvalFlowService.getApprovalFlow(
-      project.department,
-    );
-    if (!approvalFlow || !approvalFlow.steps.length) {
-      throw new BadRequestException(
-        `No approval flow configured for department: ${project.department}`,
+    let initialStatus: string;
+    if (this.isCoachContract(contract)) {
+      initialStatus = 'pending_reviewer_approval';
+    } else {
+      // Get the approval flow for the project's department
+      const approvalFlow = await this.approvalFlowService.getApprovalFlow(
+        project.department,
       );
+      if (!approvalFlow || !approvalFlow.steps.length) {
+        throw new BadRequestException(
+          `No approval flow configured for department: ${project.department}`,
+        );
+      }
+
+      // Get the initial status from the first step in the approval flow
+      initialStatus = `pending_${approvalFlow.steps[0].role}_approval`;
     }
 
-    // Get the initial status from the first step in the approval flow
-    const initialStatus = `pending_${approvalFlow.steps[0].role}_approval`;
+    const coachClaim = (createClaimDto as any).coachClaim as
+      | {
+          units: number;
+          rate: number;
+          rateUnit: 'per_session' | 'per_hour';
+          unitAmount: number;
+          totalAmount: number;
+        }
+      | undefined;
+
+    const finalAmount = coachClaim?.totalAmount ?? createClaimDto.amount;
 
     // Create the claim
     const claim = new this.claimModel({
@@ -334,6 +485,8 @@ export class ClaimsService {
       createdBy: userId, // The person who created the claim
       updatedBy: userId,
       claimantId: claimantId, // The person who will receive payment
+      ...(coachClaim && { coachClaim }),
+      amount: finalAmount,
       version: 1,
     });
 
@@ -799,8 +952,15 @@ export class ClaimsService {
       throw new BadRequestException('Only draft claims can be submitted');
     }
 
-    // Update claim status to pending checker approval
-    claim.status = CLAIM_STATUSES[1]; // 'pending_checker_approval'
+    const contract = await this.contractModel.findById(claim.contractId);
+    if (!contract) {
+      throw new NotFoundException('Contract not found');
+    }
+
+    // Update claim status to first approval step
+    claim.status = this.isCoachContract(contract)
+      ? 'pending_reviewer_approval'
+      : CLAIM_STATUSES[1]; // 'pending_checker_approval'
     const savedClaim = await claim.save();
 
     await this.notifyStakeholders(savedClaim, userId);
@@ -827,6 +987,11 @@ export class ClaimsService {
       throw new NotFoundException('Project not found');
     }
 
+    const contract = await this.contractModel.findById(claim.contractId);
+    if (!contract) {
+      throw new NotFoundException('Contract not found');
+    }
+
     // Get next step in approval flow
     const next = await this.getNextApprovalStep(claim);
     console.log(next);
@@ -842,6 +1007,20 @@ export class ClaimsService {
 
     // Check if user has the required role
     if (
+      this.isCoachContract(contract) &&
+      (currentRole === 'reviewer' || currentRole === 'approver')
+    ) {
+      const allowed = await this.isCoachManagerAuthorized(
+        claim.projectId,
+        userId,
+        currentRole,
+      );
+      if (!allowed) {
+        throw new BadRequestException(
+          `User does not have ${currentRole} approval rights`,
+        );
+      }
+    } else if (
       !approver.roles?.includes(
         ClaimsService.roleMap[currentRole as ApprovalRole],
       )
@@ -910,7 +1089,26 @@ export class ClaimsService {
       .replace('_approval', '') as ApprovalRole;
     const user = await this.userModel.findById(userId);
 
-    if (!user?.roles.includes(ClaimsService.roleMap[currentRole])) {
+    const contract = await this.contractModel.findById(claim.contractId);
+    if (!contract) {
+      throw new NotFoundException('Contract not found');
+    }
+
+    if (
+      this.isCoachContract(contract) &&
+      (currentRole === 'reviewer' || currentRole === 'approver')
+    ) {
+      const allowed = await this.isCoachManagerAuthorized(
+        claim.projectId,
+        userId,
+        currentRole,
+      );
+      if (!allowed) {
+        throw new BadRequestException(
+          `Only users with ${currentRole} role can reject at this stage`,
+        );
+      }
+    } else if (!user?.roles.includes(ClaimsService.roleMap[currentRole])) {
       throw new BadRequestException(
         `Only users with ${currentRole} role can reject at this stage`,
       );
@@ -976,7 +1174,26 @@ export class ClaimsService {
       .replace('_approval', '') as ApprovalRole;
     const user = await this.userModel.findById(userId);
 
-    if (!user?.roles.includes(ClaimsService.roleMap[currentRole])) {
+    const contract = await this.contractModel.findById(claim.contractId);
+    if (!contract) {
+      throw new NotFoundException('Contract not found');
+    }
+
+    if (
+      this.isCoachContract(contract) &&
+      (currentRole === 'reviewer' || currentRole === 'approver')
+    ) {
+      const allowed = await this.isCoachManagerAuthorized(
+        claim.projectId,
+        userId,
+        currentRole,
+      );
+      if (!allowed) {
+        throw new BadRequestException(
+          `Only users with ${currentRole} role can request revision at this stage`,
+        );
+      }
+    } else if (!user?.roles.includes(ClaimsService.roleMap[currentRole])) {
       throw new BadRequestException(
         `Only users with ${currentRole} role can request revision at this stage`,
       );
