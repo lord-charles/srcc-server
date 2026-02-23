@@ -1,11 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsObject, IsBoolean, IsOptional, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsObject,
+  IsBoolean,
+  IsOptional,
+  IsEnum,
+} from 'class-validator';
 
 export enum ConfigType {
   LOAN = 'loan',
   WALLET = 'wallet',
   MPESA = 'mpesa',
   ADVANCE = 'advance',
+  PROJECT = 'project',
 }
 
 export class CreateSystemConfigDto {

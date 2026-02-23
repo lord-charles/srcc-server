@@ -30,6 +30,7 @@ import {
   InvoiceApprovalDto,
   InvoiceRejectionDto,
   InvoiceRevisionDto,
+  AddCreditNoteDto,
 } from '../dto/invoice.dto';
 import { Invoice } from '../schemas/invoice.schema';
 
@@ -152,7 +153,6 @@ export class InvoiceController {
       dto,
     );
   }
-
   @Post(':id/payments')
   @ApiOperation({ summary: 'Record a payment for an invoice' })
   @ApiResponse({
@@ -166,6 +166,25 @@ export class InvoiceController {
     @Body() dto: CreatePaymentDto,
   ): Promise<Invoice> {
     return this.invoiceService.recordPayment(
+      new Types.ObjectId(id),
+      req.user.sub,
+      dto,
+    );
+  }
+
+  @Post(':id/credit-notes')
+  @ApiOperation({ summary: 'Add a credit note to an invoice' })
+  @ApiResponse({
+    status: 200,
+    description: 'Credit note added successfully',
+    type: Invoice,
+  })
+  async addCreditNote(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() dto: AddCreditNoteDto,
+  ): Promise<Invoice> {
+    return this.invoiceService.addCreditNote(
       new Types.ObjectId(id),
       req.user.sub,
       dto,

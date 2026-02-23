@@ -115,6 +115,32 @@ class PaymentDetails {
   whtVatCertificateUrl?: string;
 }
 
+@Schema({ _id: false })
+class CreditNote {
+  @ApiProperty({ description: 'Date the credit note was issued' })
+  @Prop({ required: true, default: Date.now })
+  issuedAt: Date;
+
+  @ApiProperty({ description: 'Credit note amount', example: 50000 })
+  @Prop({ required: true, min: 0 })
+  amount: number;
+
+  @ApiProperty({
+    description: 'Reason or comment for the credit note',
+    example: 'Excess invoicing correction',
+  })
+  @Prop({ required: true })
+  comment: string;
+
+  @ApiProperty({ description: 'Optional attachment URL for the credit note' })
+  @Prop()
+  fileUrl?: string;
+
+  @ApiProperty({ description: 'User who recorded the credit note' })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  recordedBy: Types.ObjectId;
+}
+
 @Schema()
 export class RevisionRequest {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
@@ -241,6 +267,10 @@ export class Invoice extends Document {
   @ApiProperty({ description: 'Payment tracking' })
   @Prop({ type: [PaymentDetails], default: [] })
   payments: PaymentDetails[];
+
+  @ApiProperty({ description: 'Credit notes issued against this invoice' })
+  @Prop({ type: [CreditNote], default: [] })
+  creditNotes: CreditNote[];
 
   @ApiProperty({ description: 'Approval details' })
   @Prop({

@@ -82,4 +82,8 @@ export class SystemConfigService {
   async getMpesaConfig() {
     return this.findByKey('mpesa_config');
   }
+
+  async getProjectConfig() {
+    return this.findByKey('project_config');
+  }
 }

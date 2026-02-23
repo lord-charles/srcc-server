@@ -20,7 +20,7 @@ export class SystemConfig {
   })
   @Prop({
     required: true,
-    enum: ['loan', 'wallet', 'mpesa', 'advance'],
+    enum: ['loan', 'wallet', 'mpesa', 'advance', 'project'],
   })
   type: string;
 
@@ -73,6 +73,9 @@ export class SystemConfig {
     callbackBaseUrl?: string;
     initiatorName?: string;
     securityCredential?: string;
+
+    // Project Configurations
+    departments?: string[];
   };
 
   @ApiProperty({

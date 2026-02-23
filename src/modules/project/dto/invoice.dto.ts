@@ -238,3 +238,26 @@ export class InvoiceRevisionDto {
   @ArrayMinSize(1)
   changes: string[];
 }
+
+export class AddCreditNoteDto {
+  @ApiProperty({ example: 50000, description: 'Amount for the credit note' })
+  @IsNumber()
+  @Min(0)
+  amount: number;
+
+  @ApiProperty({
+    example: 'Excess invoicing correction',
+    description: 'Reason for the credit note',
+  })
+  @IsString()
+  comment: string;
+
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/.../credit_note.pdf',
+    description: 'Optional file URL for the credit note',
+    required: false,
+  })
+  @IsOptional()
+  @IsUrl()
+  fileUrl?: string;
+}

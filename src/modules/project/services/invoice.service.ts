@@ -14,6 +14,7 @@ import {
   InvoiceApprovalDto,
   InvoiceRejectionDto,
   InvoiceRevisionDto,
+  AddCreditNoteDto,
 } from '../dto/invoice.dto';
 import { NotificationService } from '../../notifications/services/notification.service';
 import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
@@ -138,10 +139,7 @@ export class InvoiceService {
           );
 
           const smsPromise = approver.phoneNumber
-            ? this.notificationService.sendSMS(
-                approver.phoneNumber,
-                smsMessage,
-              )
+            ? this.notificationService.sendSMS(approver.phoneNumber, smsMessage)
             : Promise.resolve(true);
 
           await Promise.all([emailPromise, smsPromise]);
@@ -1042,7 +1040,6 @@ export class InvoiceService {
   ): Promise<Invoice> {
     const invoice = await this.findOne(id);
 
-
     const previousPaid = invoice.payments.reduce(
       (sum, payment) => sum + Number(payment.amountPaid || 0),
       0,
@@ -1104,7 +1101,70 @@ export class InvoiceService {
   }
 
   async findByProject(projectId: Types.ObjectId): Promise<Invoice[]> {
-    return this.invoiceModel.find({ projectId }).sort({ invoiceDate: -1 });
+    return this.invoiceModel
+      .find({ projectId })
+      .populate('issuedBy', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email')
+      .populate('updatedBy', 'firstName lastName email')
+      .populate({
+        path: 'auditTrail.performedBy',
+        select: 'firstName lastName email',
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async addCreditNote(
+    id: Types.ObjectId,
+    userId: string,
+    dto: AddCreditNoteDto,
+  ): Promise<Invoice> {
+    const invoice = await this.invoiceModel.findById(id);
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    const recordedBy = new Types.ObjectId(userId);
+
+    // Initialise creditNotes if it doesn't exist (though schema has default [])
+    if (!invoice.creditNotes) {
+      invoice.creditNotes = [];
+    }
+
+    invoice.creditNotes.push({
+      ...dto,
+      issuedAt: new Date(),
+      recordedBy,
+    });
+
+    // Update status if fully "paid" by credit notes and payments
+    const totalPaid = (invoice.payments || []).reduce(
+      (sum, p) => sum + (p.amountPaid || 0),
+      0,
+    );
+    const totalCreditNotes = invoice.creditNotes.reduce(
+      (sum, cn) => sum + cn.amount,
+      0,
+    );
+
+    if (totalPaid + totalCreditNotes >= invoice.totalAmount) {
+      invoice.status = 'paid';
+    } else if (totalPaid + totalCreditNotes > 0) {
+      invoice.status = 'partially_paid';
+    }
+
+    // Add to audit trail
+    invoice.auditTrail.push({
+      action: 'CREDIT_NOTE_ADDED',
+      performedBy: recordedBy as any,
+      performedAt: new Date(),
+      details: { creditNote: dto },
+    });
+
+    await invoice.save();
+
+    // Populate the populated fields after save
+    return this.findOne(invoice._id as any);
   }
 
   /**

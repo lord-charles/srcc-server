@@ -403,11 +403,13 @@ export class Project {
       {
         title: { type: String, required: true },
         description: { type: String, required: true },
+        startDate: { type: Date },
         dueDate: { type: Date, required: true },
         completed: { type: Boolean, default: false },
         completionDate: { type: Date },
         budget: { type: Number, required: true },
         actualCost: { type: Number },
+        percentage: { type: Number },
       },
     ],
     required: false,
