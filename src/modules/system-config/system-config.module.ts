@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { SystemConfig, SystemConfigSchema } from './schemas/system-config.schema';
-import { SystemConfigService } from './services/system-config.service';
-import { SystemConfigController } from './controllers/system-config.controller';
+import { ChartsOfAccounts, ChartsOfAccountsSchema } from './schemas/charts-of-accounts.schema';
+import { ChartsOfAccountsService } from './services/charts-of-accounts.service';
+import { ChartsOfAccountsController } from './controllers/charts-of-accounts.controller';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: SystemConfig.name, schema: SystemConfigSchema },
+      { name: ChartsOfAccounts.name, schema: ChartsOfAccountsSchema },
     ]),
   ],
-  controllers: [SystemConfigController],
-  providers: [SystemConfigService],
-  exports: [SystemConfigService],
+  controllers: [ ChartsOfAccountsController],
+  providers: [ChartsOfAccountsService],
+  exports: [ ChartsOfAccountsService],
 })
 export class SystemConfigModule {}

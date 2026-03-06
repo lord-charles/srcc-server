@@ -1,0 +1,2169 @@
+{
+  "chartsOfAccounts": {
+    "SR": {
+      "accounts": [
+        {
+          "accountNumber": "2101400",
+          "accountName": "DLC MANAGER",
+          "subAccounts": [
+            {
+              "subAccountNumber": "00001",
+              "subAccountName": "SUP Books",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00002",
+              "subAccountName": "CPA Books",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00003",
+              "subAccountName": "ACCA FINANCIAL ACCOUNTING STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00004",
+              "subAccountName": "ACCA FINANCIAL ACCOUNTING REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00005",
+              "subAccountName": "ACCA BUSINESS AND TECHNOLOGY STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00006",
+              "subAccountName": "ACCA BUSINESS AND TECHNOLOGY REVISIONKIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00007",
+              "subAccountName": "ACCA MANAGEMENT ACCOUNTING STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00008",
+              "subAccountName": "ACCA MANAGEMENT ACCOUNTING REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00009",
+              "subAccountName": "ACCA FA1 RECORDING FINANCIAL- STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00010",
+              "subAccountName": "ACCA FA1 RECORDING -REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00011",
+              "subAccountName": "ACCA MA1 MANAGEMENT INFO- STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00012",
+              "subAccountName": "ACCA MA1 MANAGEMENT INFO- REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00013",
+              "subAccountName": "ACCAFA2 MAINTAINING FINANCIAL-STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00014",
+              "subAccountName": "ACCAFA2 MAINTAINING FIN REC-REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00015",
+              "subAccountName": "ACCA MA2 MANAGING C AND FIN STUDY KITS",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00016",
+              "subAccountName": "ACCA MA2 MANAGING C AND FIN REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00017",
+              "subAccountName": "ACCA PM PERFORMANCE MGMT STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00018",
+              "subAccountName": "ACCA PM PERFORMANCE MGMENT REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00019",
+              "subAccountName": "ACCA TX TAXATION STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00020",
+              "subAccountName": "ACCA TX TAXATION REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00021",
+              "subAccountName": "ACCA AA AUDIT AND ASSURANCE STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00022",
+              "subAccountName": "ACCA AA AUDIT AND ASSURANCE REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00023",
+              "subAccountName": "ACCA CORP & BUSINESS LAW GLB STUDY TXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00024",
+              "subAccountName": "ACCA CORP & BUSNS LAW GLO REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00025",
+              "subAccountName": "ACCA SBR STRATEGIC BUSSS REPT STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00026",
+              "subAccountName": "ACCA SBR STRATEGIC BNS REP REVSION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00027",
+              "subAccountName": "ACCA SBL STRATEGIC BSN LEADER STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00028",
+              "subAccountName": "ACCA SBL STRATEGIC BUS LDER REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00029",
+              "subAccountName": "ACCA FM FINANCIAL MANAGEMENT STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00030",
+              "subAccountName": "ACCA FM FINANCIAL MANAGMENT REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00031",
+              "subAccountName": "ACCA FR FINANCIAL REPORTING STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00032",
+              "subAccountName": "ACCA FR FINANCIAL REPORTING REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00033",
+              "subAccountName": "ACCA APM ADV PRM MGMENT STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00035",
+              "subAccountName": "ACCA APM ADVANCED PFM MGT REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00036",
+              "subAccountName": "ACCA AAA ADV AUDIT & ASSURANCE STUDY TXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00037",
+              "subAccountName": "ACCA AAA ADV AUDIT & ASSURANCE REV KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00038",
+              "subAccountName": "ACCA AFM ADV FIN MANAGMT STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00039",
+              "subAccountName": "ACCA AFM ADV FIN MANAGMT REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00040",
+              "subAccountName": "KPLN BT BUSINESS TECHNOLOGY STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00041",
+              "subAccountName": "KPLN FA2 MAINTAINING FINANCIAL RECORDS",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00042",
+              "subAccountName": "KPLN FA1 RECORDING FIN TRCTS  STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00043",
+              "subAccountName": "KPLN MA1 MANAGEMENT INFOR STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00044",
+              "subAccountName": "KPLN MA2 MAINT COST AND FIN STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00045",
+              "subAccountName": "KPLN FA FINANCIAL ACCOUNTING STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00046",
+              "subAccountName": "KPLN MA MANAGEMENT ACCOUNTING STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00047",
+              "subAccountName": "KPLN CORPORATE AND BUSS LAW STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00048",
+              "subAccountName": "KPLN PM PERFORMANCE MGEMENT STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00049",
+              "subAccountName": "KPLN TX TAXATION STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00050",
+              "subAccountName": "KPLN FR FINANCIAL REPORTING STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00051",
+              "subAccountName": "AA AUDIT AND ASSURANCE STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00052",
+              "subAccountName": "KPLN FM FINANCIAL MANAGEMENT STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00053",
+              "subAccountName": "KPLN SBL STARTEGIC BSS LEADER STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00054",
+              "subAccountName": "KPLN SBR STRATEGIC BSS REPTG STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00055",
+              "subAccountName": "KPLAN APM STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00056",
+              "subAccountName": "KAPLAN AFM STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00057",
+              "subAccountName": "KAPLAN AAA STUDY TEXT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00058",
+              "subAccountName": "KAPLAN BUSINESS AND TECH REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00059",
+              "subAccountName": "KAPLAN FA2 REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00060",
+              "subAccountName": "KAPLAN FA1 REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00061",
+              "subAccountName": "KAPLAN MA1 REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00062",
+              "subAccountName": "KAPLAN MA2 REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00063",
+              "subAccountName": "KAPLAN MA REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00064",
+              "subAccountName": "KAPLAN FA REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00065",
+              "subAccountName": "KAPLAN CORP LAW REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00066",
+              "subAccountName": "KAPLAN PM REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00067",
+              "subAccountName": "KAPLAN TX REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00068",
+              "subAccountName": "KAPLAN  FR REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00069",
+              "subAccountName": "KAPLAN FR REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00070",
+              "subAccountName": "KAPALAN FM REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00071",
+              "subAccountName": "KAPLAN SBL REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00072",
+              "subAccountName": "KAPLAN SBR REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00073",
+              "subAccountName": "KAPLAN APM REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00074",
+              "subAccountName": "KAPLAN AFM REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00075",
+              "subAccountName": "KAPALAN AAA REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00076",
+              "subAccountName": "KPLAN AA REVISION KIT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00077",
+              "subAccountName": "PWC",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00078",
+              "subAccountName": "JIPS",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00079",
+              "subAccountName": "Fontana Bookshop",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00080",
+              "subAccountName": "Excel College",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00081",
+              "subAccountName": "SU Library",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00082",
+              "subAccountName": "School of Accountancy",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00083",
+              "subAccountName": "CarnegIE Institute",
+              "type": "EX"
+            }
+          ],
+          "mappings": [
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2101400",
+              "accountName": "DLC MANAGER",
+              "objectCode": "265",
+              "objectCodeName": "REVISION KITS",
+              "financialStatement": "Income Statement",
+              "type": "Income",
+              "fsTitle": "Sale of Books",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2101400",
+              "accountName": "DLC MANAGER",
+              "objectCode": "274",
+              "objectCodeName": "STUDY TEXTS",
+              "financialStatement": "Income Statement",
+              "type": "Income",
+              "fsTitle": "Sale of Books",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2101400",
+              "accountName": "DLC MANAGER",
+              "objectCode": "2040",
+              "objectCodeName": "EMPLOYERS NSSF CONTRIBUTION",
+              "financialStatement": "Income Statement",
+              "type": "Expense",
+              "fsTitle": "Finance Costs",
+              "mapping": "True"
+            },
+            {
+              "section": "assetsMapping",
+              "chart": "SR",
+              "accountNumber": "2101400",
+              "accountName2025": "DLC MANAGER",
+              "objectCode": "8090",
+              "objectCodeName": "PETTY CASH",
+              "financialStatement": "Balance Sheet",
+              "type": "ASSET",
+              "fsTitle": "Current Assets",
+              "fsSubTitle": "Cash & Bank Balances",
+              "mapping": "True"
+            },
+            {
+              "section": "assetsMapping",
+              "chart": "SR",
+              "accountNumber": "2101400",
+              "accountName2025": "DLC MANAGER",
+              "objectCode": "8118",
+              "objectCodeName": "ACCOUNTS RECEIVABLE",
+              "financialStatement": "Balance Sheet",
+              "type": "ASSET",
+              "fsTitle": "Current Assets",
+              "fsSubTitle": "Other Receivables",
+              "mapping": "True"
+            }
+          ]
+        },
+        {
+          "accountNumber": "2200001",
+          "accountName": "Director-SRCC",
+          "subAccounts": [
+            {
+              "subAccountNumber": "00001",
+              "subAccountName": "National Quality Control Laboratories",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00002",
+              "subAccountName": "British American Tobacco Kenya Limited",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00003",
+              "subAccountName": "Windle International   Kenya",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00004",
+              "subAccountName": "Norwegian Refugee Council",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00005",
+              "subAccountName": "KETRACO",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00006",
+              "subAccountName": "Telicon Consortium Enterprises Ltd",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00007",
+              "subAccountName": "KENHA",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00008",
+              "subAccountName": "KARMA HOLDINGS",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00009",
+              "subAccountName": "KCIC Consulting Limited",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00010",
+              "subAccountName": "AGRA",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00011",
+              "subAccountName": "UNESCO",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00012",
+              "subAccountName": "Palladium Group",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00013",
+              "subAccountName": "KCCB",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00014",
+              "subAccountName": "WOMEN IN HEALTHCARE",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00015",
+              "subAccountName": "IITA",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00016",
+              "subAccountName": "Thomas Burke Nursery & Pri Sch.",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00017",
+              "subAccountName": "Pfizer",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00018",
+              "subAccountName": "Preliminary project costs",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00019",
+              "subAccountName": "Workshops",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00020",
+              "subAccountName": "Pfizer Activities",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00021",
+              "subAccountName": "SoCCha - EM- Patterson",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00022",
+              "subAccountName": "GG Reuben Family",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00023",
+              "subAccountName": "Trademark Africa (TMA)",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00024",
+              "subAccountName": "Peace Winds Japan",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00025",
+              "subAccountName": "Inuka Kenya ni Sisi Ltd",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00026",
+              "subAccountName": "Jacaranda Health Limited",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00027",
+              "subAccountName": "UBER B.V.",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00028",
+              "subAccountName": "Norken International Ltd",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00029",
+              "subAccountName": "FORUM CIV",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00030",
+              "subAccountName": "Lattice Consulting",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00031",
+              "subAccountName": "USAID",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00032",
+              "subAccountName": "Eka Group of Hotels",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00033",
+              "subAccountName": "Trademark Africa (NISK)",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00034",
+              "subAccountName": "AFIDEP",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00035",
+              "subAccountName": "YARA EAST AFRICAN LIMITED",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00036",
+              "subAccountName": "SRCC Managent fees",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00037",
+              "subAccountName": "Nextrade Group Ltd",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00038",
+              "subAccountName": "JEFF OBONYO",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00039",
+              "subAccountName": "PPP Directorate",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00040",
+              "subAccountName": "The Nature Conservancy",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00041",
+              "subAccountName": "Lawrence Muiruri",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00042",
+              "subAccountName": "Charles Muhia",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00043",
+              "subAccountName": "Kenya Red Cross Society",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00044",
+              "subAccountName": "Leadership Academy",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00045",
+              "subAccountName": "Shirika DT Sacco",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00046",
+              "subAccountName": "Legal Resources Foundation",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00047",
+              "subAccountName": "Lotus Consulting",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00048",
+              "subAccountName": "Energy Saving Trust",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00049",
+              "subAccountName": "Technozor",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00050",
+              "subAccountName": "Africa Enterprise Challenge Fund (AECF)",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00051",
+              "subAccountName": "Oxyplus International",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00052",
+              "subAccountName": "Afrilab",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00053",
+              "subAccountName": "Owate Lelli Aurell",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00054",
+              "subAccountName": "SBVP Case Booklet",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00055",
+              "subAccountName": "LINET MUKAMI NJUKI",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00056",
+              "subAccountName": "VICTOR BETT",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00057",
+              "subAccountName": "EDWARD MACHARIA RITHO",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00058",
+              "subAccountName": "JAMALDIN KEITANY",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00059",
+              "subAccountName": "ANDREW OMARIBA",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00060",
+              "subAccountName": "CHRISTINE OWANDE",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00077",
+              "subAccountName": "NEPARC",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00078",
+              "subAccountName": "SR-SNV",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00079",
+              "subAccountName": "SBVP",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00080",
+              "subAccountName": "Strathmore University",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00081",
+              "subAccountName": "ACTA PROJECTS",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00082",
+              "subAccountName": "Sidian Bank",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00083",
+              "subAccountName": "Cerba Lancet",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00084",
+              "subAccountName": "AAR Insurance",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00085",
+              "subAccountName": "Safaricom",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00086",
+              "subAccountName": "The African Court",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00087",
+              "subAccountName": "CPF Financial Services",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00088",
+              "subAccountName": "IDH Trade",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00089",
+              "subAccountName": "MSEA",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00090",
+              "subAccountName": "F3 Global",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00091",
+              "subAccountName": "SCAP",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00092",
+              "subAccountName": "Bajeti",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00159",
+              "subAccountName": "LUCY WANJIRU MUTURI",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00187",
+              "subAccountName": "CHARLES MWANIKI",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00466",
+              "subAccountName": "Christine Akinyi Oyuko",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00615",
+              "subAccountName": "PETER KIMEU",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00661",
+              "subAccountName": "Dennis Mutinda Mutuku",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00662",
+              "subAccountName": "Nelly Adhiambo Amwata",
+              "type": "EX"
+            },
+            {
+              "subAccountNumber": "00676",
+              "subAccountName": "Amy Wanza Amu",
+              "type": "EX"
+            }
+          ],
+          "mappings": [
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "230",
+              "objectCodeName": "GAIN OR LOSS ON EXCHANGE",
+              "financialStatement": "Income Statement",
+              "type": "Income",
+              "fsTitle": "Exchange Rate Fluctuation",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "240",
+              "objectCodeName": "INTEREST INCOME",
+              "financialStatement": "Income Statement",
+              "type": "Income",
+              "fsTitle": "Finance Income",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "264",
+              "objectCodeName": "MANAGEMENT CONSULTING REVENUES",
+              "financialStatement": "Income Statement",
+              "type": "Income",
+              "fsTitle": "Management Consulting",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "266",
+              "objectCodeName": "SRCC ADMIN FEE",
+              "financialStatement": "Income Statement",
+              "type": "Income",
+              "fsTitle": "Agency fees",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "2000",
+              "objectCodeName": "STAFF TRAINING",
+              "financialStatement": "Income Statement",
+              "type": "Expense",
+              "fsTitle": "Staff Related - Service",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "2001",
+              "objectCodeName": "BURSARIES - STAFF DEPENDANTS",
+              "financialStatement": "Income Statement",
+              "type": "Expense",
+              "fsTitle": "Administrative",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "2020",
+              "objectCodeName": "CONFERENCES AND SEMINARS",
+              "financialStatement": "Income Statement",
+              "type": "Expense",
+              "fsTitle": "Professional Services",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "2030",
+              "objectCodeName": "CONSULTANCY FEES",
+              "financialStatement": "Income Statement",
+              "type": "Expense",
+              "fsTitle": "Marketing And Advertising",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "2040",
+              "objectCodeName": "EMPLOYERS NSSF CONTRIBUTION",
+              "financialStatement": "Income Statement",
+              "type": "Expense",
+              "fsTitle": "Provision for Doubtful Debts",
+              "mapping": "True"
+            },
+            {
+              "section": "unknown",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName": "Director-SRCC",
+              "objectCode": "2046",
+              "objectCodeName": "EMPLOYERS NHDF CONTRIBUTION-FACULTY",
+              "financialStatement": "Income Statement",
+              "type": "Expense",
+              "fsTitle": "Depreciation & Amortization",
+              "mapping": "True"
+            },
+            {
+              "section": "assetsMapping",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName2025": "Director-SRCC",
+              "objectCode": "8080",
+              "objectCodeName": "SHORT TERM DEPOSITS",
+              "financialStatement": "Balance Sheet",
+              "type": "ASSET",
+              "fsTitle": "Current Assets",
+              "fsSubTitle": "Short Term Deposits",
+              "mapping": "True"
+            },
+            {
+              "section": "assetsMapping",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName2025": "Director-SRCC",
+              "objectCode": "8090",
+              "objectCodeName": "PETTY CASH",
+              "financialStatement": "Balance Sheet",
+              "type": "ASSET",
+              "fsTitle": "Current Assets",
+              "fsSubTitle": "Cash & Bank Balances",
+              "mapping": "True"
+            },
+            {
+              "section": "assetsMapping",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName2025": "Director-SRCC",
+              "objectCode": "8105",
+              "objectCodeName": "INTEREST RECEIVABLE-SHORT TERM",
+              "financialStatement": "Balance Sheet",
+              "type": "ASSET",
+              "fsTitle": "Current Assets",
+              "fsSubTitle": "Other Receivables",
+              "mapping": "True"
+            },
+            {
+              "section": "assetsMapping",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName2025": "Director-SRCC",
+              "objectCode": "8118",
+              "objectCodeName": "ACCOUNTS RECEIVABLE",
+              "financialStatement": "Balance Sheet",
+              "type": "ASSET",
+              "fsTitle": "Current Assets",
+              "fsSubTitle": "Other Receivables",
+              "mapping": "True"
+            },
+            {
+              "section": "assetsMapping",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName2025": "Director-SRCC",
+              "objectCode": "9896",
+              "objectCodeName": "ACCUMULATED RESERVE-PRIOR PERIOD ADJUST",
+              "financialStatement": "Balance Sheet",
+              "type": "FUNDBAL",
+              "fsTitle": "Capital Fund",
+              "fsSubTitle": "Accumulated Surplus",
+              "mapping": "True"
+            },
+            {
+              "section": "assetsMapping",
+              "chart": "SR",
+              "accountNumber": "2200001",
+              "accountName2025": "Director-SRCC",
+              "objectCode": "9374",
+              "objectCodeName": "DEFERRED INCOME- CONSULTING",
+              "financialStatement": "Balance Sheet",
+              "type": "LIABILITY",
+              "fsTitle": "Current Liabilities",
+              "fsSubTitle": "Due to Related Parties",
+              "mapping": "True"
+            }
+          ]
+        }
+      ],
+      "mappings": [
+        {
+          "section": "unknown",
+          "chart": "SR",
+          "accountNumber": "6000400",
+          "accountName": "CPA BOOKS",
+          "objectCode": "265",
+          "objectCodeName": "REVISION KITS",
+          "financialStatement": "Income Statement",
+          "type": "Income",
+          "fsTitle": "Sale of Books",
+          "mapping": "True"
+        }
+      ]
+    },
+    "objectCodes": [
+      {
+        "objectCode": "100",
+        "objectCodeName": "APPLICATION FEES",
+        "type": "IN"
+      },
+      {
+        "objectCode": "120",
+        "objectCodeName": "COURSE FEES",
+        "type": "IN"
+      },
+      {
+        "objectCode": "140",
+        "objectCodeName": "INSTALMENT FEES",
+        "type": "IN"
+      },
+      {
+        "objectCode": "160",
+        "objectCodeName": "LAB FEES",
+        "type": "IN"
+      },
+      {
+        "objectCode": "170",
+        "objectCodeName": "Library fees",
+        "type": "IN"
+      },
+      {
+        "objectCode": "180",
+        "objectCodeName": "REGISTRATION FEE",
+        "type": "IN"
+      },
+      {
+        "objectCode": "190",
+        "objectCodeName": "STUDENT ACTIVITY FEES",
+        "type": "IN"
+      },
+      {
+        "objectCode": "200",
+        "objectCodeName": "STUDENT IDENTITY CARDS",
+        "type": "IN"
+      },
+      {
+        "objectCode": "220",
+        "objectCodeName": "DONATIONS REALIZED",
+        "type": "IN"
+      },
+      {
+        "objectCode": "230",
+        "objectCodeName": "GAIN OR LOSS ON EXCHANGE",
+        "type": "IN"
+      },
+      {
+        "objectCode": "240",
+        "objectCodeName": "INTEREST INCOME",
+        "type": "IN"
+      },
+      {
+        "objectCode": "250",
+        "objectCodeName": "INTERVIEWS",
+        "type": "IN"
+      },
+      {
+        "objectCode": "260",
+        "objectCodeName": "SUNDRY INCOME",
+        "type": "IN"
+      },
+
+      {
+        "objectCode": "370",
+        "objectCodeName": "CONFERENCE FEES",
+        "type": "IN"
+      }
+    ]
+  },
+  "CU": {
+    "accounts": [
+      {
+        "accountNumber": "6031500",
+        "accountName": "DIGITAL LEARNING -SRCC",
+        "subAccounts": [],
+        "mappings": []
+      },
+      {
+        "accountNumber": "6032000",
+        "accountName": "DIGITAL LEARNING -SRCC",
+        "subAccounts": [],
+        "mappings": []
+      },
+      {
+        "accountNumber": "2200001",
+        "accountName": "Director-SRCC",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "230",
+            "objectCodeName": "GAIN OR LOSS ON EXCHANGE",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Exchange Rate Fluctuation",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "240",
+            "objectCodeName": "INTEREST INCOME",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Finance Income",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "264",
+            "objectCodeName": "MANAGEMENT CONSULTING REVENUES",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Management Consulting",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "266",
+            "objectCodeName": "SRCC ADMIN FEE",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Agency fees",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2000",
+            "objectCodeName": "STAFF TRAINING",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Staff Related - Service",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2001",
+            "objectCodeName": "BURSARIES - STAFF DEPENDANTS",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Administrative",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2020",
+            "objectCodeName": "CONFERENCES AND SEMINARS",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Professional Services",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2030",
+            "objectCodeName": "CONSULTANCY FEES",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Marketing And Advertising",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2040",
+            "objectCodeName": "EMPLOYERS NSSF CONTRIBUTION",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Provision for Doubtful Debts",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2046",
+            "objectCodeName": "EMPLOYERS NHDF CONTRIBUTION-FACULTY",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Depreciation & Amortization",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "8080",
+            "objectCodeName": "SHORT TERM DEPOSITS",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Short Term Deposits",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "8090",
+            "objectCodeName": "PETTY CASH",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Cash & Bank Balances",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "8105",
+            "objectCodeName": "INTEREST RECEIVABLE-SHORT TERM",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "9896",
+            "objectCodeName": "ACCUMULATED RESERVE-PRIOR PERIOD ADJUST",
+            "financialStatement": "Balance Sheet",
+            "type": "FUNDBAL",
+            "fsTitle": "Capital Fund",
+            "fsSubTitle": "Accumulated Surplus",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CU",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "9374",
+            "objectCodeName": "DEFERRED INCOME- CONSULTING",
+            "financialStatement": "Balance Sheet",
+            "type": "LIABILITY",
+            "fsTitle": "Current Liabilities",
+            "fsSubTitle": "Due to Related Parties",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "6000400",
+        "accountName": "CPA BOOKS",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "6000400",
+            "accountName": "CPA BOOKS",
+            "objectCode": "265",
+            "objectCodeName": "REVISION KITS",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Sale of Books",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CU",
+            "accountNumber": "6000400",
+            "accountName": "CPA BOOKS",
+            "objectCode": "274",
+            "objectCodeName": "STUDY TEXTS",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Sale of Books",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CU",
+            "accountNumber": "6000400",
+            "accountName2025": "CPA BOOKS",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          }
+        ]
+      }
+    ],
+    "objectCodes": []
+  },
+  "CB": {
+    "accounts": [
+      {
+        "accountNumber": "2200001",
+        "accountName": "Director-SRCC",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "230",
+            "objectCodeName": "GAIN OR LOSS ON EXCHANGE",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Exchange Rate Fluctuation",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "240",
+            "objectCodeName": "INTEREST INCOME",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Finance Income",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "264",
+            "objectCodeName": "MANAGEMENT CONSULTING REVENUES",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Management Consulting",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "266",
+            "objectCodeName": "SRCC ADMIN FEE",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Agency fees",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2000",
+            "objectCodeName": "STAFF TRAINING",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Staff Related - Service",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2001",
+            "objectCodeName": "BURSARIES - STAFF DEPENDANTS",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Administrative",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2020",
+            "objectCodeName": "CONFERENCES AND SEMINARS",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Professional Services",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2030",
+            "objectCodeName": "CONSULTANCY FEES",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Marketing And Advertising",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2040",
+            "objectCodeName": "EMPLOYERS NSSF CONTRIBUTION",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Provision for Doubtful Debts",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName": "Director-SRCC",
+            "objectCode": "2046",
+            "objectCodeName": "EMPLOYERS NHDF CONTRIBUTION-FACULTY",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Depreciation & Amortization",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "8080",
+            "objectCodeName": "SHORT TERM DEPOSITS",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Short Term Deposits",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "8090",
+            "objectCodeName": "PETTY CASH",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Cash & Bank Balances",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "8105",
+            "objectCodeName": "INTEREST RECEIVABLE-SHORT TERM",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "9896",
+            "objectCodeName": "ACCUMULATED RESERVE-PRIOR PERIOD ADJUST",
+            "financialStatement": "Balance Sheet",
+            "type": "FUNDBAL",
+            "fsTitle": "Capital Fund",
+            "fsSubTitle": "Accumulated Surplus",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "2200001",
+            "accountName2025": "Director-SRCC",
+            "objectCode": "9374",
+            "objectCodeName": "DEFERRED INCOME- CONSULTING",
+            "financialStatement": "Balance Sheet",
+            "type": "LIABILITY",
+            "fsTitle": "Current Liabilities",
+            "fsSubTitle": "Due to Related Parties",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "6000400",
+        "accountName": "CPA BOOKS",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "6000400",
+            "accountName": "CPA BOOKS",
+            "objectCode": "265",
+            "objectCodeName": "REVISION KITS",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Sale of Books",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "6000400",
+            "accountName": "CPA BOOKS",
+            "objectCode": "274",
+            "objectCodeName": "STUDY TEXTS",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Sale of Books",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "6000400",
+            "accountName2025": "CPA BOOKS",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "2101400",
+        "accountName": "DLC MANAGER",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2101400",
+            "accountName": "DLC MANAGER",
+            "objectCode": "265",
+            "objectCodeName": "REVISION KITS",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Sale of Books",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2101400",
+            "accountName": "DLC MANAGER",
+            "objectCode": "274",
+            "objectCodeName": "STUDY TEXTS",
+            "financialStatement": "Income Statement",
+            "type": "Income",
+            "fsTitle": "Sale of Books",
+            "mapping": "True"
+          },
+          {
+            "section": "unknown",
+            "chart": "CB",
+            "accountNumber": "2101400",
+            "accountName": "DLC MANAGER",
+            "objectCode": "2040",
+            "objectCodeName": "EMPLOYERS NSSF CONTRIBUTION",
+            "financialStatement": "Income Statement",
+            "type": "Expense",
+            "fsTitle": "Finance Costs",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "2101400",
+            "accountName2025": "DLC MANAGER",
+            "objectCode": "8090",
+            "objectCodeName": "PETTY CASH",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Cash & Bank Balances",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "2101400",
+            "accountName2025": "DLC MANAGER",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "100003",
+        "accountName": "INTANGIBLE ASSETS",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "100003",
+            "accountName2025": "INTANGIBLE ASSETS",
+            "objectCode": "8200",
+            "objectCodeName": "NON CURRENT ASSETS-COST",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Non-Current Assets",
+            "fsSubTitle": "Intangible Assets",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "100003",
+            "accountName2025": "INTANGIBLE ASSETS",
+            "objectCode": "8300",
+            "objectCodeName": "NON CURRENT ASSETS-ACCUMULATED DEP",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Non-Current Assets",
+            "fsSubTitle": "Intangible Assets",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "100002",
+        "accountName": "Computers & accessories",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "100002",
+            "accountName2025": "Computers & accessories",
+            "objectCode": "8200",
+            "objectCodeName": "NON CURRENT ASSETS-COST",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Non-Current Assets",
+            "fsSubTitle": "Property And Equipment",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "100002",
+            "accountName2025": "Computers & accessories",
+            "objectCode": "8300",
+            "objectCodeName": "NON CURRENT ASSETS-ACCUMULATED DEP",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Non-Current Assets",
+            "fsSubTitle": "Property And Equipment",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "100001",
+        "accountName": "Furniture & fittings",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "100001",
+            "accountName2025": "Furniture & fittings",
+            "objectCode": "8200",
+            "objectCodeName": "NON CURRENT ASSETS-COST",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Non-Current Assets",
+            "fsSubTitle": "Property And Equipment",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "100001",
+            "accountName2025": "Furniture & fittings",
+            "objectCode": "8300",
+            "objectCodeName": "NON CURRENT ASSETS-ACCUMULATED DEP",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Non-Current Assets",
+            "fsSubTitle": "Property And Equipment",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "103003",
+        "accountName": "SHORT TERM DEPOSITS",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "103003",
+            "accountName2025": "SHORT TERM DEPOSITS",
+            "objectCode": "8080",
+            "objectCodeName": "SHORT TERM DEPOSITS",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Short Term Deposits",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "5200090",
+        "accountName": "Deferred Research Deposits",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "5200090",
+            "accountName2025": "Deferred Research Deposits",
+            "objectCode": "8080",
+            "objectCodeName": "SHORT TERM DEPOSITS",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Short Term Deposits",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "101000",
+        "accountName": "Petty cash",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "101000",
+            "accountName2025": "Petty cash",
+            "objectCode": "8090",
+            "objectCodeName": "PETTY CASH",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Cash & Bank Balances",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "4002000",
+        "accountName": "McKinney Rogers",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "4002000",
+            "accountName2025": "McKinney Rogers",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "4001000",
+        "accountName": "East African Breweries Limited",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "4001000",
+            "accountName2025": "East African Breweries Limited",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "4001000",
+            "accountName2025": "East African Breweries Limited",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Inventory",
+            "mapping": "False"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "4001000",
+            "accountName2025": "East African Breweries Limited",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Other Receivables",
+            "mapping": "False"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "4001000",
+            "accountName2025": "East African Breweries Limited",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Prepayments",
+            "mapping": "False"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "4001000",
+            "accountName2025": "East African Breweries Limited",
+            "objectCode": "8118",
+            "objectCodeName": "ACCOUNTS RECEIVABLE",
+            "financialStatement": "Balance Sheet",
+            "type": "ASSET",
+            "fsTitle": "Current Assets",
+            "fsSubTitle": "Designated Deposit",
+            "mapping": "False"
+          }
+        ]
+      },
+      {
+        "accountNumber": "150004",
+        "accountName": "ACCUMULATED RESERVE-PRIOR PERIOD ADJUST",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "150004",
+            "accountName2025": "ACCUMULATED RESERVE-PRIOR PERIOD ADJUST",
+            "objectCode": "9896",
+            "objectCodeName": "ACCUMULATED RESERVE-PRIOR PERIOD ADJUST",
+            "financialStatement": "Balance Sheet",
+            "type": "FUNDBAL",
+            "fsTitle": "Capital Fund",
+            "fsSubTitle": "Capital Investment Fund",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "120001",
+        "accountName": "Retained Earnings",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "120001",
+            "accountName2025": "Retained Earnings",
+            "objectCode": "9897",
+            "objectCodeName": "ACCUMULATED RESERVE-RETAINED EARNINGS",
+            "financialStatement": "Balance Sheet",
+            "type": "FUNDBAL",
+            "fsTitle": "Capital Fund",
+            "fsSubTitle": "Capital Investment Fund",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "6000200",
+        "accountName": "RESEARCH GRANTS",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "6000200",
+            "accountName2025": "RESEARCH GRANTS",
+            "objectCode": "9899",
+            "objectCodeName": "FUND BALANCE",
+            "financialStatement": "Balance Sheet",
+            "type": "FUNDBAL",
+            "fsTitle": "Capital Fund",
+            "fsSubTitle": "Capital Investment Fund",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "110010",
+        "accountName": "VAT Control",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "110010",
+            "accountName2025": "VAT Control",
+            "objectCode": "9220",
+            "objectCodeName": "VALUE ADDED TAX - VAT",
+            "financialStatement": "Balance Sheet",
+            "type": "LIABILITY",
+            "fsTitle": "Current Liabilities",
+            "fsSubTitle": "Staff Payables",
+            "mapping": "True"
+          },
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "110010",
+            "accountName2025": "VAT Control",
+            "objectCode": "9221",
+            "objectCodeName": "WITHHOLDING VAT",
+            "financialStatement": "Balance Sheet",
+            "type": "LIABILITY",
+            "fsTitle": "Current Liabilities",
+            "fsSubTitle": "Suppliers Payables",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "110011",
+        "accountName": "Withholding tax-Tax Liability",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "110011",
+            "accountName2025": "Withholding tax-Tax Liability",
+            "objectCode": "9221",
+            "objectCodeName": "WITHHOLDING VAT",
+            "financialStatement": "Balance Sheet",
+            "type": "LIABILITY",
+            "fsTitle": "Current Liabilities",
+            "fsSubTitle": "Deferred Income-Fees Income",
+            "mapping": "True"
+          }
+        ]
+      },
+      {
+        "accountNumber": "110002",
+        "accountName": "Payroll",
+        "subAccounts": [],
+        "mappings": [
+          {
+            "section": "assetsMapping",
+            "chart": "CB",
+            "accountNumber": "110002",
+            "accountName2025": "Payroll",
+            "objectCode": "9234",
+            "objectCodeName": "SBM BANK LOAN",
+            "financialStatement": "Balance Sheet",
+            "type": "LIABILITY",
+            "fsTitle": "Current Liabilities",
+            "fsSubTitle": "Other Payables & Accrued Expenses",
+            "mapping": "True"
+          }
+        ]
+      }
+    ],
+    "objectCodes": []
+  }
+}
