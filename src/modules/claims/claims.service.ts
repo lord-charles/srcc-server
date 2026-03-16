@@ -48,12 +48,6 @@ interface ProjectMilestone {
 
 type ApprovalRole = keyof typeof ClaimsService.roleMap;
 
-type ApprovalFlowStep = {
-  nextStatus: ClaimStatus;
-  role: ApprovalRole;
-  department: string;
-};
-
 @Injectable()
 export class ClaimsService {
   private readonly logger = new Logger(ClaimsService.name);
@@ -476,6 +470,24 @@ export class ClaimsService {
 
     const finalAmount = coachClaim?.totalAmount ?? createClaimDto.amount;
 
+    // Check if the new claim exceeds the remaining contract value
+    const existingClaims = await this.claimModel.find({
+      contractId: contract._id,
+      status: { $nin: ['rejected', 'cancelled'] },
+    });
+
+    const totalClaimedAmount = existingClaims.reduce(
+      (sum, c) => sum + (c.amount || 0),
+      0,
+    );
+
+    if (totalClaimedAmount + finalAmount > contract.contractValue) {
+      const remainingAmount = contract.contractValue - totalClaimedAmount;
+      throw new BadRequestException(
+        `Claim amount (${finalAmount}) exceeds the remaining contract value (${remainingAmount}). Contract total: ${contract.contractValue}.`,
+      );
+    }
+
     // Create the claim
     const claim = new this.claimModel({
       ...createClaimDto,
@@ -874,10 +886,39 @@ export class ClaimsService {
       throw new BadRequestException('Only draft claims can be updated');
     }
 
+    const contract = await this.contractModel.findById(claim.contractId);
+    if (!contract) {
+      throw new NotFoundException('Contract not found');
+    }
+
+    const coachClaim = (updateClaimDto as any).coachClaim;
+    const finalAmount =
+      coachClaim?.totalAmount ?? updateClaimDto.amount ?? claim.amount;
+
+    // Check if the updated claim exceeds the remaining contract value
+    const existingClaims = await this.claimModel.find({
+      contractId: contract._id,
+      _id: { $ne: claim._id },
+      status: { $nin: ['rejected', 'cancelled'] },
+    });
+
+    const totalClaimedAmount = existingClaims.reduce(
+      (sum, c) => sum + (c.amount || 0),
+      0,
+    );
+
+    if (totalClaimedAmount + finalAmount > contract.contractValue) {
+      const remainingAmount = contract.contractValue - totalClaimedAmount;
+      throw new BadRequestException(
+        `Updated claim amount (${finalAmount}) exceeds the remaining contract value (${remainingAmount}). Contract total: ${contract.contractValue}.`,
+      );
+    }
+
     return this.claimModel.findByIdAndUpdate(
       id,
       {
         ...updateClaimDto,
+        amount: finalAmount,
         updatedBy: userId,
       },
       { new: true },
