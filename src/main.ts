@@ -9,10 +9,37 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
-  // Enable CORS
-  app.enableCors();
+  // Enable CORS with proper configuration - Allow all origins
+  app.enableCors({
+    origin: true, // Allow all origins
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+    ],
+    exposedHeaders: ['Authorization'],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
+
   // Set global prefix for all routes
   app.setGlobalPrefix('srcc/api');
+
+  // Enable global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
   // Get the configuration service
   const configService = app.get(ConfigService);
@@ -52,6 +79,5 @@ async function bootstrap() {
     `API Documentation available at: http://localhost:${port}/srcc/api/docs`,
   );
   logger.log(`API Base URL: http://localhost:${port}/srcc/api`);
-;
 }
 bootstrap();
