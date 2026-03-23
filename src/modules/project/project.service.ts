@@ -83,6 +83,10 @@ export class ProjectService {
       .populate('assistantProjectManagers.userId', 'firstName lastName email')
       .populate('assistantProjectManagers.contractId')
       .populate('teamMembers.userId', 'firstName lastName email _id')
+      .populate(
+        'teamMembers.organizationId',
+        'companyName businessEmail contactPerson _id',
+      )
       .populate('coachManagers.userId', 'firstName lastName email')
       .populate('coachAssistants.userId', 'firstName lastName email')
       .populate('coaches.userId', 'firstName lastName email')
@@ -141,9 +145,20 @@ export class ProjectService {
       );
     }
 
-    // Manually populate milestoneId for team members
+    // Manually populate milestoneId for team members and normalize data
     if (project.teamMembers && project.milestones) {
       project.teamMembers = project.teamMembers.map((member: any) => {
+        // Transform organization data to match user format
+        if (member.isOrganization && member.organizationId) {
+          const org = member.organizationId;
+          member.userId = {
+            _id: org._id,
+            firstName: org.companyName,
+            lastName: org.contactPerson?.name || '',
+            email: org.businessEmail || org.contactPerson?.email || '',
+          };
+        }
+
         if (member.milestoneId) {
           const milestone = project.milestones.find(
             (m: any) => m._id.toString() === member.milestoneId.toString(),
@@ -304,13 +319,26 @@ export class ProjectService {
   }
 
   async addTeamMember(id: string, teamMember: TeamMemberDto) {
+    const memberData = {
+      ...teamMember,
+      isOrganization: !!teamMember.organizationId,
+      userId: teamMember.organizationId || teamMember.userId,
+    };
+
     return this.projectModel
       .findByIdAndUpdate(
         id,
-        { $push: { teamMembers: teamMember } },
+        { $push: { teamMembers: memberData } },
         { new: true },
       )
-      .populate('teamMembers.userId', 'firstName lastName email')
+      .populate(
+        'teamMembers.userId',
+        'firstName lastName email companyName businessEmail contactPerson _id',
+      )
+      .populate(
+        'teamMembers.organizationId',
+        'companyName businessEmail contactPerson',
+      )
       .exec();
   }
 
@@ -356,18 +384,27 @@ export class ProjectService {
     milestoneId: string,
     teamMember: TeamMemberDto,
   ) {
-    const teamMemberWithMilestone = {
+    const memberData = {
       ...teamMember,
+      isOrganization: !!teamMember.organizationId,
+      userId: teamMember.organizationId || teamMember.userId,
       milestoneId: milestoneId as any,
     };
 
     return this.projectModel
       .findByIdAndUpdate(
         projectId,
-        { $push: { teamMembers: teamMemberWithMilestone } },
+        { $push: { teamMembers: memberData } },
         { new: true },
       )
-      .populate('teamMembers.userId', 'firstName lastName email')
+      .populate(
+        'teamMembers.userId',
+        'firstName lastName email companyName businessEmail contactPerson _id',
+      )
+      .populate(
+        'teamMembers.organizationId',
+        'companyName businessEmail contactPerson',
+      )
       .exec();
   }
 

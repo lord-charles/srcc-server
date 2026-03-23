@@ -127,6 +127,12 @@ export class Project {
     type: [
       {
         userId: { type: MongooseSchema.Types.ObjectId, ref: 'User' },
+        organizationId: {
+          type: MongooseSchema.Types.ObjectId,
+          ref: 'Organization',
+          required: false,
+        },
+        isOrganization: { type: Boolean, default: false },
         milestoneId: { type: MongooseSchema.Types.ObjectId, required: false },
         startDate: { type: Date },
         endDate: { type: Date },
@@ -137,7 +143,9 @@ export class Project {
     default: [],
   })
   teamMembers?: {
-    userId: MongooseSchema.Types.ObjectId;
+    userId?: MongooseSchema.Types.ObjectId;
+    organizationId?: MongooseSchema.Types.ObjectId;
+    isOrganization: boolean;
     milestoneId?: MongooseSchema.Types.ObjectId;
     role: string;
     startDate: Date;

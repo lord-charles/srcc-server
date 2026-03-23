@@ -373,48 +373,58 @@ export class BudgetService {
     userId: Types.ObjectId,
     dto: UpdateBudgetDto,
   ): Promise<Budget> {
-    const budget = await this.findOne(id);
+    try {
+      const budget = await this.findOne(id);
 
-    // if (budget.status !== 'draft' && budget.status !== 'revision_requested') {
-    //   throw new BadRequestException(
-    //     'Budget can only be updated when in draft or revision requested status',
-    //   );
-    // }
+      // if (budget.status !== 'draft' && budget.status !== 'revision_requested') {
+      //   throw new BadRequestException(
+      //     'Budget can only be updated when in draft or revision requested status',
+      //   );
+      // }
 
-    // Increment version when significant changes are made
-    const shouldIncrementVersion =
-      dto.internalCategories?.length > 0 ||
-      dto.externalCategories?.length > 0 ||
-      dto.totalInternalBudget !== undefined ||
-      dto.totalExternalBudget !== undefined;
+      // Increment version when significant changes are made
+      const shouldIncrementVersion =
+        dto.internalCategories?.length > 0 ||
+        dto.externalCategories?.length > 0 ||
+        dto.totalInternalBudget !== undefined ||
+        dto.totalExternalBudget !== undefined;
 
-    const updatedBudget = await this.budgetModel.findByIdAndUpdate(
-      id,
-      {
-        ...dto,
-        updatedBy: userId,
-        ...(shouldIncrementVersion && { version: budget.version + 1 }),
-        $push: {
-          auditTrail: {
-            action: 'UPDATED',
-            performedBy: userId,
-            performedAt: new Date(),
-            details: {
-              internalCategories: dto.internalCategories,
-              externalCategories: dto.externalCategories,
-              totalInternalBudget: dto.totalInternalBudget,
-              totalExternalBudget: dto.totalExternalBudget,
-              version: shouldIncrementVersion
-                ? budget.version + 1
-                : budget.version,
+      const updatedBudget = await this.budgetModel.findByIdAndUpdate(
+        id,
+        {
+          ...dto,
+          updatedBy: userId,
+          ...(shouldIncrementVersion && { version: budget.version + 1 }),
+          $push: {
+            auditTrail: {
+              action: 'UPDATED',
+              performedBy: userId,
+              performedAt: new Date(),
+              details: {
+                internalCategories: dto.internalCategories,
+                externalCategories: dto.externalCategories,
+                totalInternalBudget: dto.totalInternalBudget,
+                totalExternalBudget: dto.totalExternalBudget,
+                version: shouldIncrementVersion
+                  ? budget.version + 1
+                  : budget.version,
+              },
             },
           },
         },
-      },
-      { new: true },
-    );
+        { new: true },
+      );
 
-    return updatedBudget;
+      return updatedBudget;
+    } catch (error) {
+      console.error('Error updating budget', {
+        budgetId: id,
+        userId: userId,
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   }
 
   async getNextApprover(level: string): Promise<User> {

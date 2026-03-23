@@ -1,23 +1,35 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsMongoId,
-  IsString,
-  IsDateString,
   IsArray,
   IsOptional,
+  IsString,
+  ValidateIf,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { Schema as MongooseSchema } from 'mongoose';
 
 export class TeamMemberDto {
   @ApiProperty({
     example: '507f1f77bcf86cd799439011',
     description: 'Team member user ID',
+    required: false,
   })
   @IsMongoId()
-  userId: MongooseSchema.Types.ObjectId;
+  @IsOptional()
+  userId?: MongooseSchema.Types.ObjectId;
 
   @ApiProperty({
     example: '507f1f77bcf86cd799439012',
+    description: 'Organization ID (alternative to userId)',
+    required: false,
+  })
+  @IsMongoId()
+  @IsOptional()
+  organizationId?: MongooseSchema.Types.ObjectId;
+
+  @ApiProperty({
+    example: '507f1f77bcf86cd799439013',
     description: 'Milestone ID (optional)',
     required: false,
   })
@@ -25,13 +37,22 @@ export class TeamMemberDto {
   @IsOptional()
   milestoneId?: MongooseSchema.Types.ObjectId;
 
-  @ApiProperty({ example: '2024-01-01', description: 'Start date' })
-  @IsDateString()
-  startDate: Date;
-
-  @ApiProperty({ example: '2024-12-31', description: 'End date' })
-  @IsDateString()
+  @ApiProperty({
+    example: '2024-01-01T00:00:00.000Z',
+    description: 'Start date in ISO 8601 format',
+    required: false,
+  })
   @IsOptional()
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
+  startDate?: Date;
+
+  @ApiProperty({
+    example: '2024-12-31T00:00:00.000Z',
+    description: 'End date in ISO 8601 format',
+    required: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   endDate?: Date;
 
   @ApiProperty({

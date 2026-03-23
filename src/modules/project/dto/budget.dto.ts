@@ -271,18 +271,22 @@ export class UpdateBudgetItemDto extends CreateBudgetItemDto {
   @ApiProperty({
     example: '65d4a5e9c1656d8f4c0c2d1f',
     description: 'ID of the budget item to update',
+    required: false,
   })
   @IsMongoId()
-  itemId: Types.ObjectId;
+  @IsOptional()
+  itemId?: Types.ObjectId;
 }
 
 export class UpdateBudgetCategoryDto extends CreateBudgetCategoryDto {
   @ApiProperty({
     example: '65d4a5e9c1656d8f4c0c2d1g',
     description: 'ID of the budget category to update',
+    required: false,
   })
   @IsMongoId()
-  categoryId: Types.ObjectId;
+  @IsOptional()
+  categoryId?: Types.ObjectId;
 }
 
 export class UpdateBudgetDto {
