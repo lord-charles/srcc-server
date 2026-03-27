@@ -68,6 +68,7 @@ export class ContractService {
     @InjectModel(Claim.name) private claimModel: Model<ClaimDocument>,
     @InjectModel(ContractTemplate.name)
     private templateModel: Model<ContractTemplateDocument>,
+    @InjectModel('Organization') private organizationModel: Model<any>,
     private readonly notificationService: NotificationService,
     private readonly configService: ConfigService,
   ) {
@@ -131,14 +132,27 @@ export class ContractService {
     currentUserId: string,
   ): Promise<Contract> {
     try {
-      // Check if user exists
-      const user = await this.userModel.findById(
-        createContractDto.contractedUserId,
-      );
-      if (!user) {
-        throw new NotFoundException(
-          `User with ID ${createContractDto.contractedUserId} not found`,
+      // Check if contracted entity is a user or organization
+      let contractedEntity: any;
+
+      if (createContractDto.isOrganization) {
+        contractedEntity = await this.organizationModel.findById(
+          createContractDto.contractedUserId,
         );
+        if (!contractedEntity) {
+          throw new NotFoundException(
+            `Organization with ID ${createContractDto.contractedUserId} not found`,
+          );
+        }
+      } else {
+        contractedEntity = await this.userModel.findById(
+          createContractDto.contractedUserId,
+        );
+        if (!contractedEntity) {
+          throw new NotFoundException(
+            `User with ID ${createContractDto.contractedUserId} not found`,
+          );
+        }
       }
 
       const contractNumber = await this.generateContractNumber();
@@ -190,9 +204,9 @@ export class ContractService {
       // const approvers = await this.getApprovers(initialLevel, savedContract);
       // await this.notifyApprovers(savedContract, approvers, initialLevel);
 
-      // Send notification if user has contact details
-      // if (user.email && user.phoneNumber) {
-      //   await this.sendContractNotification(savedContract, user).catch(
+      // Send notification if entity has contact details
+      // if (contractedEntity.email && contractedEntity.phoneNumber) {
+      //   await this.sendContractNotification(savedContract, contractedEntity).catch(
       //     (error) => {
       //       this.logger.error(
       //         `Failed to send contract notification: ${error.message}`,
@@ -202,7 +216,7 @@ export class ContractService {
       //   );
       // } else {
       //   this.logger.warn(
-      //     `Could not send notification to user ${user._id}: Missing email or phone number`,
+      //     `Could not send notification to entity ${contractedEntity._id}: Missing email or phone number`,
       //   );
       // }
 
@@ -235,9 +249,8 @@ export class ContractService {
         }
       }
 
-      return await this.contractModel
+      const contracts = await this.contractModel
         .find(query)
-        .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('projectId', 'name')
         .populate('milestoneId', 'title description budget dueDate')
         .populate('amendments.approvedBy', 'firstName lastName email')
@@ -251,6 +264,38 @@ export class ContractService {
         )
         .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
+
+      // Transform contracts to populate contractedUserId based on isOrganization flag
+      const transformedContracts = await Promise.all(
+        contracts.map(async (contract) => {
+          const contractObj = contract.toObject() as any;
+          if (contract.isOrganization) {
+            const organization = await this.organizationModel.findById(
+              contract.contractedUserId,
+            );
+            if (organization) {
+              contractObj.contractedUserId = {
+                _id: organization._id,
+                firstName: organization.companyName,
+                lastName: organization.contactPerson?.name || '',
+                email: organization.contactPerson?.email || '',
+                phoneNumber: organization.contactPerson?.phoneNumber || '',
+              };
+            }
+          } else {
+            const user = await this.userModel.findById(
+              contract.contractedUserId,
+              'firstName lastName email phoneNumber',
+            );
+            if (user) {
+              contractObj.contractedUserId = user;
+            }
+          }
+          return contractObj;
+        }),
+      );
+
+      return transformedContracts as Contract[];
     } catch (error) {
       this.logger.error(
         `Error finding contracts: ${error.message}`,
@@ -264,10 +309,9 @@ export class ContractService {
   async findMyContracts(userId: string): Promise<Contract[]> {
     console.log(userId);
     try {
-      return await this.contractModel
+      const contracts = await this.contractModel
         .find({ contractedUserId: new Types.ObjectId(userId) })
         .populate('projectId', 'name milestones')
-        .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('milestoneId', 'title description budget dueDate')
         .populate('amendments.approvedBy', 'firstName lastName email')
         .populate(
@@ -280,6 +324,38 @@ export class ContractService {
         )
         .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
+
+      // Transform contracts to populate contractedUserId based on isOrganization flag
+      const transformedContracts = await Promise.all(
+        contracts.map(async (contract) => {
+          const contractObj = contract.toObject() as any;
+          if (contract.isOrganization) {
+            const organization = await this.organizationModel.findById(
+              contract.contractedUserId,
+            );
+            if (organization) {
+              contractObj.contractedUserId = {
+                _id: organization._id,
+                firstName: organization.companyName,
+                lastName: organization.contactPerson?.name || '',
+                email: organization.contactPerson?.email || '',
+                phoneNumber: organization.contactPerson?.phoneNumber || '',
+              };
+            }
+          } else {
+            const user = await this.userModel.findById(
+              contract.contractedUserId,
+              'firstName lastName email phoneNumber',
+            );
+            if (user) {
+              contractObj.contractedUserId = user as any;
+            }
+          }
+          return contractObj;
+        }),
+      );
+
+      return transformedContracts as Contract[];
     } catch (error) {
       this.logger.error(
         `Error finding contracts by project ID: ${error.message}`,
@@ -292,9 +368,8 @@ export class ContractService {
   //  * Find contracts by project ID
   async findByProject(projectId: string): Promise<Contract[]> {
     try {
-      return await this.contractModel
+      const contracts = await this.contractModel
         .find({ projectId: new Types.ObjectId(projectId) })
-        .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('milestoneId', 'title description budget dueDate')
         .populate('amendments.approvedBy', 'firstName lastName email')
         .populate(
@@ -307,6 +382,38 @@ export class ContractService {
         )
         .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
+
+      // Transform contracts to populate contractedUserId based on isOrganization flag
+      const transformedContracts = await Promise.all(
+        contracts.map(async (contract) => {
+          const contractObj = contract.toObject() as any;
+          if (contract.isOrganization) {
+            const organization = await this.organizationModel.findById(
+              contract.contractedUserId,
+            );
+            if (organization) {
+              contractObj.contractedUserId = {
+                _id: organization._id,
+                firstName: organization.companyName,
+                lastName: organization.contactPerson?.name || '',
+                email: organization.contactPerson?.email || '',
+                phoneNumber: organization.contactPerson?.phoneNumber || '',
+              };
+            }
+          } else {
+            const user = await this.userModel.findById(
+              contract.contractedUserId,
+              'firstName lastName email phoneNumber',
+            );
+            if (user) {
+              contractObj.contractedUserId = user;
+            }
+          }
+          return contractObj;
+        }),
+      );
+
+      return transformedContracts as Contract[];
     } catch (error) {
       this.logger.error(
         `Error finding contracts by project ID: ${error.message}`,
@@ -321,7 +428,6 @@ export class ContractService {
     try {
       const contract = await this.contractModel
         .findById(id)
-        .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('projectId', 'name')
         .populate('milestoneId', 'title description budget dueDate')
         .populate('createdBy', 'firstName lastName email')
@@ -342,7 +448,32 @@ export class ContractService {
         throw new NotFoundException(`Contract with ID ${id} not found`);
       }
 
-      return contract;
+      // Transform contract to populate contractedUserId based on isOrganization flag
+      const contractObj = contract.toObject() as any;
+      if (contract.isOrganization) {
+        const organization = await this.organizationModel.findById(
+          contract.contractedUserId,
+        );
+        if (organization) {
+          contractObj.contractedUserId = {
+            _id: organization._id,
+            firstName: organization.companyName,
+            lastName: organization.contactPerson?.name || '',
+            email: organization.contactPerson?.email || '',
+            phoneNumber: organization.contactPerson?.phoneNumber || '',
+          };
+        }
+      } else {
+        const user = await this.userModel.findById(
+          contract.contractedUserId,
+          'firstName lastName email phoneNumber',
+        );
+        if (user) {
+          contractObj.contractedUserId = user;
+        }
+      }
+
+      return contractObj as Contract;
     } catch (error) {
       this.logger.error(
         `Error finding contract by ID: ${error.message}`,
@@ -660,17 +791,36 @@ export class ContractService {
       );
 
       // Send confirmation notification
-      const user = await this.userModel.findById(contract.contractedUserId);
-      if (user) {
-        await this.sendContractAcceptanceConfirmation(
-          updatedContract,
-          user,
-        ).catch((error) => {
-          this.logger.error(
-            `Failed to send acceptance confirmation: ${error.message}`,
-            error.stack,
-          );
-        });
+      if (contract.isOrganization) {
+        const organization = await this.organizationModel.findById(
+          contract.contractedUserId,
+        );
+        if (organization && organization.contactPerson?.email) {
+          await this.sendContractAcceptanceConfirmation(updatedContract, {
+            firstName: organization.companyName,
+            lastName: organization.contactPerson?.name || '',
+            email: organization.contactPerson?.email,
+            phoneNumber: organization.contactPerson?.phoneNumber,
+          }).catch((error) => {
+            this.logger.error(
+              `Failed to send acceptance confirmation: ${error.message}`,
+              error.stack,
+            );
+          });
+        }
+      } else {
+        const user = await this.userModel.findById(contract.contractedUserId);
+        if (user) {
+          await this.sendContractAcceptanceConfirmation(
+            updatedContract,
+            user,
+          ).catch((error) => {
+            this.logger.error(
+              `Failed to send acceptance confirmation: ${error.message}`,
+              error.stack,
+            );
+          });
+        }
       }
 
       return updatedContract;
@@ -1051,15 +1201,38 @@ Please log in to the SRCC Portal to review and take action.`;
   }
 
   private async notifyContractActivation(contract: Contract): Promise<void> {
-    const user = await this.userModel.findById(contract.contractedUserId);
     const project = await this.projectModel.findById(contract.projectId);
 
-    if (!user || !project) {
-      throw new NotFoundException('User or Project not found');
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    let contactEmail: string | undefined;
+    let contactPhone: string | undefined;
+    let contactName: string;
+
+    if (contract.isOrganization) {
+      const organization = await this.organizationModel.findById(
+        contract.contractedUserId,
+      );
+      if (!organization) {
+        throw new NotFoundException('Organization not found');
+      }
+      contactEmail = organization.contactPerson?.email;
+      contactPhone = organization.contactPerson?.phoneNumber;
+      contactName = organization.companyName;
+    } else {
+      const user = await this.userModel.findById(contract.contractedUserId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      contactEmail = user.email;
+      contactPhone = user.phoneNumber;
+      contactName = `${user.firstName} ${user.lastName}`;
     }
 
     const subject = `Action Required: Contract Acceptance - ${contract.contractNumber}`;
-    const message = `Dear ${user.firstName} ${user.lastName},
+    const message = `Dear ${contactName},
 
 Your contract for project "${project.name}" has been approved and is ready for your acceptance.
 
@@ -1074,13 +1247,13 @@ Next Steps
 2. Generate an OTP for acceptance
 3. Enter the OTP to accept the contract`;
 
-    if (user.email) {
-      await this.notificationService.sendEmail(user.email, subject, message);
+    if (contactEmail) {
+      await this.notificationService.sendEmail(contactEmail, subject, message);
     }
 
-    if (user.phoneNumber) {
+    if (contactPhone) {
       const smsMessage = `SRCC: Your contract (${contract.contractNumber}) has been approved and requires your acceptance. Please check your email for instructions.`;
-      await this.notificationService.sendSMS(user.phoneNumber, smsMessage);
+      await this.notificationService.sendSMS(contactPhone, smsMessage);
     }
   }
 

@@ -120,6 +120,13 @@ export class Contract extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   contractedUserId: MongooseSchema.Types.ObjectId;
 
+  @ApiProperty({
+    description: 'Whether the contracted entity is an organization',
+    example: false,
+  })
+  @Prop({ default: false })
+  isOrganization: boolean;
+
   @ApiProperty({ description: 'History of contract amendments' })
   @Prop({
     type: [

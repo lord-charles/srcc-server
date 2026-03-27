@@ -41,7 +41,15 @@ class BudgetItem {
 
   @ApiProperty({ example: 'monthly', description: 'Frequency of the expense' })
   @Prop({
-    enum: ['one-time', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'],
+    enum: [
+      'one-time',
+      'daily',
+      'weekly',
+      'monthly',
+      'quarterly',
+      'yearly',
+      'annually',
+    ],
   })
   frequency: string;
 

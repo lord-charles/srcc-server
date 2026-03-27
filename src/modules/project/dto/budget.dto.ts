@@ -61,10 +61,26 @@ export class CreateBudgetItemDto {
   @ApiProperty({
     example: 'monthly',
     description: 'Frequency of the expense',
-    enum: ['one-time', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'],
+    enum: [
+      'one-time',
+      'daily',
+      'weekly',
+      'monthly',
+      'quarterly',
+      'yearly',
+      'annually',
+    ],
   })
   @IsString()
-  @IsEnum(['one-time', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'])
+  @IsEnum([
+    'one-time',
+    'daily',
+    'weekly',
+    'monthly',
+    'quarterly',
+    'yearly',
+    'annually',
+  ])
   frequency: string;
 
   @ApiProperty({

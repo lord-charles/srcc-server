@@ -92,6 +92,14 @@ export class CreateContractDto {
   contractedUserId: string;
 
   @ApiProperty({
+    description: 'Whether the contracted entity is an organization',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  isOrganization?: boolean;
+
+  @ApiProperty({
     description: 'Contract status',
     enum: [
       'draft',
