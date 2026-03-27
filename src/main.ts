@@ -29,17 +29,6 @@ async function bootstrap() {
   // Set global prefix for all routes
   app.setGlobalPrefix('srcc/api');
 
-  // Enable global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: false, // Allow extra fields to be stripped silently
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
 
   // Get the configuration service
   const configService = app.get(ConfigService);
