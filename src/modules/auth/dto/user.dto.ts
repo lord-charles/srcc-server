@@ -46,7 +46,6 @@ class BankDetailsDto {
   branchCode?: string;
 }
 
-
 class EmergencyContactDto {
   @ApiProperty({
     description: 'Name of the emergency contact',
@@ -125,7 +124,7 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   nationalId: string;
-  
+
   @ApiProperty({
     description: 'Roles assigned in the app',
     example: ['employee'],
@@ -187,7 +186,6 @@ export class CreateUserDto {
   @ValidateNested()
   @Type(() => BankDetailsDto)
   bankDetails?: BankDetailsDto;
-
 
   @ApiProperty({
     description: 'Emergency contact details',

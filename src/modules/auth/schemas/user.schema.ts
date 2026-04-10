@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types, Schema as MongooseSchema } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 export type UserDocument = User & Document;
@@ -321,7 +321,7 @@ export class User {
       if (typeof workTypes === 'string') {
         try {
           workTypes = JSON.parse(workTypes);
-        } catch (e) {
+        } catch (_e) {
           return [workTypes];
         }
       }
@@ -343,7 +343,7 @@ export class User {
       if (typeof workTypes === 'string') {
         try {
           workTypes = JSON.parse(workTypes);
-        } catch (e) {
+        } catch (_e) {
           return [workTypes];
         }
       }

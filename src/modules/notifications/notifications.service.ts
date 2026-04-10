@@ -1,10 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  Expo,
-  ExpoPushMessage,
-  ExpoPushTicket,
-  ExpoPushReceipt,
-} from 'expo-server-sdk';
+import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { PushToken } from './schemas/push-token.schema';
@@ -28,7 +23,7 @@ export class NotificationsService {
       // Allow development tokens in non-production environment
       const isDevelopment = process.env.NODE_ENV !== 'production';
       const isDevToken = token.startsWith('SIMULATOR-DEV-TOKEN-');
-      
+
       if (!isDevelopment && !Expo.isExpoPushToken(token)) {
         this.logger.error(`Invalid Expo push token: ${token}`);
         throw new Error('Invalid push token format');
@@ -49,7 +44,7 @@ export class NotificationsService {
       const newToken = new this.pushTokenModel({
         userId,
         token,
-        isActive: true
+        isActive: true,
       });
 
       return newToken.save();

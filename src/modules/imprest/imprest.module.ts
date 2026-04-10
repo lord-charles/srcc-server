@@ -14,11 +14,9 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
       { name: User.name, schema: UserSchema },
     ]),
     CloudinaryModule,
-
   ],
   controllers: [ImprestController],
   providers: [ImprestService, NotificationService],
   exports: [ImprestService],
 })
 export class ImprestModule {}
-

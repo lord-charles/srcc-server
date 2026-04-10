@@ -25,13 +25,15 @@ export class ApprovalFlow {
   })
   @Prop({
     required: true,
-    type: [{
-      stepNumber: { type: Number, required: true },
-      role: { type: String, required: true },
-      department: { type: String, required: true },
-      description: { type: String, required: true },
-      nextStatus: { type: String, required: true }
-    }]
+    type: [
+      {
+        stepNumber: { type: Number, required: true },
+        role: { type: String, required: true },
+        department: { type: String, required: true },
+        description: { type: String, required: true },
+        nextStatus: { type: String, required: true },
+      },
+    ],
   })
   steps: ApprovalStep[];
 

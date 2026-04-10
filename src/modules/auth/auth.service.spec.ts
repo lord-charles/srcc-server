@@ -74,13 +74,18 @@ describe('AuthService', () => {
           '/my-projects': ['read', 'write'],
           '/projects': [],
         },
-        toObject: function() { return this; }
+        toObject: function () {
+          return this;
+        },
       };
-      
+
       const sanitizedUser = (service as any).sanitizeUser(mockUser);
-      
+
       expect(sanitizedUser.permissions).toBeDefined();
-      expect(sanitizedUser.permissions['/my-projects']).toEqual(['read', 'write']);
+      expect(sanitizedUser.permissions['/my-projects']).toEqual([
+        'read',
+        'write',
+      ]);
       expect(sanitizedUser.permissions['/projects']).toEqual([]);
     });
   });

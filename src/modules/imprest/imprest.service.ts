@@ -255,7 +255,7 @@ SRCC Finance Team`,
 
     // Get user data for notifications
     const requester = await this.userModel.findById(imprest.requestedBy);
-    const approver = await this.userModel.findById(userId);
+    // const approver = await this.userModel.findById(userId);
 
     // Notify accountants
     const accountants = await this.userModel.find({

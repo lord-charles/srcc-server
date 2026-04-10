@@ -10,7 +10,6 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
-  BadRequestException,
   Req,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';

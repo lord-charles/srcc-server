@@ -185,7 +185,7 @@ export class Organization {
     default: ['consultant'],
   })
   roles: string[];
-  
+
   @ApiProperty({
     description: 'User module permissions',
     example: {

@@ -11,6 +11,8 @@ import { SystemLogsModule } from './modules/system-logs/system-logs.module';
 import { ProjectModule } from './modules/project/project.module';
 import { ClaimsModule } from './modules/claims/claims.module';
 import { ImprestModule } from './modules/imprest/imprest.module';
+import { SupplierModule } from './modules/supplier/supplier.module';
+import { LpoModule } from './modules/lpo/lpo.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { ImprestModule } from './modules/imprest/imprest.module';
     ProjectModule,
     ClaimsModule,
     ImprestModule,
+    SupplierModule,
+    LpoModule,
   ],
   controllers: [],
   providers: [

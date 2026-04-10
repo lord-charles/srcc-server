@@ -1,13 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsEnum, IsNumber, IsDate, ValidateNested, IsOptional, Min, IsArray, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsEnum,
+  IsNumber,
+  IsDate,
+  ValidateNested,
+  IsOptional,
+  Min,
+  IsArray,
+  IsObject,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class SkillDto {
-  @ApiProperty({ description: 'Name of the skill', example: 'Project Management' })
+  @ApiProperty({
+    description: 'Name of the skill',
+    example: 'Project Management',
+  })
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Years of experience with this skill', example: 5 })
+  @ApiProperty({
+    description: 'Years of experience with this skill',
+    example: 5,
+  })
   @IsNumber()
   @Min(0)
   yearsOfExperience: number;
@@ -15,18 +32,24 @@ class SkillDto {
   @ApiProperty({
     description: 'Proficiency level',
     example: 'Expert',
-    enum: ['Beginner', 'Intermediate', 'Expert']
+    enum: ['Beginner', 'Intermediate', 'Expert'],
   })
   @IsEnum(['Beginner', 'Intermediate', 'Expert'])
   proficiencyLevel: string;
 }
 
 class EducationDto {
-  @ApiProperty({ description: 'Name of institution', example: 'University of Nairobi' })
+  @ApiProperty({
+    description: 'Name of institution',
+    example: 'University of Nairobi',
+  })
   @IsString()
   institution: string;
 
-  @ApiProperty({ description: 'Qualification obtained', example: 'Bachelor of Science in Computer Science' })
+  @ApiProperty({
+    description: 'Qualification obtained',
+    example: 'Bachelor of Science in Computer Science',
+  })
   @IsString()
   qualification: string;
 
@@ -36,11 +59,17 @@ class EducationDto {
 }
 
 class AcademicCertificateDto {
-  @ApiProperty({ description: 'Name of the certificate', example: 'Bachelor of Science' })
+  @ApiProperty({
+    description: 'Name of the certificate',
+    example: 'Bachelor of Science',
+  })
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Institution that issued the certificate', example: 'University of Nairobi' })
+  @ApiProperty({
+    description: 'Institution that issued the certificate',
+    example: 'University of Nairobi',
+  })
   @IsString()
   institution: string;
 
@@ -67,7 +96,10 @@ class CertificationDto {
   @IsString()
   expiryDate?: string;
 
-  @ApiProperty({ description: 'Certification ID or number', example: 'PMP123456' })
+  @ApiProperty({
+    description: 'Certification ID or number',
+    example: 'PMP123456',
+  })
   @IsOptional()
   @IsString()
   certificationId?: string;
@@ -75,24 +107,30 @@ class CertificationDto {
 
 class EmergencyContactDto {
   @ApiProperty({ description: 'Name of the contact', example: 'John Doe' })
-
   @IsOptional()
   @IsString()
   name: string;
 
-
   @IsOptional()
-  @ApiProperty({ description: 'Relationship to the consultant', example: 'Spouse' })
+  @ApiProperty({
+    description: 'Relationship to the consultant',
+    example: 'Spouse',
+  })
   @IsString()
   relationship: string;
 
-
   @IsOptional()
-  @ApiProperty({ description: 'Primary phone number', example: '+254712345678' })
+  @ApiProperty({
+    description: 'Primary phone number',
+    example: '+254712345678',
+  })
   @IsString()
   phoneNumber: string;
 
-  @ApiProperty({ description: 'Alternative phone number', example: '+254723456789' })
+  @ApiProperty({
+    description: 'Alternative phone number',
+    example: '+254723456789',
+  })
   @IsOptional()
   @IsString()
   alternativePhoneNumber?: string;
@@ -113,7 +151,10 @@ class BankDetailsDto {
 }
 
 class MpesaDetailsDto {
-  @ApiProperty({ description: 'Phone number linked to Mpesa', example: '+254712345678' })
+  @ApiProperty({
+    description: 'Phone number linked to Mpesa',
+    example: '+254712345678',
+  })
   @IsString()
   phoneNumber: string;
 }
@@ -132,7 +173,10 @@ export class RegisterConsultantDto {
   @IsString()
   middleName?: string;
 
-  @ApiProperty({ description: 'Email address', example: 'jane.wanjiku@example.com' })
+  @ApiProperty({
+    description: 'Email address',
+    example: 'jane.wanjiku@example.com',
+  })
   @IsEmail()
   email: string;
 
@@ -144,7 +188,10 @@ export class RegisterConsultantDto {
   @IsString()
   phoneNumber: string;
 
-  @ApiProperty({ description: 'Alternative phone number', example: '+254723456789' })
+  @ApiProperty({
+    description: 'Alternative phone number',
+    example: '+254723456789',
+  })
   @IsOptional()
   @IsString()
   alternativePhoneNumber?: string;
@@ -161,11 +208,17 @@ export class RegisterConsultantDto {
   @IsString()
   dateOfBirth: string;
 
-  @ApiProperty({ description: 'Physical address', example: 'Westlands, Nairobi' })
+  @ApiProperty({
+    description: 'Physical address',
+    example: 'Westlands, Nairobi',
+  })
   @IsString()
   physicalAddress: string;
 
-  @ApiProperty({ description: 'Postal address', example: 'P.O. Box 12345-00100' })
+  @ApiProperty({
+    description: 'Postal address',
+    example: 'P.O. Box 12345-00100',
+  })
   @IsOptional()
   @IsString()
   postalAddress?: string;
@@ -204,13 +257,19 @@ export class RegisterConsultantDto {
   @Type(() => EducationDto)
   education: EducationDto[];
 
-  @ApiProperty({ description: 'Academic certificates', type: [AcademicCertificateDto] })
+  @ApiProperty({
+    description: 'Academic certificates',
+    type: [AcademicCertificateDto],
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AcademicCertificateDto)
   academicCertificates: AcademicCertificateDto[];
 
-  @ApiProperty({ description: 'Professional certifications', type: [CertificationDto] })
+  @ApiProperty({
+    description: 'Professional certifications',
+    type: [CertificationDto],
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -231,14 +290,17 @@ export class RegisterConsultantDto {
     description: 'Preferred work types',
     example: ['remote', 'hybrid'],
     enum: ['remote', 'onsite', 'hybrid'],
-    isArray: true
+    isArray: true,
   })
   @IsOptional()
   @IsArray()
   @IsEnum(['remote', 'onsite', 'hybrid'], { each: true })
   preferredWorkTypes: string[];
 
-  @ApiProperty({ description: 'Primary expertise/department', example: 'Software Engineering' })
+  @ApiProperty({
+    description: 'Primary expertise/department',
+    example: 'Software Engineering',
+  })
   @IsString()
   department: string;
 

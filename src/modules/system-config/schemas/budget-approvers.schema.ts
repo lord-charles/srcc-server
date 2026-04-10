@@ -26,7 +26,9 @@ class ApproverConfig {
   @Prop({ required: true })
   approvalLimit: number;
 
-  @ApiProperty({ description: 'Backup approver when this person is unavailable' })
+  @ApiProperty({
+    description: 'Backup approver when this person is unavailable',
+  })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   backupApproverId?: MongooseSchema.Types.ObjectId;
 }
@@ -45,15 +47,17 @@ export class BudgetApproversConfig {
   @Prop({ type: [ApproverConfig], required: true })
   financeApprovers: ApproverConfig[];
 
-  @ApiProperty({ description: 'Minimum number of approvers required at each level' })
+  @ApiProperty({
+    description: 'Minimum number of approvers required at each level',
+  })
   @Prop({
     type: {
       checker: { type: Number, required: true, default: 1 },
       approver: { type: Number, required: true, default: 1 },
-      finance: { type: Number, required: true, default: 1 }
+      finance: { type: Number, required: true, default: 1 },
     },
     _id: false,
-    required: true
+    required: true,
   })
   minimumApprovals: {
     checker: number;
@@ -78,10 +82,10 @@ export class BudgetApproversConfig {
     type: {
       checker: { type: Number, required: true, default: 24 },
       approver: { type: Number, required: true, default: 48 },
-      finance: { type: Number, required: true, default: 72 }
+      finance: { type: Number, required: true, default: 72 },
     },
     _id: false,
-    required: true
+    required: true,
   })
   approvalTimeouts: {
     checker: number;
@@ -90,4 +94,6 @@ export class BudgetApproversConfig {
   };
 }
 
-export const BudgetApproversConfigSchema = SchemaFactory.createForClass(BudgetApproversConfig);
+export const BudgetApproversConfigSchema = SchemaFactory.createForClass(
+  BudgetApproversConfig,
+);

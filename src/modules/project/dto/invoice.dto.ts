@@ -6,7 +6,6 @@ import {
   IsArray,
   ValidateNested,
   IsOptional,
-  IsEnum,
   Min,
   IsMongoId,
   ArrayMinSize,

@@ -3,7 +3,7 @@ import { NotificationsService } from '../notifications.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { PushToken } from '../schemas/push-token.schema';
 import { Model } from 'mongoose';
-import { Expo } from 'expo-server-sdk';
+// Expo import removed as it was unused
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
@@ -46,11 +46,15 @@ describe('NotificationsService', () => {
       };
 
       (mockPushTokenModel.findOne as jest.Mock).mockResolvedValue(null);
-      (mockPushTokenModel as any).prototype.save = jest.fn().mockResolvedValue(mockToken);
+      (mockPushTokenModel as any).prototype.save = jest
+        .fn()
+        .mockResolvedValue(mockToken);
 
       await service.savePushToken(mockUserId, mockExpoToken);
 
-      expect(mockPushTokenModel.findOne).toHaveBeenCalledWith({ userId: mockUserId });
+      expect(mockPushTokenModel.findOne).toHaveBeenCalledWith({
+        userId: mockUserId,
+      });
     });
 
     it('should update existing push token', async () => {
@@ -60,7 +64,9 @@ describe('NotificationsService', () => {
         save: jest.fn().mockResolvedValue(true),
       };
 
-      (mockPushTokenModel.findOne as jest.Mock).mockResolvedValue(mockExistingToken);
+      (mockPushTokenModel.findOne as jest.Mock).mockResolvedValue(
+        mockExistingToken,
+      );
 
       await service.savePushToken(mockUserId, mockExpoToken);
 
@@ -71,7 +77,9 @@ describe('NotificationsService', () => {
     it('should throw error for invalid token format', async () => {
       const invalidToken = 'invalid-token';
 
-      await expect(service.savePushToken(mockUserId, invalidToken)).rejects.toThrow();
+      await expect(
+        service.savePushToken(mockUserId, invalidToken),
+      ).rejects.toThrow();
     });
   });
 

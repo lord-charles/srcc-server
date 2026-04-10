@@ -44,7 +44,7 @@ export class UserController {
     status: 200,
     description: 'Employees retrieved successfully',
   })
-  async findAll(@Query() filterDto: UserFilterDto, @Req() req: Request) {
+  async findAll(@Query() filterDto: UserFilterDto, @Req() _req: Request) {
     const {
       status,
       department,
@@ -101,7 +101,7 @@ export class UserController {
   })
   async findByNationalId(
     @Param('nationalId') nationalId: string,
-    @Req() req: any,
+    @Req() _req: any,
   ) {
     return this.userService.findByNationalId(nationalId);
   }
@@ -127,9 +127,9 @@ export class UserController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @Req() req: any,
+    @Req() _req: any,
   ) {
-    return this.userService.update(id, updateUserDto, req);
+    return this.userService.update(id, updateUserDto, _req);
   }
 
   // Delete user
@@ -148,8 +148,8 @@ export class UserController {
     status: 404,
     description: 'Employee not found',
   })
-  async remove(@Param('id') id: string, @Req() req: Request) {
-    return this.userService.remove(id, req);
+  async remove(@Param('id') id: string, @Req() _req: Request) {
+    return this.userService.remove(id, _req);
   }
 
   // Suspend user
@@ -202,8 +202,8 @@ export class UserController {
     status: 404,
     description: 'User not found',
   })
-  async unsuspendUser(@Param('id') userId: string, @Req() req: any) {
-    return this.userService.unsuspendUser(userId, req.user.sub);
+  async unsuspendUser(@Param('id') userId: string, @Req() _req: any) {
+    return this.userService.unsuspendUser(userId, _req.user.sub);
   }
 
   // Update user status
@@ -231,12 +231,12 @@ export class UserController {
     @Param('id') userId: string,
     @Body('status') status: string,
     @Body('reason') reason: string,
-    @Req() req: any,
+    @Req() _req: any,
   ) {
     return this.userService.updateUserStatus(
       userId,
       status,
-      req.user.sub,
+      _req.user.sub,
       reason,
     );
   }

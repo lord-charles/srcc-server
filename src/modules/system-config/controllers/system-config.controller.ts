@@ -12,12 +12,20 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { SystemConfigService } from '../services/system-config.service';
-import { CreateSystemConfigDto, UpdateSystemConfigDto } from '../dto/system-config.dto';
+import {
+  CreateSystemConfigDto,
+  UpdateSystemConfigDto,
+} from '../dto/system-config.dto';
 
 @ApiTags('System Config')
 @Controller('system-config')
@@ -30,7 +38,10 @@ export class SystemConfigController {
   @Roles('admin', 'super_admin')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a system configuration' })
-  @ApiResponse({ status: 201, description: 'Configuration created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Configuration created successfully',
+  })
   create(@Body() createDto: CreateSystemConfigDto, @Req() req: any) {
     return this.systemConfigService.create(createDto, req.user.sub);
   }
@@ -53,7 +64,10 @@ export class SystemConfigController {
   @Patch(':key')
   @Roles('admin', 'super_admin')
   @ApiOperation({ summary: 'Update a system configuration by key' })
-  @ApiResponse({ status: 200, description: 'Configuration updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Configuration updated successfully',
+  })
   update(
     @Param('key') key: string,
     @Body() updateDto: UpdateSystemConfigDto,
@@ -66,7 +80,10 @@ export class SystemConfigController {
   @Roles('admin', 'super_admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a system configuration by key' })
-  @ApiResponse({ status: 204, description: 'Configuration deleted successfully' })
+  @ApiResponse({
+    status: 204,
+    description: 'Configuration deleted successfully',
+  })
   async remove(@Param('key') key: string) {
     await this.systemConfigService.remove(key);
   }

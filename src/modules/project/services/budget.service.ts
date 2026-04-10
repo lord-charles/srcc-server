@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types, Document } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   CreateBudgetDto,
   UpdateBudgetDto,
@@ -79,8 +79,8 @@ export class BudgetService {
       day: 'numeric',
     });
 
-    let emailSubject = `${project.name} - Budget ${action} Notification`;
-    let baseMessage = `
+    const emailSubject = `${project.name} - Budget ${action} Notification`;
+    const baseMessage = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
           <h2 style="color: #2c3e50; margin-bottom: 20px;">Budget ${action}</h2>

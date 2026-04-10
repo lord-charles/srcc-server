@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsMongoId,
-  IsArray,
-  IsOptional,
-  IsString,
-  ValidateIf,
-} from 'class-validator';
+import { IsMongoId, IsArray, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { Schema as MongooseSchema } from 'mongoose';
 

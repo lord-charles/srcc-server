@@ -20,10 +20,10 @@ class MilestoneClaimUpdateDto {
   @IsString()
   title: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Percentage of milestone amount being claimed',
     minimum: 0,
-    maximum: 100
+    maximum: 100,
   })
   @IsNumber()
   @Min(0)
@@ -39,9 +39,9 @@ class DocumentUpdateDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Type of document',
-    enum: ['invoice', 'receipt', 'timesheet', 'report', 'other']
+    enum: ['invoice', 'receipt', 'timesheet', 'report', 'other'],
   })
   @IsEnum(['invoice', 'receipt', 'timesheet', 'report', 'other'])
   type: string;
@@ -84,10 +84,24 @@ export class UpdateClaimDto {
 
   @ApiProperty({
     description: 'Status of the claim',
-    enum: ['draft', 'pending_approval', 'approved', 'rejected', 'paid', 'cancelled'],
+    enum: [
+      'draft',
+      'pending_approval',
+      'approved',
+      'rejected',
+      'paid',
+      'cancelled',
+    ],
   })
   @IsOptional()
-  @IsEnum(['draft', 'pending_approval', 'approved', 'rejected', 'paid', 'cancelled'])
+  @IsEnum([
+    'draft',
+    'pending_approval',
+    'approved',
+    'rejected',
+    'paid',
+    'cancelled',
+  ])
   status?: string;
 
   @ApiProperty({ description: 'Supporting documents for the claim' })

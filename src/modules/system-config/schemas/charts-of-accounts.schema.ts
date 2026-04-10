@@ -14,7 +14,11 @@ class SubAccount {
   @Prop({ required: true })
   subAccountName: string;
 
-  @ApiProperty({ description: 'Account type', example: 'EX', enum: ['EX', 'IN', 'AS', 'LI', 'EQ'] })
+  @ApiProperty({
+    description: 'Account type',
+    example: 'EX',
+    enum: ['EX', 'IN', 'AS', 'LI', 'EQ'],
+  })
   @Prop({ required: true })
   type: string;
 }
@@ -49,7 +53,10 @@ class Mapping {
   @Prop({ required: true })
   objectCodeName: string;
 
-  @ApiProperty({ description: 'Financial statement type', example: 'Income Statement' })
+  @ApiProperty({
+    description: 'Financial statement type',
+    example: 'Income Statement',
+  })
   @Prop({ required: true })
   financialStatement: string;
 
@@ -57,11 +64,17 @@ class Mapping {
   @Prop({ required: true })
   type: string;
 
-  @ApiProperty({ description: 'Financial statement title', example: 'Sale of Books' })
+  @ApiProperty({
+    description: 'Financial statement title',
+    example: 'Sale of Books',
+  })
   @Prop({ required: true })
   fsTitle: string;
 
-  @ApiProperty({ description: 'Financial statement subtitle', example: 'Current Assets' })
+  @ApiProperty({
+    description: 'Financial statement subtitle',
+    example: 'Current Assets',
+  })
   @Prop({ required: false })
   fsSubTitle?: string;
 
@@ -80,7 +93,10 @@ class Account {
   @Prop({ required: true })
   accountName: string;
 
-  @ApiProperty({ description: 'Sub-accounts under this account', type: [SubAccount] })
+  @ApiProperty({
+    description: 'Sub-accounts under this account',
+    type: [SubAccount],
+  })
   @Prop({ type: [SubAccount], default: [] })
   subAccounts: SubAccount[];
 
@@ -125,7 +141,10 @@ export class ChartsOfAccounts {
   @Prop({ required: true, unique: true })
   chartCode: string;
 
-  @ApiProperty({ description: 'Chart data containing accounts and object codes', type: ChartData })
+  @ApiProperty({
+    description: 'Chart data containing accounts and object codes',
+    type: ChartData,
+  })
   @Prop({ type: ChartData, required: true })
   data: ChartData;
 
@@ -138,4 +157,5 @@ export class ChartsOfAccounts {
   updatedBy: MongooseSchema.Types.ObjectId;
 }
 
-export const ChartsOfAccountsSchema = SchemaFactory.createForClass(ChartsOfAccounts);
+export const ChartsOfAccountsSchema =
+  SchemaFactory.createForClass(ChartsOfAccounts);

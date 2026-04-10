@@ -8,9 +8,11 @@ import { Project, ProjectSchema } from '../project/schemas/project.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Contract, ContractSchema } from '../project/schemas/contract.schema';
-import { ApprovalFlow, ApprovalFlowSchema } from './schemas/approval-flow.schema';
+import {
+  ApprovalFlow,
+  ApprovalFlowSchema,
+} from './schemas/approval-flow.schema';
 import { ApprovalFlowService } from './approval-flow.service';
-
 
 @Module({
   imports: [

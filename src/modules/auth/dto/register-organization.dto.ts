@@ -98,7 +98,7 @@ export class RegisterOrganizationDto {
 
   @ApiProperty({
     description: 'Services offered by the organization',
-    example: ['Software Development', 'IT Consulting', 'Cloud Solutions']
+    example: ['Software Development', 'IT Consulting', 'Cloud Solutions'],
   })
   @IsArray()
   @IsString({ each: true })
@@ -106,7 +106,7 @@ export class RegisterOrganizationDto {
 
   @ApiProperty({
     description: 'Industries the organization operates in',
-    example: ['Technology', 'Finance', 'Healthcare']
+    example: ['Technology', 'Finance', 'Healthcare'],
   })
   @IsArray()
   @IsString({ each: true })
@@ -130,7 +130,7 @@ export class RegisterOrganizationDto {
   @ApiProperty({
     description: 'Tax compliance certificate expiry date',
     example: '2025-12-31',
-    type: String
+    type: String,
   })
   @IsString()
   taxComplianceExpiryDate: string;

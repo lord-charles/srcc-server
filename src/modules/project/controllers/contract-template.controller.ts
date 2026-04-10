@@ -1,5 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { ContractTemplateService } from '../services/contract-template.service';
@@ -40,7 +56,10 @@ export class ContractTemplateController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update template' })
-  async update(@Param('id') id: string, @Body() dto: Partial<CreateContractTemplateDto>) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: Partial<CreateContractTemplateDto>,
+  ) {
     return this.service.update(id, dto);
   }
 

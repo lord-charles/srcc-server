@@ -311,6 +311,9 @@ export class AuthController {
     @Param('userId') userId: string,
     @Body() updatePermissionsDto: UpdateUserDto,
   ) {
-    return this.authService.updateUserPermissions(userId, updatePermissionsDto.permissions);
+    return this.authService.updateUserPermissions(
+      userId,
+      updatePermissionsDto.permissions,
+    );
   }
 }

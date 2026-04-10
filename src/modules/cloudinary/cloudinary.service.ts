@@ -7,7 +7,7 @@ import * as streamifier from 'streamifier';
 export class CloudinaryService {
   async uploadFile(
     file: Express.Multer.File,
-    folder: string
+    folder: string,
   ): Promise<CloudinaryResponse> {
     return new Promise<CloudinaryResponse>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
@@ -36,10 +36,10 @@ export class CloudinaryService {
             url: result.url,
             secure_url: result.secure_url,
             folder: result.folder,
-            original_filename: result.original_filename
+            original_filename: result.original_filename,
           };
           resolve(response);
-        }
+        },
       );
 
       streamifier.createReadStream(file.buffer).pipe(uploadStream);

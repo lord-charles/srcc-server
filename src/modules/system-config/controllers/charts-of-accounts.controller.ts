@@ -12,7 +12,12 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { ChartsOfAccountsService } from '../services/charts-of-accounts.service';
@@ -28,7 +33,9 @@ import {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ChartsOfAccountsController {
-  constructor(private readonly chartsOfAccountsService: ChartsOfAccountsService) {}
+  constructor(
+    private readonly chartsOfAccountsService: ChartsOfAccountsService,
+  ) {}
 
   // Chart CRUD Operations
   @Post()
@@ -48,8 +55,6 @@ export class ChartsOfAccountsController {
     return this.chartsOfAccountsService.findAll();
   }
 
-
-
   @Get(':chartCode')
   @Roles('admin', 'finance', 'user')
   @ApiOperation({ summary: 'Get chart of accounts by code' })
@@ -67,7 +72,11 @@ export class ChartsOfAccountsController {
     @Body() updateDto: UpdateChartsOfAccountsDto,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.update(chartCode, updateDto, req.user.sub);
+    return this.chartsOfAccountsService.update(
+      chartCode,
+      updateDto,
+      req.user.sub,
+    );
   }
 
   @Delete(':chartCode')
@@ -84,21 +93,34 @@ export class ChartsOfAccountsController {
   @Roles('admin', 'finance')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Add account to chart' })
-  addAccount(@Param('chartCode') chartCode: string, @Body() accountData: any, @Req() req) {
-    return this.chartsOfAccountsService.addAccount(chartCode, accountData, req.user.sub);
+  addAccount(
+    @Param('chartCode') chartCode: string,
+    @Body() accountData: any,
+    @Req() req,
+  ) {
+    return this.chartsOfAccountsService.addAccount(
+      chartCode,
+      accountData,
+      req.user.sub,
+    );
   }
 
   @Get(':chartCode/accounts')
   @Roles('admin', 'finance', 'user')
   @ApiOperation({ summary: 'Get all accounts in chart' })
   getAccounts(@Param('chartCode') chartCode: string) {
-    return this.chartsOfAccountsService.findByChartCode(chartCode).then((chart) => chart.data.accounts);
+    return this.chartsOfAccountsService
+      .findByChartCode(chartCode)
+      .then((chart) => chart.data.accounts);
   }
 
   @Get(':chartCode/accounts/:accountNumber')
   @Roles('admin', 'finance', 'user')
   @ApiOperation({ summary: 'Get specific account' })
-  getAccount(@Param('chartCode') chartCode: string, @Param('accountNumber') accountNumber: string) {
+  getAccount(
+    @Param('chartCode') chartCode: string,
+    @Param('accountNumber') accountNumber: string,
+  ) {
     return this.chartsOfAccountsService.getAccount(chartCode, accountNumber);
   }
 
@@ -111,7 +133,12 @@ export class ChartsOfAccountsController {
     @Body() accountData: any,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.updateAccount(chartCode, accountNumber, accountData, req.user.sub);
+    return this.chartsOfAccountsService.updateAccount(
+      chartCode,
+      accountNumber,
+      accountData,
+      req.user.sub,
+    );
   }
 
   @Delete(':chartCode/accounts/:accountNumber')
@@ -123,7 +150,11 @@ export class ChartsOfAccountsController {
     @Param('accountNumber') accountNumber: string,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.removeAccount(chartCode, accountNumber, req.user.sub);
+    return this.chartsOfAccountsService.removeAccount(
+      chartCode,
+      accountNumber,
+      req.user.sub,
+    );
   }
 
   // Sub-Account Operations
@@ -137,7 +168,12 @@ export class ChartsOfAccountsController {
     @Body() subAccountData: any,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.addSubAccount(chartCode, accountNumber, subAccountData, req.user.sub);
+    return this.chartsOfAccountsService.addSubAccount(
+      chartCode,
+      accountNumber,
+      subAccountData,
+      req.user.sub,
+    );
   }
 
   @Delete(':chartCode/accounts/:accountNumber/sub-accounts/:subAccountNumber')
@@ -163,15 +199,25 @@ export class ChartsOfAccountsController {
   @Roles('admin', 'finance')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Add object code' })
-  addObjectCode(@Param('chartCode') chartCode: string, @Body() objectCodeData: any, @Req() req) {
-    return this.chartsOfAccountsService.addObjectCode(chartCode, objectCodeData, req.user.sub);
+  addObjectCode(
+    @Param('chartCode') chartCode: string,
+    @Body() objectCodeData: any,
+    @Req() req,
+  ) {
+    return this.chartsOfAccountsService.addObjectCode(
+      chartCode,
+      objectCodeData,
+      req.user.sub,
+    );
   }
 
   @Get(':chartCode/object-codes')
   @Roles('admin', 'finance', 'user')
   @ApiOperation({ summary: 'Get all object codes in chart' })
   getObjectCodes(@Param('chartCode') chartCode: string) {
-    return this.chartsOfAccountsService.findByChartCode(chartCode).then((chart) => chart.data.objectCodes);
+    return this.chartsOfAccountsService
+      .findByChartCode(chartCode)
+      .then((chart) => chart.data.objectCodes);
   }
 
   @Delete(':chartCode/object-codes/:objectCode')
@@ -183,7 +229,11 @@ export class ChartsOfAccountsController {
     @Param('objectCode') objectCode: string,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.removeObjectCode(chartCode, objectCode, req.user.sub);
+    return this.chartsOfAccountsService.removeObjectCode(
+      chartCode,
+      objectCode,
+      req.user.sub,
+    );
   }
 
   // Mapping Operations
@@ -197,7 +247,12 @@ export class ChartsOfAccountsController {
     @Body() mappingData: any,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.addMapping(chartCode, accountNumber, mappingData, req.user.sub);
+    return this.chartsOfAccountsService.addMapping(
+      chartCode,
+      accountNumber,
+      mappingData,
+      req.user.sub,
+    );
   }
 
   @Delete(':chartCode/accounts/:accountNumber/mappings/:mappingIndex')
@@ -210,7 +265,12 @@ export class ChartsOfAccountsController {
     @Param('mappingIndex') mappingIndex: number,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.removeMapping(chartCode, accountNumber, mappingIndex, req.user.sub);
+    return this.chartsOfAccountsService.removeMapping(
+      chartCode,
+      accountNumber,
+      mappingIndex,
+      req.user.sub,
+    );
   }
 
   // Bulk Operations
@@ -222,7 +282,10 @@ export class ChartsOfAccountsController {
     @Body() bulkUpdateDto: BulkUpdateAccountsDto,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.bulkUpdateAccounts(bulkUpdateDto, req.user.sub);
+    return this.chartsOfAccountsService.bulkUpdateAccounts(
+      bulkUpdateDto,
+      req.user.sub,
+    );
   }
 
   @Patch(':chartCode/object-codes/bulk')
@@ -233,28 +296,43 @@ export class ChartsOfAccountsController {
     @Body() bulkUpdateDto: BulkUpdateObjectCodesDto,
     @Req() req,
   ) {
-    return this.chartsOfAccountsService.bulkUpdateObjectCodes(bulkUpdateDto, req.user.sub);
+    return this.chartsOfAccountsService.bulkUpdateObjectCodes(
+      bulkUpdateDto,
+      req.user.sub,
+    );
   }
 
   // Search and Filter Operations
   @Get(':chartCode/accounts/search')
   @Roles('admin', 'finance', 'user')
   @ApiOperation({ summary: 'Search accounts' })
-  searchAccounts(@Param('chartCode') chartCode: string, @Query('q') searchTerm: string) {
+  searchAccounts(
+    @Param('chartCode') chartCode: string,
+    @Query('q') searchTerm: string,
+  ) {
     return this.chartsOfAccountsService.searchAccounts(chartCode, searchTerm);
   }
 
   @Get(':chartCode/object-codes/search')
   @Roles('admin', 'finance', 'user')
   @ApiOperation({ summary: 'Search object codes' })
-  searchObjectCodes(@Param('chartCode') chartCode: string, @Query('q') searchTerm: string) {
-    return this.chartsOfAccountsService.searchObjectCodes(chartCode, searchTerm);
+  searchObjectCodes(
+    @Param('chartCode') chartCode: string,
+    @Query('q') searchTerm: string,
+  ) {
+    return this.chartsOfAccountsService.searchObjectCodes(
+      chartCode,
+      searchTerm,
+    );
   }
 
   @Get(':chartCode/accounts/type/:type')
   @Roles('admin', 'finance', 'user')
   @ApiOperation({ summary: 'Get accounts by type' })
-  getAccountsByType(@Param('chartCode') chartCode: string, @Param('type') type: string) {
+  getAccountsByType(
+    @Param('chartCode') chartCode: string,
+    @Param('type') type: string,
+  ) {
     return this.chartsOfAccountsService.getAccountsByType(chartCode, type);
   }
 

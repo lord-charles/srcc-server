@@ -233,7 +233,7 @@ export class ContractService {
   //  * Find all contracts
   async findAll(filters?: any): Promise<Contract[]> {
     try {
-      let query = {};
+      const query = {};
 
       if (filters) {
         if (filters.status) {

@@ -5,14 +5,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model, Types, Document, Mongoose } from 'mongoose';
-import { Claim, ClaimDocument } from './schemas/claim.schema';
-import { Contract, ContractDocument } from '../project/schemas/contract.schema';
-import { Project, ProjectDocument } from '../project/schemas/project.schema';
-import { User, UserDocument } from '../auth/schemas/user.schema';
+import { Model, Types } from 'mongoose';
+import { ClaimDocument } from './schemas/claim.schema';
+import { ContractDocument } from '../project/schemas/contract.schema';
+import { ProjectDocument } from '../project/schemas/project.schema';
+import { UserDocument } from '../auth/schemas/user.schema';
 import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimDto } from './dto/update-claim.dto';
-import { NotificationService } from '../notifications/services/notification.service';
 import { ClaimsNotificationService } from './claims-notification.service';
 import { ApprovalFlowService } from './approval-flow.service';
 
@@ -610,7 +609,7 @@ export class ClaimsService {
       this.logger.log(`User is admin: ${isAdmin}`);
 
       // Build the query
-      let query = this.claimModel.find(filters);
+      const query = this.claimModel.find(filters);
 
       // If not admin, filter by department
       if (!isAdmin && user.department) {

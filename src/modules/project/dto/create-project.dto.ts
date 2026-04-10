@@ -123,7 +123,9 @@ export class CreateProjectDto {
   @IsNotEmpty()
   department: string;
 
-  @ApiProperty({ example: 'Comprehensive upgrade of the hospital management system' })
+  @ApiProperty({
+    example: 'Comprehensive upgrade of the hospital management system',
+  })
   @IsString()
   @IsNotEmpty()
   description: string;

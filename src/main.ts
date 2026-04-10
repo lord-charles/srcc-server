@@ -29,7 +29,6 @@ async function bootstrap() {
   // Set global prefix for all routes
   app.setGlobalPrefix('srcc/api');
 
-
   // Get the configuration service
   const configService = app.get(ConfigService);
 

@@ -1,7 +1,6 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
   IsString,
-  IsObject,
   IsBoolean,
   IsOptional,
   IsArray,
@@ -37,12 +36,20 @@ export class MappingDto {
   @IsString()
   accountNumber: string;
 
-  @ApiProperty({ description: 'Account name', example: 'DLC MANAGER', required: false })
+  @ApiProperty({
+    description: 'Account name',
+    example: 'DLC MANAGER',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   accountName?: string;
 
-  @ApiProperty({ description: 'Account name for 2025', example: 'DLC MANAGER', required: false })
+  @ApiProperty({
+    description: 'Account name for 2025',
+    example: 'DLC MANAGER',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   accountName2025?: string;
@@ -55,7 +62,10 @@ export class MappingDto {
   @IsString()
   objectCodeName: string;
 
-  @ApiProperty({ description: 'Financial statement type', example: 'Income Statement' })
+  @ApiProperty({
+    description: 'Financial statement type',
+    example: 'Income Statement',
+  })
   @IsString()
   financialStatement: string;
 
@@ -63,11 +73,18 @@ export class MappingDto {
   @IsString()
   type: string;
 
-  @ApiProperty({ description: 'Financial statement title', example: 'Sale of Books' })
+  @ApiProperty({
+    description: 'Financial statement title',
+    example: 'Sale of Books',
+  })
   @IsString()
   fsTitle: string;
 
-  @ApiProperty({ description: 'Financial statement subtitle', example: 'Current Assets', required: false })
+  @ApiProperty({
+    description: 'Financial statement subtitle',
+    example: 'Current Assets',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   fsSubTitle?: string;
@@ -100,14 +117,22 @@ export class AccountDto {
   @IsString()
   accountName: string;
 
-  @ApiProperty({ description: 'Sub-accounts', type: [SubAccountDto], required: false })
+  @ApiProperty({
+    description: 'Sub-accounts',
+    type: [SubAccountDto],
+    required: false,
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SubAccountDto)
   @IsOptional()
   subAccounts?: SubAccountDto[];
 
-  @ApiProperty({ description: 'Account mappings', type: [MappingDto], required: false })
+  @ApiProperty({
+    description: 'Account mappings',
+    type: [MappingDto],
+    required: false,
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MappingDto)
@@ -128,7 +153,11 @@ export class ChartDataDto {
   @Type(() => ObjectCodeDto)
   objectCodes: ObjectCodeDto[];
 
-  @ApiProperty({ description: 'Chart-level mappings', type: [MappingDto], required: false })
+  @ApiProperty({
+    description: 'Chart-level mappings',
+    type: [MappingDto],
+    required: false,
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MappingDto)
@@ -155,7 +184,11 @@ export class CreateChartsOfAccountsDto {
   @Type(() => ChartDataDto)
   data: ChartDataDto;
 
-  @ApiProperty({ description: 'Whether chart is active', example: true, required: false })
+  @ApiProperty({
+    description: 'Whether chart is active',
+    example: true,
+    required: false,
+  })
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
@@ -166,7 +199,9 @@ export class CreateChartsOfAccountsDto {
   currency?: string;
 }
 
-export class UpdateChartsOfAccountsDto extends PartialType(CreateChartsOfAccountsDto) {
+export class UpdateChartsOfAccountsDto extends PartialType(
+  CreateChartsOfAccountsDto,
+) {
   @ApiProperty({ description: 'Version number', example: 1, required: false })
   @IsNumber()
   @IsOptional()

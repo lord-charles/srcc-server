@@ -1,7 +1,16 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
-import { ChartsOfAccounts, ChartsOfAccountsDocument } from '../schemas/charts-of-accounts.schema';
+import {
+  ChartsOfAccounts,
+  ChartsOfAccountsDocument,
+} from '../schemas/charts-of-accounts.schema';
 import {
   CreateChartsOfAccountsDto,
   UpdateChartsOfAccountsDto,
@@ -18,12 +27,19 @@ export class ChartsOfAccountsService {
     private chartsOfAccountsModel: Model<ChartsOfAccountsDocument>,
   ) {}
 
-  async create(createDto: CreateChartsOfAccountsDto, userId: string): Promise<ChartsOfAccountsDocument> {
+  async create(
+    createDto: CreateChartsOfAccountsDto,
+    userId: string,
+  ): Promise<ChartsOfAccountsDocument> {
     try {
       // Check if chart code already exists
-      const existing = await this.chartsOfAccountsModel.findOne({ chartCode: createDto.chartCode });
+      const existing = await this.chartsOfAccountsModel.findOne({
+        chartCode: createDto.chartCode,
+      });
       if (existing) {
-        throw new ConflictException(`Chart with code ${createDto.chartCode} already exists`);
+        throw new ConflictException(
+          `Chart with code ${createDto.chartCode} already exists`,
+        );
       }
 
       const chart = await this.chartsOfAccountsModel.create({
@@ -45,7 +61,9 @@ export class ChartsOfAccountsService {
   }
 
   async findByChartCode(chartCode: string): Promise<ChartsOfAccountsDocument> {
-    const chart = await this.chartsOfAccountsModel.findOne({ chartCode }).exec();
+    const chart = await this.chartsOfAccountsModel
+      .findOne({ chartCode })
+      .exec();
     if (!chart) {
       throw new NotFoundException(`Chart with code ${chartCode} not found`);
     }
@@ -81,7 +99,9 @@ export class ChartsOfAccountsService {
   }
 
   async remove(chartCode: string): Promise<ChartsOfAccountsDocument> {
-    const chart = await this.chartsOfAccountsModel.findOneAndDelete({ chartCode }).exec();
+    const chart = await this.chartsOfAccountsModel
+      .findOneAndDelete({ chartCode })
+      .exec();
     if (!chart) {
       throw new NotFoundException(`Chart with code ${chartCode} not found`);
     }
@@ -90,20 +110,30 @@ export class ChartsOfAccountsService {
   }
 
   // Account-specific operations
-  async addAccount(chartCode: string, accountData: any, userId: string): Promise<ChartsOfAccountsDocument> {
+  async addAccount(
+    chartCode: string,
+    accountData: any,
+    userId: string,
+  ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
 
     // Check if account already exists
-    const accountExists = chart.data.accounts.some((acc) => acc.accountNumber === accountData.accountNumber);
+    const accountExists = chart.data.accounts.some(
+      (acc) => acc.accountNumber === accountData.accountNumber,
+    );
     if (accountExists) {
-      throw new ConflictException(`Account ${accountData.accountNumber} already exists in this chart`);
+      throw new ConflictException(
+        `Account ${accountData.accountNumber} already exists in this chart`,
+      );
     }
 
     chart.data.accounts.push(accountData);
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Added account ${accountData.accountNumber} to chart ${chartCode}`);
+    this.logger.log(
+      `Added account ${accountData.accountNumber} to chart ${chartCode}`,
+    );
     return updated;
   }
 
@@ -115,12 +145,19 @@ export class ChartsOfAccountsService {
   ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
 
-    const accountIndex = chart.data.accounts.findIndex((acc) => acc.accountNumber === accountNumber);
+    const accountIndex = chart.data.accounts.findIndex(
+      (acc) => acc.accountNumber === accountNumber,
+    );
     if (accountIndex === -1) {
-      throw new NotFoundException(`Account ${accountNumber} not found in chart ${chartCode}`);
+      throw new NotFoundException(
+        `Account ${accountNumber} not found in chart ${chartCode}`,
+      );
     }
 
-    chart.data.accounts[accountIndex] = { ...chart.data.accounts[accountIndex], ...accountData };
+    chart.data.accounts[accountIndex] = {
+      ...chart.data.accounts[accountIndex],
+      ...accountData,
+    };
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
@@ -128,12 +165,20 @@ export class ChartsOfAccountsService {
     return updated;
   }
 
-  async removeAccount(chartCode: string, accountNumber: string, userId: string): Promise<ChartsOfAccountsDocument> {
+  async removeAccount(
+    chartCode: string,
+    accountNumber: string,
+    userId: string,
+  ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
 
-    const accountIndex = chart.data.accounts.findIndex((acc) => acc.accountNumber === accountNumber);
+    const accountIndex = chart.data.accounts.findIndex(
+      (acc) => acc.accountNumber === accountNumber,
+    );
     if (accountIndex === -1) {
-      throw new NotFoundException(`Account ${accountNumber} not found in chart ${chartCode}`);
+      throw new NotFoundException(
+        `Account ${accountNumber} not found in chart ${chartCode}`,
+      );
     }
 
     chart.data.accounts.splice(accountIndex, 1);
@@ -146,10 +191,14 @@ export class ChartsOfAccountsService {
 
   async getAccount(chartCode: string, accountNumber: string): Promise<any> {
     const chart = await this.findByChartCode(chartCode);
-    const account = chart.data.accounts.find((acc) => acc.accountNumber === accountNumber);
+    const account = chart.data.accounts.find(
+      (acc) => acc.accountNumber === accountNumber,
+    );
 
     if (!account) {
-      throw new NotFoundException(`Account ${accountNumber} not found in chart ${chartCode}`);
+      throw new NotFoundException(
+        `Account ${accountNumber} not found in chart ${chartCode}`,
+      );
     }
 
     return account;
@@ -163,10 +212,14 @@ export class ChartsOfAccountsService {
     userId: string,
   ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
-    const account = chart.data.accounts.find((acc) => acc.accountNumber === accountNumber);
+    const account = chart.data.accounts.find(
+      (acc) => acc.accountNumber === accountNumber,
+    );
 
     if (!account) {
-      throw new NotFoundException(`Account ${accountNumber} not found in chart ${chartCode}`);
+      throw new NotFoundException(
+        `Account ${accountNumber} not found in chart ${chartCode}`,
+      );
     }
 
     const subAccountExists = account.subAccounts.some(
@@ -182,7 +235,9 @@ export class ChartsOfAccountsService {
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Added sub-account ${subAccountData.subAccountNumber} to account ${accountNumber}`);
+    this.logger.log(
+      `Added sub-account ${subAccountData.subAccountNumber} to account ${accountNumber}`,
+    );
     return updated;
   }
 
@@ -193,72 +248,113 @@ export class ChartsOfAccountsService {
     userId: string,
   ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
-    const account = chart.data.accounts.find((acc) => acc.accountNumber === accountNumber);
+    const account = chart.data.accounts.find(
+      (acc) => acc.accountNumber === accountNumber,
+    );
 
     if (!account) {
-      throw new NotFoundException(`Account ${accountNumber} not found in chart ${chartCode}`);
+      throw new NotFoundException(
+        `Account ${accountNumber} not found in chart ${chartCode}`,
+      );
     }
 
-    const subAccountIndex = account.subAccounts.findIndex((sub) => sub.subAccountNumber === subAccountNumber);
+    const subAccountIndex = account.subAccounts.findIndex(
+      (sub) => sub.subAccountNumber === subAccountNumber,
+    );
     if (subAccountIndex === -1) {
-      throw new NotFoundException(`Sub-account ${subAccountNumber} not found in account ${accountNumber}`);
+      throw new NotFoundException(
+        `Sub-account ${subAccountNumber} not found in account ${accountNumber}`,
+      );
     }
 
     account.subAccounts.splice(subAccountIndex, 1);
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Removed sub-account ${subAccountNumber} from account ${accountNumber}`);
+    this.logger.log(
+      `Removed sub-account ${subAccountNumber} from account ${accountNumber}`,
+    );
     return updated;
   }
 
   // Object code operations
-  async addObjectCode(chartCode: string, objectCodeData: any, userId: string): Promise<ChartsOfAccountsDocument> {
+  async addObjectCode(
+    chartCode: string,
+    objectCodeData: any,
+    userId: string,
+  ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
 
-    const codeExists = chart.data.objectCodes.some((code) => code.objectCode === objectCodeData.objectCode);
+    const codeExists = chart.data.objectCodes.some(
+      (code) => code.objectCode === objectCodeData.objectCode,
+    );
     if (codeExists) {
-      throw new ConflictException(`Object code ${objectCodeData.objectCode} already exists in this chart`);
+      throw new ConflictException(
+        `Object code ${objectCodeData.objectCode} already exists in this chart`,
+      );
     }
 
     chart.data.objectCodes.push(objectCodeData);
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Added object code ${objectCodeData.objectCode} to chart ${chartCode}`);
+    this.logger.log(
+      `Added object code ${objectCodeData.objectCode} to chart ${chartCode}`,
+    );
     return updated;
   }
 
-  async removeObjectCode(chartCode: string, objectCode: string, userId: string): Promise<ChartsOfAccountsDocument> {
+  async removeObjectCode(
+    chartCode: string,
+    objectCode: string,
+    userId: string,
+  ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
 
-    const codeIndex = chart.data.objectCodes.findIndex((code) => code.objectCode === objectCode);
+    const codeIndex = chart.data.objectCodes.findIndex(
+      (code) => code.objectCode === objectCode,
+    );
     if (codeIndex === -1) {
-      throw new NotFoundException(`Object code ${objectCode} not found in chart ${chartCode}`);
+      throw new NotFoundException(
+        `Object code ${objectCode} not found in chart ${chartCode}`,
+      );
     }
 
     chart.data.objectCodes.splice(codeIndex, 1);
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Removed object code ${objectCode} from chart ${chartCode}`);
+    this.logger.log(
+      `Removed object code ${objectCode} from chart ${chartCode}`,
+    );
     return updated;
   }
 
   // Mapping operations
-  async addMapping(chartCode: string, accountNumber: string, mappingData: any, userId: string): Promise<ChartsOfAccountsDocument> {
+  async addMapping(
+    chartCode: string,
+    accountNumber: string,
+    mappingData: any,
+    userId: string,
+  ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
-    const account = chart.data.accounts.find((acc) => acc.accountNumber === accountNumber);
+    const account = chart.data.accounts.find(
+      (acc) => acc.accountNumber === accountNumber,
+    );
 
     if (!account) {
-      throw new NotFoundException(`Account ${accountNumber} not found in chart ${chartCode}`);
+      throw new NotFoundException(
+        `Account ${accountNumber} not found in chart ${chartCode}`,
+      );
     }
 
     account.mappings.push(mappingData);
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Added mapping to account ${accountNumber} in chart ${chartCode}`);
+    this.logger.log(
+      `Added mapping to account ${accountNumber} in chart ${chartCode}`,
+    );
     return updated;
   }
 
@@ -269,10 +365,14 @@ export class ChartsOfAccountsService {
     userId: string,
   ): Promise<ChartsOfAccountsDocument> {
     const chart = await this.findByChartCode(chartCode);
-    const account = chart.data.accounts.find((acc) => acc.accountNumber === accountNumber);
+    const account = chart.data.accounts.find(
+      (acc) => acc.accountNumber === accountNumber,
+    );
 
     if (!account) {
-      throw new NotFoundException(`Account ${accountNumber} not found in chart ${chartCode}`);
+      throw new NotFoundException(
+        `Account ${accountNumber} not found in chart ${chartCode}`,
+      );
     }
 
     if (mappingIndex < 0 || mappingIndex >= account.mappings.length) {
@@ -283,7 +383,9 @@ export class ChartsOfAccountsService {
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Removed mapping from account ${accountNumber} in chart ${chartCode}`);
+    this.logger.log(
+      `Removed mapping from account ${accountNumber} in chart ${chartCode}`,
+    );
     return updated;
   }
 
@@ -303,7 +405,9 @@ export class ChartsOfAccountsService {
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Bulk updated ${bulkUpdateDto.accounts.length} accounts in chart ${bulkUpdateDto.chartCode}`);
+    this.logger.log(
+      `Bulk updated ${bulkUpdateDto.accounts.length} accounts in chart ${bulkUpdateDto.chartCode}`,
+    );
     return updated;
   }
 
@@ -318,7 +422,9 @@ export class ChartsOfAccountsService {
     chart.updatedBy = userId as unknown as ObjectId;
 
     const updated = await chart.save();
-    this.logger.log(`Bulk updated ${bulkUpdateDto.objectCodes.length} object codes in chart ${bulkUpdateDto.chartCode}`);
+    this.logger.log(
+      `Bulk updated ${bulkUpdateDto.objectCodes.length} object codes in chart ${bulkUpdateDto.chartCode}`,
+    );
     return updated;
   }
 
@@ -334,7 +440,10 @@ export class ChartsOfAccountsService {
     );
   }
 
-  async searchObjectCodes(chartCode: string, searchTerm: string): Promise<any[]> {
+  async searchObjectCodes(
+    chartCode: string,
+    searchTerm: string,
+  ): Promise<any[]> {
     const chart = await this.findByChartCode(chartCode);
     const lowerSearchTerm = searchTerm.toLowerCase();
 
@@ -358,9 +467,15 @@ export class ChartsOfAccountsService {
     return {
       chartCode: chart.chartCode,
       totalAccounts: chart.data.accounts.length,
-      totalSubAccounts: chart.data.accounts.reduce((sum, acc) => sum + acc.subAccounts.length, 0),
+      totalSubAccounts: chart.data.accounts.reduce(
+        (sum, acc) => sum + acc.subAccounts.length,
+        0,
+      ),
       totalObjectCodes: chart.data.objectCodes.length,
-      totalMappings: chart.data.accounts.reduce((sum, acc) => sum + acc.mappings.length, 0),
+      totalMappings: chart.data.accounts.reduce(
+        (sum, acc) => sum + acc.mappings.length,
+        0,
+      ),
     };
   }
 }

@@ -650,7 +650,7 @@ export class ConsultantService {
   // Organization Services
   async registerOrganization(
     registerOrgDto: any,
-    req?: Request,
+    _req?: Request,
   ): Promise<Organization> {
     try {
       // Validate organization data

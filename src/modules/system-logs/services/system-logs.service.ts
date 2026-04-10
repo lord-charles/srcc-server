@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { SystemLog, SystemLogDocument, LogSeverity } from '../schemas/system-log.schema';
+import {
+  SystemLog,
+  SystemLogDocument,
+  LogSeverity,
+} from '../schemas/system-log.schema';
 import { Request } from 'express';
 
 @Injectable()

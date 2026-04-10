@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ContractTemplate, ContractTemplateDocument } from '../schemas/contract-template.schema';
+import {
+  ContractTemplate,
+  ContractTemplateDocument,
+} from '../schemas/contract-template.schema';
 import { CreateContractTemplateDto } from '../dto/create-contract-template.dto';
 
 @Injectable()
@@ -13,7 +16,10 @@ export class ContractTemplateService {
 
   async create(dto: CreateContractTemplateDto): Promise<ContractTemplate> {
     const variables = dto.variablesCsv
-      ? dto.variablesCsv.split(',').map(v => v.trim()).filter(Boolean)
+      ? dto.variablesCsv
+          .split(',')
+          .map((v) => v.trim())
+          .filter(Boolean)
       : [];
 
     const created = new this.templateModel({
@@ -28,7 +34,10 @@ export class ContractTemplateService {
     return created.save();
   }
 
-  async findAll(params?: { active?: boolean; category?: string }): Promise<ContractTemplate[]> {
+  async findAll(params?: {
+    active?: boolean;
+    category?: string;
+  }): Promise<ContractTemplate[]> {
     const query: any = {};
     if (params?.active !== undefined) query.active = params.active;
     if (params?.category) query.category = params.category;
@@ -41,21 +50,30 @@ export class ContractTemplateService {
     return tpl as any;
   }
 
-  async update(id: string, dto: Partial<CreateContractTemplateDto>): Promise<ContractTemplate> {
+  async update(
+    id: string,
+    dto: Partial<CreateContractTemplateDto>,
+  ): Promise<ContractTemplate> {
     const update: any = { ...dto };
     if (dto.variablesCsv !== undefined) {
       update.variables = dto.variablesCsv
-        ? dto.variablesCsv.split(',').map(v => v.trim()).filter(Boolean)
+        ? dto.variablesCsv
+            .split(',')
+            .map((v) => v.trim())
+            .filter(Boolean)
         : [];
       delete update.variablesCsv;
     }
-    const tpl = await this.templateModel.findByIdAndUpdate(id, update, { new: true });
+    const tpl = await this.templateModel.findByIdAndUpdate(id, update, {
+      new: true,
+    });
     if (!tpl) throw new NotFoundException(`Template ${id} not found`);
     return tpl;
   }
 
   async remove(id: string): Promise<void> {
     const res = await this.templateModel.deleteOne({ _id: id });
-    if (!res.deletedCount) throw new NotFoundException(`Template ${id} not found`);
+    if (!res.deletedCount)
+      throw new NotFoundException(`Template ${id} not found`);
   }
 }
