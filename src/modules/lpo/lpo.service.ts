@@ -45,6 +45,16 @@ export class LpoService {
     return savedLpo;
   }
 
+  async findAll(): Promise<Lpo[]> {
+    return this.lpoModel
+      .find()
+      .populate('projectId', 'name description')
+      .populate('supplierId', 'name email phone')
+      .populate('preparedBy', 'firstName lastName')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   async findByProject(projectId: string): Promise<Lpo[]> {
     return this.lpoModel
       .find({ projectId })

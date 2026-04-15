@@ -28,6 +28,12 @@ export class LpoController {
     return this.lpoService.create(createLpoDto, userId);
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Get all LPOs' })
+  async findAll() {
+    return this.lpoService.findAll();
+  }
+
   @Get('project/:projectId')
   @ApiOperation({ summary: 'Get LPOs for a specific project' })
   async findByProject(@Param('projectId') projectId: string) {
