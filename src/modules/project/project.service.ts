@@ -15,6 +15,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { TeamMemberDto } from './dto/team-member.dto';
 import { Schema as MongooseSchema } from 'mongoose';
+import { SystemConfigService } from '../system-config/services/system-config.service';
 
 @Injectable()
 export class ProjectService {
@@ -23,6 +24,7 @@ export class ProjectService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Organization.name)
     private organizationModel: Model<OrganizationDocument>,
+    private systemConfigService: SystemConfigService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
@@ -199,6 +201,23 @@ export class ProjectService {
     id: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<Project> {
+    // Check if documents are being updated
+    const documentFields = [
+      'projectProposalUrl',
+      'signedContractUrl',
+      'executionMemoUrl',
+      'signedBudgetUrl',
+      'documents',
+    ];
+
+    const isUpdatingDocuments = Object.keys(updateProjectDto).some((key) =>
+      documentFields.includes(key),
+    );
+
+    if (isUpdatingDocuments) {
+      await this.checkDocumentCrudPermission();
+    }
+
     const updatedProject = await this.projectModel
       .findByIdAndUpdate(id, updateProjectDto, { new: true })
       .exec();
@@ -278,6 +297,108 @@ export class ProjectService {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
     return project;
+  }
+
+  async updateDocument(
+    projectId: string,
+    documentId: string,
+    documentData: any,
+  ): Promise<Project> {
+    await this.checkDocumentCrudPermission();
+
+    const project = await this.projectModel
+      .findOneAndUpdate(
+        {
+          _id: projectId,
+          'documents._id': documentId,
+        },
+        {
+          $set: Object.keys(documentData).reduce((acc, key) => {
+            acc[`documents.$.${key}`] = documentData[key];
+            return acc;
+          }, {}),
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project or document not found`);
+    }
+    return project;
+  }
+
+  async deleteDocument(projectId: string, documentId: string): Promise<Project> {
+    await this.checkDocumentCrudPermission();
+
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $pull: { documents: { _id: documentId } } },
+        { new: true },
+      )
+      .exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+    return project;
+  }
+
+  async addDocumentFolder(projectId: string, folderName: string): Promise<Project> {
+    const project = await this.projectModel.findByIdAndUpdate(
+      projectId,
+      { $addToSet: { documentFolders: folderName } },
+      { new: true }
+    ).exec();
+    
+    if (!project) {
+      throw new NotFoundException(`Project not found`);
+    }
+    return project;
+  }
+
+  async deleteDocumentFolder(projectId: string, folderName: string): Promise<Project> {
+    // First remove folder from explicit list
+    const project = await this.projectModel.findByIdAndUpdate(
+      projectId,
+      { $pull: { documentFolders: folderName } },
+      { new: true }
+    ).exec();
+
+    if (!project) {
+      throw new NotFoundException(`Project not found`);
+    }
+
+    // Then unset folder name from related documents
+    await this.projectModel.updateOne(
+      { _id: projectId },
+      { $unset: { 'documents.$[elem].folder': '' } },
+      { arrayFilters: [{ 'elem.folder': folderName }] }
+    ).exec();
+
+    // Fetch the updated project to return
+    return await this.findOne(projectId);
+  }
+
+  private async checkDocumentCrudPermission() {
+    try {
+      const config = await this.systemConfigService.getProjectConfig();
+      const expiry = config?.data?.documentCrudExpiry;
+
+      if (!expiry || new Date() > new Date(expiry)) {
+        throw new BadRequestException(
+          'Document CRUD operations are currently disabled. Please contact an administrator to enable them.',
+        );
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new BadRequestException(
+          'Project configuration not found. Document CRUD operations are disabled by default.',
+        );
+      }
+      throw error;
+    }
   }
 
   async updateFinancials(id: string, financialData: any): Promise<Project> {

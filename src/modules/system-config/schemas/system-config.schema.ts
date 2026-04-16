@@ -76,6 +76,7 @@ export class SystemConfig {
 
     // Project Configurations
     departments?: string[];
+    documentCrudExpiry?: Date;
   };
 
   @ApiProperty({

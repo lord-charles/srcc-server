@@ -4,6 +4,7 @@ import { ProjectController } from './project.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Project, ProjectSchema } from './schemas/project.schema';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { SystemConfigModule } from '../system-config/system-config.module';
 import { Invoice, InvoiceSchema } from './schemas/invoice.schema';
 import { InvoiceController } from './controllers/invoice.controller';
 import { BudgetController } from './controllers/budget.controller';
@@ -40,6 +41,7 @@ import { Claim, ClaimSchema } from '../claims/schemas/claim.schema';
       { name: Claim.name, schema: ClaimSchema },
     ]),
     CloudinaryModule,
+    SystemConfigModule,
   ],
   controllers: [
     ProjectController,

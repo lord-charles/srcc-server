@@ -541,6 +541,45 @@ export class ProjectController {
     return this.projectService.addDocument(id, documentData);
   }
 
+  @Patch(':id/documents/:documentId')
+  @ApiOperation({ summary: 'Update project document' })
+  @ApiResponse({ status: 200, description: 'Document updated successfully.' })
+  updateDocument(
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+    @Body() documentData: any,
+  ) {
+    return this.projectService.updateDocument(id, documentId, documentData);
+  }
+
+  @Delete(':id/documents/:documentId')
+  @ApiOperation({ summary: 'Delete project document' })
+  @ApiResponse({ status: 200, description: 'Document deleted successfully.' })
+  deleteDocument(
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+  ) {
+    return this.projectService.deleteDocument(id, documentId);
+  }
+
+  @Post(':id/document-folders')
+  @ApiOperation({ summary: 'Add document folder to project' })
+  @ApiResponse({ status: 201, description: 'Folder added successfully.' })
+  @ApiBody({ schema: { type: 'object', properties: { folderName: { type: 'string' } } } })
+  addDocumentFolder(@Param('id') id: string, @Body('folderName') folderName: string) {
+    return this.projectService.addDocumentFolder(id, folderName);
+  }
+
+  @Delete(':id/document-folders/:folderName')
+  @ApiOperation({ summary: 'Delete project document folder' })
+  @ApiResponse({ status: 200, description: 'Folder deleted successfully.' })
+  deleteDocumentFolder(
+    @Param('id') id: string,
+    @Param('folderName') folderName: string,
+  ) {
+    return this.projectService.deleteDocumentFolder(id, folderName);
+  }
+
   @Patch(':id/financials')
   @ApiOperation({ summary: 'Update project financials' })
   @ApiResponse({ status: 200, description: 'Financials updated successfully.' })

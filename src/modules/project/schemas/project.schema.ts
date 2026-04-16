@@ -284,6 +284,7 @@ export class Project {
           ref: 'User',
           required: true,
         },
+        folder: { type: String },
       },
     ],
   })
@@ -291,9 +292,14 @@ export class Project {
     type: string;
     url: string;
     name: string;
+    folder?: string;
     uploadedAt: Date;
     uploadedBy: MongooseSchema.Types.ObjectId;
   }[];
+
+  @ApiProperty({ description: 'Explicitly created document folders' })
+  @Prop({ type: [String], default: [] })
+  documentFolders?: string[];
 
   @ApiProperty({
     example: 'High',
