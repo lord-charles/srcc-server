@@ -8,15 +8,12 @@ import {
   UseGuards,
   BadRequestException,
   Req,
-  UseInterceptors,
-  UploadedFiles,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
-  ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
 import { ImprestService } from './imprest.service';
@@ -33,18 +30,13 @@ import {
 } from './dto/imprest-approval.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @ApiTags('Imprest')
 @Controller('imprest')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ImprestController {
-  constructor(
-    private readonly imprestService: ImprestService,
-    private readonly cloudinaryService: CloudinaryService,
-  ) {}
+  constructor(private readonly imprestService: ImprestService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new imprest request' })
@@ -201,7 +193,6 @@ export class ImprestController {
 
   @Post(':id/account')
   @ApiOperation({ summary: 'Submit imprest accounting' })
-  @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
@@ -213,81 +204,48 @@ export class ImprestController {
             properties: {
               description: { type: 'string', example: 'Office supplies' },
               amount: { type: 'number', example: 150.75 },
+              receiptUrl: {
+                type: 'string',
+                example: 'https://res.cloudinary.com/...',
+              },
             },
+            required: ['description', 'amount', 'receiptUrl'],
           },
         },
         comments: { type: 'string' },
-        receiptFiles: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
       },
-      required: ['receipts', 'receiptFiles'],
+      required: ['receipts'],
     },
   })
   @ApiResponse({ status: 200, description: 'Imprest accounting submitted.' })
-  @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'receiptFiles', maxCount: 10 }]),
-  )
   async submitAccounting(
     @Param('id') id: string,
     @Req() req: any,
-    @Body() accountingDto: any,
-    @UploadedFiles() files: { receiptFiles?: Express.Multer.File[] },
+    @Body() accountingDto: { receipts: ReceiptDto[]; comments?: string },
   ) {
-    if (!files?.receiptFiles?.length) {
-      throw new BadRequestException('Receipt files are required');
+    const { receipts, comments } = accountingDto;
+
+    if (!receipts || !Array.isArray(receipts) || receipts.length === 0) {
+      throw new BadRequestException('Valid receipts data is required');
     }
 
-    // Parse or get receipts data
-    let receipts: ReceiptDto[];
-    try {
-      // Check if receipts is already an array or needs to be parsed
-      receipts =
-        typeof accountingDto.receipts === 'string'
-          ? JSON.parse(accountingDto.receipts)
-          : accountingDto.receipts;
-
-      if (!Array.isArray(receipts) || receipts.length === 0) {
-        throw new BadRequestException('Valid receipts data is required');
+    for (const receipt of receipts) {
+      if (!receipt.receiptUrl) {
+        throw new BadRequestException('Each receipt must include a receiptUrl');
       }
-
-      if (receipts.length !== files.receiptFiles.length) {
-        throw new BadRequestException(
-          'Number of receipt files must match number of receipt entries',
-        );
-      }
-    } catch (error) {
-      throw new BadRequestException(error.message);
     }
 
-    // Upload receipt files
-    const processedReceipts = [];
-
-    for (let i = 0; i < files.receiptFiles.length; i++) {
-      const file = files.receiptFiles[i];
-      const receipt = receipts[i];
-
-      const uploadResult = await this.cloudinaryService.uploadFile(
-        file,
-        'imprest-receipts',
-      );
-
-      processedReceipts.push({
-        description: receipt.description,
-        amount: receipt.amount,
-        receiptUrl: uploadResult.secure_url,
-        uploadedAt: new Date(),
-      });
-    }
+    const processedReceipts = receipts.map((receipt) => ({
+      description: receipt.description,
+      amount: receipt.amount,
+      receiptUrl: receipt.receiptUrl,
+      uploadedAt: new Date(),
+    }));
 
     return this.imprestService.submitAccounting(
       id,
       req.user.sub,
-      { receipts, comments: accountingDto.comments },
+      { receipts, comments },
       processedReceipts,
     );
   }

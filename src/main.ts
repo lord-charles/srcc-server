@@ -57,7 +57,7 @@ async function bootstrap() {
     customCss: '.swagger-ui .topbar { display: none }', // Hide the top bar
   });
 
-  const port = configService.get<number>('PORT', 5000);
+  const port = configService.get<number>('PORT', 6001);
   await app.listen(port, '0.0.0.0');
 
   // Log the URLs

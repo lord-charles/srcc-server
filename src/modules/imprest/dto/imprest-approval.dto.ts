@@ -60,6 +60,13 @@ export class ReceiptDto {
   })
   @IsNumber()
   amount: number;
+
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/...',
+    description: 'URL of the uploaded receipt file',
+  })
+  @IsString()
+  receiptUrl: string;
 }
 
 export class ImprestAccountingDto {
