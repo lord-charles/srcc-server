@@ -208,6 +208,7 @@ export class NotificationService {
     attachments: Array<{
       filename: string;
       content: Buffer | string;
+      contentType?: string;
     }>,
   ): Promise<boolean> {
     try {
@@ -230,12 +231,13 @@ export class NotificationService {
           </div>
         `;
 
-      // Convert attachments to base64
+      // Convert attachments to base64 and preserve content type
       const emailAttachments = attachments.map((att) => ({
         filename: att.filename,
         content: Buffer.isBuffer(att.content)
           ? att.content.toString('base64')
           : Buffer.from(att.content).toString('base64'),
+        contentType: (att as any).contentType,
       }));
 
       const emailPayload: EmailPayload = {

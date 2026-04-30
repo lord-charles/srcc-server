@@ -138,13 +138,16 @@ export class LpoService {
       message ||
       `Please find attached the Local Purchase Order (${lpo.lpoNo}).`;
 
-    // Strip the "data:application/pdf;base64," part if it exists
-    const base64Data = pdfBase64.replace(/^data:application\/pdf;base64,/, '');
+    // Strip the data URI prefix if it exists (e.g., "data:application/pdf;base64,")
+    const base64Data = pdfBase64.includes(';base64,')
+      ? pdfBase64.split(';base64,').pop()
+      : pdfBase64;
 
     const attachments = [
       {
         filename: `${lpo.lpoNo.replace(/\//g, '_')}.pdf`,
-        content: Buffer.from(base64Data, 'base64'),
+        content: Buffer.from(base64Data.trim(), 'base64'),
+        contentType: 'application/pdf',
       },
     ];
 
