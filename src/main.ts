@@ -3,11 +3,16 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
+
+  // Increase body size limit for large PDF uploads
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // Enable CORS with proper configuration - Allow all origins
   app.enableCors({
