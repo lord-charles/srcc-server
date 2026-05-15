@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import {
@@ -55,9 +55,7 @@ export class ProjectService {
     }
 
     // Convert userId to ObjectId for proper MongoDB comparison
-    const userObjectId = userId
-      ? new MongooseSchema.Types.ObjectId(userId)
-      : null;
+    const userObjectId = userId ? new Types.ObjectId(userId) : null;
 
     const finalQuery = hasAdminAccess
       ? { ...query }
