@@ -54,6 +54,11 @@ export class ProjectService {
       }
     }
 
+    // Convert userId to ObjectId for proper MongoDB comparison
+    const userObjectId = userId
+      ? new MongooseSchema.Types.ObjectId(userId)
+      : null;
+
     const finalQuery = hasAdminAccess
       ? { ...query }
       : {
@@ -63,7 +68,7 @@ export class ProjectService {
               $or: [
                 { createdBy: userId },
                 { projectManagerId: userId },
-                { 'assistantProjectManagers.userId': userId },
+                { 'assistantProjectManagers.userId': userObjectId },
                 { 'teamMembers.userId': userId },
                 { 'coachManagers.userId': userId },
                 { 'coachAssistants.userId': userId },
@@ -75,6 +80,17 @@ export class ProjectService {
     return this.projectModel
       .find(finalQuery)
       .populate('createdBy', 'firstName lastName email')
+      .populate('projectManagerId', 'firstName lastName email')
+      .populate('assistantProjectManagers.userId', 'firstName lastName email')
+      .populate('assistantProjectManagers.contractId')
+      .populate('teamMembers.userId', 'firstName lastName email _id')
+      .populate(
+        'teamMembers.organizationId',
+        'companyName businessEmail contactPerson _id',
+      )
+      .populate('coachManagers.userId', 'firstName lastName email')
+      .populate('coachAssistants.userId', 'firstName lastName email')
+      .populate('coaches.userId', 'firstName lastName email')
       .exec();
   }
 
@@ -328,7 +344,10 @@ export class ProjectService {
     return project;
   }
 
-  async deleteDocument(projectId: string, documentId: string): Promise<Project> {
+  async deleteDocument(
+    projectId: string,
+    documentId: string,
+  ): Promise<Project> {
     await this.checkDocumentCrudPermission();
 
     const project = await this.projectModel
@@ -345,37 +364,49 @@ export class ProjectService {
     return project;
   }
 
-  async addDocumentFolder(projectId: string, folderName: string): Promise<Project> {
-    const project = await this.projectModel.findByIdAndUpdate(
-      projectId,
-      { $addToSet: { documentFolders: folderName } },
-      { new: true }
-    ).exec();
-    
+  async addDocumentFolder(
+    projectId: string,
+    folderName: string,
+  ): Promise<Project> {
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $addToSet: { documentFolders: folderName } },
+        { new: true },
+      )
+      .exec();
+
     if (!project) {
       throw new NotFoundException(`Project not found`);
     }
     return project;
   }
 
-  async deleteDocumentFolder(projectId: string, folderName: string): Promise<Project> {
+  async deleteDocumentFolder(
+    projectId: string,
+    folderName: string,
+  ): Promise<Project> {
     // First remove folder from explicit list
-    const project = await this.projectModel.findByIdAndUpdate(
-      projectId,
-      { $pull: { documentFolders: folderName } },
-      { new: true }
-    ).exec();
+    const project = await this.projectModel
+      .findByIdAndUpdate(
+        projectId,
+        { $pull: { documentFolders: folderName } },
+        { new: true },
+      )
+      .exec();
 
     if (!project) {
       throw new NotFoundException(`Project not found`);
     }
 
     // Then unset folder name from related documents
-    await this.projectModel.updateOne(
-      { _id: projectId },
-      { $unset: { 'documents.$[elem].folder': '' } },
-      { arrayFilters: [{ 'elem.folder': folderName }] }
-    ).exec();
+    await this.projectModel
+      .updateOne(
+        { _id: projectId },
+        { $unset: { 'documents.$[elem].folder': '' } },
+        { arrayFilters: [{ 'elem.folder': folderName }] },
+      )
+      .exec();
 
     // Fetch the updated project to return
     return await this.findOne(projectId);
