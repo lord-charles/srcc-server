@@ -23,6 +23,19 @@ class LpoItem {
 }
 const LpoItemSchema = SchemaFactory.createForClass(LpoItem);
 
+@Schema({ _id: false })
+class LpoDispatchLog {
+  @Prop({ required: true })
+  dispatchedAt: Date;
+
+  @Prop({ type: [String], default: [] })
+  ccEmails: string[];
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  sentBy: MongooseSchema.Types.ObjectId;
+}
+const LpoDispatchLogSchema = SchemaFactory.createForClass(LpoDispatchLog);
+
 export enum LpoStatus {
   DRAFT = 'draft',
   SUBMITTED = 'submitted',
@@ -84,6 +97,14 @@ export class Lpo {
   @ApiProperty()
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   preparedBy: MongooseSchema.Types.ObjectId;
+
+  @ApiProperty()
+  @Prop({ default: false })
+  isDispatched: boolean;
+
+  @ApiProperty()
+  @Prop({ type: [LpoDispatchLogSchema], default: [] })
+  dispatchHistory: LpoDispatchLog[];
 }
 
 export const LpoSchema = SchemaFactory.createForClass(Lpo);

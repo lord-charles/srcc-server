@@ -13,6 +13,7 @@ import { ClaimsModule } from './modules/claims/claims.module';
 import { ImprestModule } from './modules/imprest/imprest.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { LpoModule } from './modules/lpo/lpo.module';
+import { PaymentRequestModule } from './modules/payment-request/payment-request.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { LpoModule } from './modules/lpo/lpo.module';
     ImprestModule,
     SupplierModule,
     LpoModule,
+    PaymentRequestModule,
   ],
   controllers: [],
   providers: [

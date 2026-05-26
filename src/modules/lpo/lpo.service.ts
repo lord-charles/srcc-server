@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Lpo, LpoDocument, LpoStatus } from './schemas/lpo.schema';
 import { CreateLpoDto, SendLpoEmailDto } from './dto/lpo.dto';
 import { NotificationService } from '../notifications/services/notification.service';
@@ -51,6 +51,10 @@ export class LpoService {
       .populate('projectId', 'name description')
       .populate('supplierId', 'name email phone')
       .populate('preparedBy', 'firstName lastName')
+      .populate({
+        path: 'dispatchHistory.sentBy',
+        select: 'firstName lastName',
+      })
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -60,6 +64,10 @@ export class LpoService {
       .find({ projectId })
       .populate('supplierId', 'name email phone')
       .populate('preparedBy', 'firstName lastName')
+      .populate({
+        path: 'dispatchHistory.sentBy',
+        select: 'firstName lastName',
+      })
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -69,6 +77,10 @@ export class LpoService {
       .findById(id)
       .populate('supplierId')
       .populate('preparedBy', 'firstName lastName email')
+      .populate({
+        path: 'dispatchHistory.sentBy',
+        select: 'firstName lastName email',
+      })
       .exec();
 
     if (!lpo) {
@@ -124,7 +136,11 @@ export class LpoService {
     return updatedLpo;
   }
 
-  async sendLpoEmail(id: string, payload: SendLpoEmailDto): Promise<boolean> {
+  async sendLpoEmail(
+    id: string,
+    payload: SendLpoEmailDto,
+    userId: string,
+  ): Promise<boolean> {
     const lpo = await this.findById(id);
     if (!lpo) throw new NotFoundException('LPO not found');
 
@@ -171,6 +187,19 @@ export class LpoService {
           );
         }
       }
+    }
+
+    if (success) {
+      lpo.isDispatched = true;
+      if (!lpo.dispatchHistory) {
+        lpo.dispatchHistory = [];
+      }
+      lpo.dispatchHistory.push({
+        dispatchedAt: new Date(),
+        ccEmails: ccEmails || [],
+        sentBy: new Types.ObjectId(userId) as any,
+      });
+      await lpo.save();
     }
 
     return success;

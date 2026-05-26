@@ -128,17 +128,19 @@ export class ProjectService {
           },
         ],
       })
-      .populate({
-        path: 'teamMemberContracts',
-        populate: [
-          { path: 'contractedUserId', select: 'firstName lastName email' },
-        ],
-      })
+      .populate('teamMemberContracts')
       .lean()
       .exec();
 
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
+    }
+
+    // Manually populate contractedUserId for contracts
+    if (project.teamMemberContracts) {
+      project.teamMemberContracts = await this.populateContractedUsersForContracts(
+        project.teamMemberContracts,
+      );
     }
 
     // Manually populate milestoneId for contracts
@@ -1068,14 +1070,45 @@ export class ProjectService {
           },
         ],
       })
-      .populate({
-        path: 'teamMemberContracts',
-        populate: [
-          { path: 'contractedUserId', select: 'firstName lastName email' },
-        ],
-      })
+      .populate('teamMemberContracts')
       .exec();
 
-    return updatedProject;
+    const result = updatedProject.toObject() as any;
+    if (result.teamMemberContracts) {
+      result.teamMemberContracts = await this.populateContractedUsersForContracts(
+        result.teamMemberContracts,
+      );
+    }
+    return result;
+  }
+
+  private async populateContractedUsersForContracts(contracts: any[]): Promise<any[]> {
+    if (!contracts || !Array.isArray(contracts)) return [];
+    return Promise.all(
+      contracts.map(async (contractObj) => {
+        const contract = typeof contractObj.toObject === 'function' ? contractObj.toObject() : contractObj;
+        const contractedUserId = contract.contractedUserId?._id || contract.contractedUserId;
+        if (!contractedUserId) return contract;
+
+        if (contract.isOrganization) {
+          const organization = await this.organizationModel.findById(contractedUserId).lean();
+          if (organization) {
+            contract.contractedUserId = {
+              _id: organization._id,
+              firstName: organization.companyName,
+              lastName: organization.contactPerson?.name || '',
+              email: organization.contactPerson?.email || '',
+              phoneNumber: organization.contactPerson?.phoneNumber || '',
+            };
+          }
+        } else {
+          const user = await this.userModel.findById(contractedUserId, 'firstName lastName email phoneNumber').lean();
+          if (user) {
+            contract.contractedUserId = user;
+          }
+        }
+        return contract;
+      })
+    );
   }
 }

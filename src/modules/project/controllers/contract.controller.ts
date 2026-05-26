@@ -190,9 +190,13 @@ export class ContractController {
     const contract = await this.contractService.findOne(id);
 
     // For team members, only allow them to see their own contracts
+    const contractedUserId = (contract.contractedUserId as any)?._id
+      ? (contract.contractedUserId as any)._id.toString()
+      : contract.contractedUserId?.toString();
+
     if (
       req.user.roles.includes('team_member') &&
-      contract.contractedUserId.toString() !== req.user.sub
+      contractedUserId !== req.user.sub
     ) {
       this.logger.warn(
         `User ${req.user.sub} attempted to access contract ${id}`,
@@ -297,9 +301,13 @@ export class ContractController {
     const contract = await this.contractService.findOne(id);
 
     // For team members, only allow them to generate OTP for their own contracts
+    const contractedUserId = (contract.contractedUserId as any)?._id
+      ? (contract.contractedUserId as any)._id.toString()
+      : contract.contractedUserId?.toString();
+
     if (
       req.user.roles.includes('team_member') &&
-      contract.contractedUserId.toString() !== req.user.sub
+      contractedUserId !== req.user.sub
     ) {
       this.logger.warn(
         `User ${req.user.sub} attempted to generate OTP for contract ${id}`,
@@ -344,9 +352,13 @@ export class ContractController {
     const contract = await this.contractService.findOne(id);
 
     // For team members, only allow them to verify OTP for their own contracts
+    const contractedUserId = (contract.contractedUserId as any)?._id
+      ? (contract.contractedUserId as any)._id.toString()
+      : contract.contractedUserId?.toString();
+
     if (
       req.user.roles.includes('team_member') &&
-      contract.contractedUserId.toString() !== req.user.sub
+      contractedUserId !== req.user.sub
     ) {
       this.logger.warn(
         `User ${req.user.sub} attempted to verify OTP for contract ${id}`,

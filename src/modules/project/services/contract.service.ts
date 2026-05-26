@@ -220,7 +220,7 @@ export class ContractService {
       //   );
       // }
 
-      return savedContract;
+      return this.transformContract(savedContract);
     } catch (error) {
       this.logger.error(
         `Error creating contract: ${error.message}`,
@@ -265,37 +265,7 @@ export class ContractService {
         .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
 
-      // Transform contracts to populate contractedUserId based on isOrganization flag
-      const transformedContracts = await Promise.all(
-        contracts.map(async (contract) => {
-          const contractObj = contract.toObject() as any;
-          if (contract.isOrganization) {
-            const organization = await this.organizationModel.findById(
-              contract.contractedUserId,
-            );
-            if (organization) {
-              contractObj.contractedUserId = {
-                _id: organization._id,
-                firstName: organization.companyName,
-                lastName: organization.contactPerson?.name || '',
-                email: organization.contactPerson?.email || '',
-                phoneNumber: organization.contactPerson?.phoneNumber || '',
-              };
-            }
-          } else {
-            const user = await this.userModel.findById(
-              contract.contractedUserId,
-              'firstName lastName email phoneNumber',
-            );
-            if (user) {
-              contractObj.contractedUserId = user;
-            }
-          }
-          return contractObj;
-        }),
-      );
-
-      return transformedContracts as Contract[];
+      return this.transformContracts(contracts);
     } catch (error) {
       this.logger.error(
         `Error finding contracts: ${error.message}`,
@@ -325,37 +295,7 @@ export class ContractService {
         .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
 
-      // Transform contracts to populate contractedUserId based on isOrganization flag
-      const transformedContracts = await Promise.all(
-        contracts.map(async (contract) => {
-          const contractObj = contract.toObject() as any;
-          if (contract.isOrganization) {
-            const organization = await this.organizationModel.findById(
-              contract.contractedUserId,
-            );
-            if (organization) {
-              contractObj.contractedUserId = {
-                _id: organization._id,
-                firstName: organization.companyName,
-                lastName: organization.contactPerson?.name || '',
-                email: organization.contactPerson?.email || '',
-                phoneNumber: organization.contactPerson?.phoneNumber || '',
-              };
-            }
-          } else {
-            const user = await this.userModel.findById(
-              contract.contractedUserId,
-              'firstName lastName email phoneNumber',
-            );
-            if (user) {
-              contractObj.contractedUserId = user as any;
-            }
-          }
-          return contractObj;
-        }),
-      );
-
-      return transformedContracts as Contract[];
+      return this.transformContracts(contracts);
     } catch (error) {
       this.logger.error(
         `Error finding contracts by project ID: ${error.message}`,
@@ -383,37 +323,7 @@ export class ContractService {
         .populate('finalApproval.approvedBy', 'firstName lastName email')
         .exec();
 
-      // Transform contracts to populate contractedUserId based on isOrganization flag
-      const transformedContracts = await Promise.all(
-        contracts.map(async (contract) => {
-          const contractObj = contract.toObject() as any;
-          if (contract.isOrganization) {
-            const organization = await this.organizationModel.findById(
-              contract.contractedUserId,
-            );
-            if (organization) {
-              contractObj.contractedUserId = {
-                _id: organization._id,
-                firstName: organization.companyName,
-                lastName: organization.contactPerson?.name || '',
-                email: organization.contactPerson?.email || '',
-                phoneNumber: organization.contactPerson?.phoneNumber || '',
-              };
-            }
-          } else {
-            const user = await this.userModel.findById(
-              contract.contractedUserId,
-              'firstName lastName email phoneNumber',
-            );
-            if (user) {
-              contractObj.contractedUserId = user;
-            }
-          }
-          return contractObj;
-        }),
-      );
-
-      return transformedContracts as Contract[];
+      return this.transformContracts(contracts);
     } catch (error) {
       this.logger.error(
         `Error finding contracts by project ID: ${error.message}`,
@@ -448,32 +358,7 @@ export class ContractService {
         throw new NotFoundException(`Contract with ID ${id} not found`);
       }
 
-      // Transform contract to populate contractedUserId based on isOrganization flag
-      const contractObj = contract.toObject() as any;
-      if (contract.isOrganization) {
-        const organization = await this.organizationModel.findById(
-          contract.contractedUserId,
-        );
-        if (organization) {
-          contractObj.contractedUserId = {
-            _id: organization._id,
-            firstName: organization.companyName,
-            lastName: organization.contactPerson?.name || '',
-            email: organization.contactPerson?.email || '',
-            phoneNumber: organization.contactPerson?.phoneNumber || '',
-          };
-        }
-      } else {
-        const user = await this.userModel.findById(
-          contract.contractedUserId,
-          'firstName lastName email phoneNumber',
-        );
-        if (user) {
-          contractObj.contractedUserId = user;
-        }
-      }
-
-      return contractObj as Contract;
+      return this.transformContract(contract);
     } catch (error) {
       this.logger.error(
         `Error finding contract by ID: ${error.message}`,
@@ -530,7 +415,6 @@ export class ContractService {
 
       const contract = await this.contractModel
         .findByIdAndUpdate(id, updateData, { new: true })
-        .populate('contractedUserId', 'firstName lastName email phoneNumber')
         .populate('projectId', 'name')
         .populate('createdBy', 'firstName lastName email')
         .populate('updatedBy', 'firstName lastName email')
@@ -559,7 +443,8 @@ export class ContractService {
         updateContractDto.status === 'active' &&
         currentContract.status !== 'active'
       ) {
-        const user = await this.userModel.findById(contract.contractedUserId);
+        const rawContractedUserId = (contract.contractedUserId as any)?._id || contract.contractedUserId;
+        const user = await this.userModel.findById(rawContractedUserId);
         if (user && user.email && user.phoneNumber) {
           await this.sendContractAcceptanceConfirmation(contract, user).catch(
             (error) => {
@@ -572,7 +457,7 @@ export class ContractService {
         }
       }
 
-      return contract;
+      return this.transformContract(contract);
     } catch (error) {
       this.logger.error(
         `Error updating contract: ${error.message}`,
@@ -640,9 +525,29 @@ export class ContractService {
         );
       }
 
-      const user = await this.userModel.findById(contract.contractedUserId);
-      if (!user) {
-        throw new NotFoundException('User not found');
+      let entityEmail: string;
+      let entityPhone: string;
+
+      const rawContractedUserId = (contract.contractedUserId as any)?._id || contract.contractedUserId;
+
+      if (contract.isOrganization) {
+        const organization = await this.organizationModel.findById(
+          rawContractedUserId,
+        );
+        if (!organization) {
+          throw new NotFoundException('Organization not found');
+        }
+        entityEmail =
+          organization.contactPerson?.email || organization.businessEmail;
+        entityPhone =
+          organization.contactPerson?.phoneNumber || organization.businessPhone;
+      } else {
+        const user = await this.userModel.findById(rawContractedUserId);
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+        entityEmail = user.email;
+        entityPhone = user.phoneNumber;
       }
 
       // Check if there's an existing OTP that's not expired
@@ -688,8 +593,8 @@ export class ContractService {
       // Send OTP via SMS and email
       const message = `Your OTP for contract acceptance is: ${otp}. This code will expire in ${this.OTP_EXPIRY_MINUTES} minutes.`;
       await this.notificationService.sendRegistrationPin(
-        user.phoneNumber,
-        user.email,
+        entityPhone,
+        entityEmail,
         message,
       );
 
@@ -790,10 +695,12 @@ export class ContractService {
         `Contract ${contractId} successfully accepted with OTP verification`,
       );
 
+      const rawContractedUserId = (contract.contractedUserId as any)?._id || contract.contractedUserId;
+
       // Send confirmation notification
       if (contract.isOrganization) {
         const organization = await this.organizationModel.findById(
-          contract.contractedUserId,
+          rawContractedUserId,
         );
         if (organization && organization.contactPerson?.email) {
           await this.sendContractAcceptanceConfirmation(updatedContract, {
@@ -809,7 +716,7 @@ export class ContractService {
           });
         }
       } else {
-        const user = await this.userModel.findById(contract.contractedUserId);
+        const user = await this.userModel.findById(rawContractedUserId);
         if (user) {
           await this.sendContractAcceptanceConfirmation(
             updatedContract,
@@ -823,7 +730,7 @@ export class ContractService {
         }
       }
 
-      return updatedContract;
+      return this.transformContract(updatedContract);
     } catch (error) {
       this.logger.error(`Error verifying OTP: ${error.message}`, error.stack);
       throw error;
@@ -894,11 +801,11 @@ You can view the full contract and track progress in the SRCC Portal.`;
         },
         { new: true },
       )
-      .populate('projectId contractedUserId');
+      .populate('projectId');
 
     await this.notifyApprovers(updatedContract, approvers, nextLevel);
 
-    return updatedContract;
+    return this.transformContract(updatedContract);
   }
 
   private calculateDeadline(hours: number): Date {
@@ -1026,7 +933,7 @@ You can view the full contract and track progress in the SRCC Portal.`;
 
     const updatedContract = await this.contractModel
       .findByIdAndUpdate(id, update, { new: true })
-      .populate('projectId contractedUserId')
+      .populate('projectId')
       .populate('amendments.approvedBy', 'firstName lastName email')
       .populate(
         'approvalFlow.financeApprovals.approverId',
@@ -1066,7 +973,7 @@ You can view the full contract and track progress in the SRCC Portal.`;
       await this.notifyContractActivation(updatedContract);
     }
 
-    return updatedContract;
+    return this.transformContract(updatedContract);
   }
 
   private async notifyApprovers(
@@ -1075,14 +982,27 @@ You can view the full contract and track progress in the SRCC Portal.`;
     level: string,
   ): Promise<void> {
     const project = await this.projectModel.findById(contract.projectId);
-    const contractedUser = await this.userModel.findById(
-      contract.contractedUserId,
-    );
+    
+    let consultantName = 'Unknown Consultant';
+    const rawId = (contract.contractedUserId as any)?._id || contract.contractedUserId;
+    if (rawId) {
+      if (contract.isOrganization) {
+        const organization = await this.organizationModel.findById(rawId).lean() as any;
+        if (organization) {
+          consultantName = organization.companyName;
+        }
+      } else {
+        const user = await this.userModel.findById(rawId).lean() as any;
+        if (user) {
+          consultantName = `${user.firstName} ${user.lastName}`;
+        }
+      }
+    }
 
     const emailTemplate = this.generateApprovalEmailTemplate(
       contract,
       project,
-      contractedUser,
+      consultantName,
       level,
     );
 
@@ -1100,7 +1020,7 @@ You can view the full contract and track progress in the SRCC Portal.`;
   private generateApprovalEmailTemplate(
     contract: Contract,
     project: Project,
-    contractedUser: User,
+    consultantName: string,
     level: string,
   ): (approver: User) => string {
     return (approver: User) => `Dear ${approver.firstName} ${approver.lastName},
@@ -1110,7 +1030,7 @@ A contract requires your review at the ${this.formatRole(level)} level.
 Details
 - Contract: ${contract.contractNumber}
 - Project: ${project?.name}
-- Consultant: ${contractedUser?.firstName} ${contractedUser?.lastName}
+- Consultant: ${consultantName}
 - Value: ${contract.currency} ${contract.contractValue.toLocaleString()}
 - Duration: ${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}
 
@@ -1211,9 +1131,11 @@ Please log in to the SRCC Portal to review and take action.`;
     let contactPhone: string | undefined;
     let contactName: string;
 
+    const rawContractedUserId = (contract.contractedUserId as any)?._id || contract.contractedUserId;
+
     if (contract.isOrganization) {
       const organization = await this.organizationModel.findById(
-        contract.contractedUserId,
+        rawContractedUserId,
       );
       if (!organization) {
         throw new NotFoundException('Organization not found');
@@ -1222,7 +1144,7 @@ Please log in to the SRCC Portal to review and take action.`;
       contactPhone = organization.contactPerson?.phoneNumber;
       contactName = organization.companyName;
     } else {
-      const user = await this.userModel.findById(contract.contractedUserId);
+      const user = await this.userModel.findById(rawContractedUserId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -1387,9 +1309,47 @@ Next Steps
         },
         { new: true },
       )
-      .populate('projectId contractedUserId')
+      .populate('projectId')
       .populate('rejectionDetails.rejectedBy', 'firstName lastName email');
 
-    return updatedContract;
+    return this.transformContract(updatedContract);
+  }
+
+  private async transformContract(contract: any): Promise<any> {
+    if (!contract) return null;
+    const contractObj = typeof contract.toObject === 'function' ? contract.toObject() : contract;
+    const rawId = contract.contractedUserId?._id || contract.contractedUserId;
+    if (!rawId) return contractObj;
+
+    if (contract.isOrganization) {
+      const organization = await this.organizationModel.findById(rawId);
+      if (organization) {
+        contractObj.contractedUserId = {
+          _id: organization._id,
+          firstName: organization.companyName,
+          lastName: organization.contactPerson?.name || '',
+          email: organization.contactPerson?.email || '',
+          phoneNumber: organization.contactPerson?.phoneNumber || '',
+        };
+      } else {
+        contractObj.contractedUserId = null;
+      }
+    } else {
+      const user = await this.userModel.findById(
+        rawId,
+        'firstName lastName email phoneNumber',
+      );
+      if (user) {
+        contractObj.contractedUserId = user;
+      } else {
+        contractObj.contractedUserId = null;
+      }
+    }
+    return contractObj;
+  }
+
+  private async transformContracts(contracts: any[]): Promise<any[]> {
+    if (!contracts) return [];
+    return Promise.all(contracts.map((c) => this.transformContract(c)));
   }
 }

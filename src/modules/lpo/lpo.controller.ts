@@ -62,8 +62,10 @@ export class LpoController {
   async sendEmail(
     @Param('id') id: string,
     @Body() sendLpoEmailDto: SendLpoEmailDto,
+    @Req() req: any,
   ) {
-    const success = await this.lpoService.sendLpoEmail(id, sendLpoEmailDto);
+    const userId = req.user?.sub || req.user?.userId;
+    const success = await this.lpoService.sendLpoEmail(id, sendLpoEmailDto, userId);
     return { success };
   }
 }
