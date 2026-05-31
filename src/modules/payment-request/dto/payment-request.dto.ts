@@ -33,6 +33,11 @@ export class CreatePaymentRequestDto {
   @IsString()
   @IsOptional()
   grnUrl?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  comments?: string;
 }
 
 export class ApproveRequestDto {
@@ -66,6 +71,11 @@ export class CreateVoucherDto {
   @IsNumber()
   @IsPositive()
   amount: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  comments?: string;
 }
 
 export class ApproveVoucherDto {

@@ -139,7 +139,7 @@ export class PaymentRequestService {
           actionBy: new Types.ObjectId(userId) as any,
           action: 'Created',
           actionAt: new Date(),
-          comments: 'Initial payment request submission',
+          comments: (createDto as any).comments || 'Initial payment request submission',
         },
       ],
     });
@@ -167,6 +167,11 @@ export class PaymentRequestService {
       throw new NotFoundException('Payment Request not found');
     }
 
+    const requestCreatorId = (request.requestedBy as any)?._id ? (request.requestedBy as any)._id.toString() : request.requestedBy.toString();
+    if (requestCreatorId !== userId) {
+      throw new ForbiddenException('Only the original creator can edit or update this payment request');
+    }
+
     if (
       request.status !== PaymentRequestStatus.PENDING_HOD_APPROVAL &&
       request.status !== PaymentRequestStatus.REVISION_REQUESTED
@@ -187,9 +192,9 @@ export class PaymentRequestService {
     request.status = PaymentRequestStatus.PENDING_HOD_APPROVAL; // reset to pending HOD approval
     request.auditTrail.push({
       actionBy: new Types.ObjectId(userId) as any,
-      action: 'Updated',
+      action: 'Revised',
       actionAt: new Date(),
-      comments: 'Request updated by creator',
+      comments: (updateDto as any).comments || 'Request updated by creator',
     });
 
     const savedRequest = await request.save();
@@ -374,8 +379,17 @@ export class PaymentRequestService {
       throw new BadRequestException('Cannot raise a voucher. Request must be HOD approved.');
     }
 
-    if (dto.amount > request.amount) {
-      throw new BadRequestException(`Voucher amount (${dto.amount}) cannot exceed payment request amount (${request.amount})`);
+    const existingVouchers = await this.paymentVoucherModel.find({
+      paymentRequestId: request._id,
+      status: { $ne: PaymentVoucherStatus.REJECTED }
+    }).exec();
+    const vouchedSum = existingVouchers.reduce((sum, v) => sum + v.amount, 0);
+    const remainingRequestAmount = Math.max(0, request.amount - vouchedSum);
+
+    if (dto.amount > remainingRequestAmount) {
+      throw new BadRequestException(
+        `Requested voucher amount (${dto.amount}) KES exceeds the remaining unvouched request balance (${remainingRequestAmount}) KES`,
+      );
     }
 
     const newVoucher = new this.paymentVoucherModel({
@@ -416,6 +430,11 @@ export class PaymentRequestService {
       throw new NotFoundException('Voucher not found');
     }
 
+    const voucherCreatorId = (voucher.preparedBy as any)?._id ? (voucher.preparedBy as any)._id.toString() : voucher.preparedBy.toString();
+    if (voucherCreatorId !== userId) {
+      throw new ForbiddenException('Only the original creator can edit or update this payment voucher');
+    }
+
     if (
       voucher.status !== PaymentVoucherStatus.PENDING_FINANCE_APPROVAL &&
       voucher.status !== PaymentVoucherStatus.REVISION_REQUESTED
@@ -424,17 +443,27 @@ export class PaymentRequestService {
     }
 
     const request = await this.getRequestById(dto.paymentRequestId);
-    if (dto.amount > request.amount) {
-      throw new BadRequestException(`Voucher amount (${dto.amount}) cannot exceed payment request amount (${request.amount})`);
+    const existingVouchers = await this.paymentVoucherModel.find({
+      paymentRequestId: request._id,
+      _id: { $ne: new Types.ObjectId(id) },
+      status: { $ne: PaymentVoucherStatus.REJECTED }
+    }).exec();
+    const vouchedSum = existingVouchers.reduce((sum, v) => sum + v.amount, 0);
+    const remainingRequestAmount = Math.max(0, request.amount - vouchedSum);
+
+    if (dto.amount > remainingRequestAmount) {
+      throw new BadRequestException(
+        `Requested voucher amount (${dto.amount}) KES exceeds the remaining unvouched request balance (${remainingRequestAmount}) KES`,
+      );
     }
 
     voucher.amount = dto.amount;
     voucher.status = PaymentVoucherStatus.PENDING_FINANCE_APPROVAL; // reset to pending approval
     voucher.auditTrail.push({
       actionBy: new Types.ObjectId(userId) as any,
-      action: 'Updated Voucher',
+      action: 'Revised',
       actionAt: new Date(),
-      comments: 'Voucher details updated by checker',
+      comments: dto.comments || 'Voucher details updated by checker',
     });
 
     const savedVoucher = await voucher.save();

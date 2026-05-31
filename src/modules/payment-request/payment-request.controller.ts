@@ -148,9 +148,14 @@ export class PaymentRequestController {
   @Get('vouchers/all')
   @ApiOperation({ summary: 'Get all Payment Vouchers' })
   @ApiQuery({ name: 'status', required: false })
-  async getVouchers(@Query('status') status?: string) {
+  @ApiQuery({ name: 'paymentRequestId', required: false })
+  async getVouchers(
+    @Query('status') status?: string,
+    @Query('paymentRequestId') paymentRequestId?: string,
+  ) {
     const filters: any = {};
     if (status) filters.status = status;
+    if (paymentRequestId) filters.paymentRequestId = paymentRequestId;
     return this.service.getVouchers(filters);
   }
 
