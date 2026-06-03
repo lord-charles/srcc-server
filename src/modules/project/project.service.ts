@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -92,7 +93,7 @@ export class ProjectService {
       .exec();
   }
 
-  async findOne(id: string): Promise<Project> {
+  async findOne(id: string, userId?: string, userRoles?: string[]): Promise<Project> {
     const project = await this.projectModel
       .findById(id)
       .populate('projectManagerId', 'firstName lastName email')
@@ -134,6 +135,32 @@ export class ProjectService {
 
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
+    }
+
+    if (userId && userRoles) {
+      const hasAdminAccess = userRoles.some(
+        (r) => r === 'admin' || r === 'super_admin',
+      );
+      if (!hasAdminAccess) {
+        const pmId = (project.projectManagerId as any)?._id?.toString() || project.projectManagerId?.toString();
+        const isPm = pmId === userId;
+
+        const isAssistantPm = project.assistantProjectManagers?.some(
+          (apm: any) => (apm?.userId?._id?.toString() || apm?.userId?.toString() || apm?.toString()) === userId,
+        );
+
+        const isCoachManager = project.coachManagers?.some(
+          (cm: any) => (cm?.userId?._id?.toString() || cm?.userId?.toString() || cm?.toString()) === userId,
+        );
+
+        const isCoachAssistant = project.coachAssistants?.some(
+          (ca: any) => (ca?.userId?._id?.toString() || ca?.userId?.toString() || ca?.toString()) === userId,
+        );
+
+        if (!isPm && !isAssistantPm && !isCoachManager && !isCoachAssistant) {
+          throw new ForbiddenException('You do not have permission to access this project');
+        }
+      }
     }
 
     // Manually populate contractedUserId for contracts

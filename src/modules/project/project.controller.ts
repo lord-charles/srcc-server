@@ -96,8 +96,8 @@ export class ProjectController {
   @ApiOperation({ summary: 'Get a project by id' })
   @ApiResponse({ status: 200, description: 'Return the project.' })
   @ApiResponse({ status: 404, description: 'Project not found.' })
-  findOne(@Param('id') id: string) {
-    return this.projectService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: any) {
+    return this.projectService.findOne(id, req.user.sub, req.user.roles);
   }
 
   @Patch(':id')
