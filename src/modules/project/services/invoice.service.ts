@@ -524,9 +524,6 @@ export class InvoiceService {
     // Notify stakeholders
     await this.notifyStakeholders(savedInvoice, 'Created');
 
-    // Notify users with role srcc_invoice_request
-    await this.notifyInvoiceRequestHandlers(savedInvoice);
-
     return savedInvoice;
   }
 
@@ -647,6 +644,9 @@ export class InvoiceService {
 
     // Notify department-specific invoice approvers
     await this.notifyInvoiceApprovers(updatedInvoice);
+
+    // Notify users with role srcc_invoice_request
+    await this.notifyInvoiceRequestHandlers(updatedInvoice);
 
     return updatedInvoice;
   }

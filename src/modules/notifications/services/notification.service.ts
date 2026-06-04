@@ -27,7 +27,7 @@ export class NotificationService {
     message: string,
   ): Promise<boolean> {
     try {
-      const portalUrl = 'https://cleanuri.com/JWpdAE';
+      const portalUrl = 'https://srcc.cognitron.co.ke';
       const finalSmsMessage = `${message}\nAccess SRCC Portal: ${portalUrl}`;
       const response = await axios.post(process.env.SMS_API_URL, {
         apikey: process.env.SMS_API_KEY,
@@ -57,7 +57,7 @@ export class NotificationService {
 
   async sendSMS(phoneNumber: string, message: string): Promise<boolean> {
     try {
-      const portalUrl = 'https://cleanuri.com/JWpdAE';
+      const portalUrl = 'https://srcc.cognitron.co.ke';
       const finalMessage = `${message}\nAccess SRCC Portal: ${portalUrl}`;
       const response = await axios.post(process.env.SMS_API_URL, {
         apikey: process.env.SMS_API_KEY,
@@ -170,7 +170,7 @@ export class NotificationService {
               ${message.replace(/\n/g, '<br>')}
             </div>
             <div style="text-align:center;">
-              <a class="cta" href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener">Access SRCC Portal</a>
+              <a class="cta" href="https://srcc.cognitron.co.ke" target="_blank" rel="noopener">Access SRCC Portal</a>
             </div>
           </div>
         </div>
@@ -222,7 +222,7 @@ export class NotificationService {
               ${message.replace(/\n/g, '<br>')}
             </div>
             <div style="text-align:center; margin-top: 16px;">
-              <a href="https://cleanuri.com/JWpdAE" target="_blank" rel="noopener" style="display:inline-block;padding:10px 16px;background:#003366;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold;">Access SRCC Portal</a>
+              <a href="https://srcc.cognitron.co.ke" target="_blank" rel="noopener" style="display:inline-block;padding:10px 16px;background:#003366;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold;">Access SRCC Portal</a>
             </div>
             <div style="margin-top: 20px; padding: 20px; border-top: 1px solid #eee; color: #666; font-size: 12px;">
               <p>This is an automated message from SRCC. Please do not reply to this email.</p>
