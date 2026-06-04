@@ -194,9 +194,14 @@ export class ContractController {
       ? (contract.contractedUserId as any)._id.toString()
       : contract.contractedUserId?.toString();
 
+    const loggedInEmail = req.user.email || req.user.businessEmail;
+    const contractedEmail = (contract.contractedUserId as any)?.email;
+    const matchesEmail = loggedInEmail && contractedEmail && loggedInEmail.toLowerCase() === contractedEmail.toLowerCase();
+
     if (
       req.user.roles.includes('team_member') &&
-      contractedUserId !== req.user.sub
+      contractedUserId !== req.user.sub &&
+      !matchesEmail
     ) {
       this.logger.warn(
         `User ${req.user.sub} attempted to access contract ${id}`,
@@ -305,9 +310,14 @@ export class ContractController {
       ? (contract.contractedUserId as any)._id.toString()
       : contract.contractedUserId?.toString();
 
+    const loggedInEmail = req.user.email || req.user.businessEmail;
+    const contractedEmail = (contract.contractedUserId as any)?.email;
+    const matchesEmail = loggedInEmail && contractedEmail && loggedInEmail.toLowerCase() === contractedEmail.toLowerCase();
+
     if (
       req.user.roles.includes('team_member') &&
-      contractedUserId !== req.user.sub
+      contractedUserId !== req.user.sub &&
+      !matchesEmail
     ) {
       this.logger.warn(
         `User ${req.user.sub} attempted to generate OTP for contract ${id}`,
@@ -356,9 +366,14 @@ export class ContractController {
       ? (contract.contractedUserId as any)._id.toString()
       : contract.contractedUserId?.toString();
 
+    const loggedInEmail = req.user.email || req.user.businessEmail;
+    const contractedEmail = (contract.contractedUserId as any)?.email;
+    const matchesEmail = loggedInEmail && contractedEmail && loggedInEmail.toLowerCase() === contractedEmail.toLowerCase();
+
     if (
       req.user.roles.includes('team_member') &&
-      contractedUserId !== req.user.sub
+      contractedUserId !== req.user.sub &&
+      !matchesEmail
     ) {
       this.logger.warn(
         `User ${req.user.sub} attempted to verify OTP for contract ${id}`,

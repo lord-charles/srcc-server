@@ -24,6 +24,16 @@ export class OrganizationService {
   ) {}
 
   /**
+   * Find organization by ID
+   */
+  async findById(id: string): Promise<OrganizationDocument | null> {
+    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+      return null;
+    }
+    return this.organizationModel.findById(id).exec();
+  }
+
+  /**
    * Update organization by ID with comprehensive validation and error handling
    */
   async updateById(

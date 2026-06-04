@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserService } from '../user.service';
+import { OrganizationService } from '../organization.service';
 import { UserSuspendedException } from '../exceptions/user-suspended.exception';
 import { UserInactiveException } from '../exceptions/user-inactive.exception';
 
@@ -11,6 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   constructor(
     private readonly userService: UserService,
+    private readonly organizationService: OrganizationService,
     secretOrKey: string,
   ) {
     super({
@@ -21,45 +23,58 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    const user = await this.userService.findById(payload.sub);
-    if (!user) {
+    let entity: any = null;
+    let isOrganization = false;
+    // Try to find the user in the UserService first
+    try {
+      entity = await this.userService.findById(payload.sub);
+    } catch (error) {
+      // If not found in users, try searching in organizations
+      entity = await this.organizationService.findById(payload.sub);
+      if (entity) {
+        isOrganization = true;
+      }
+    }
+
+    if (!entity) {
       this.logger.warn(
-        `Authentication failed: User not found (ID: ${payload.sub})`,
+        `Authentication failed: Entity not found (ID: ${payload.sub})`,
       );
       throw new UnauthorizedException('User not found');
     }
 
-    // Check user status and throw appropriate exceptions
-    if (user.status === 'suspended') {
+    const email = isOrganization ? entity.businessEmail : entity.email;
+    // Check status and throw appropriate exceptions
+    if (entity.status === 'suspended') {
       this.logger.warn(
-        `Access denied: User ${user.email} (ID: ${user?.email}) is suspended`,
+        `Access denied: ${isOrganization ? 'Organization' : 'User'} ${email} (ID: ${email}) is suspended`,
       );
       throw new UserSuspendedException(
         'Your account has been suspended. Please contact the administrator for more information.',
       );
     }
 
-    if (user.status === 'terminated') {
+    if (entity.status === 'terminated') {
       this.logger.warn(
-        `Access denied: User ${user.email} (ID: ${user.email}) is terminated`,
+        `Access denied: ${isOrganization ? 'Organization' : 'User'} ${email} (ID: ${email}) is terminated`,
       );
       throw new UserInactiveException(
         'Your account has been terminated. Please contact the administrator.',
       );
     }
 
-    if (user.status === 'inactive') {
+    if (entity.status === 'inactive') {
       this.logger.warn(
-        `Access denied: User ${user.email} (ID: ${user.email}) is inactive`,
+        `Access denied: ${isOrganization ? 'Organization' : 'User'} ${email} (ID: ${email}) is inactive`,
       );
       throw new UserInactiveException(
         'Your account is inactive. Please complete your registration or contact the administrator.',
       );
     }
 
-    // After validating the user exists and is active, we return the
-    // original payload. The payload contains all the necessary user
-    // information (including roles) for the request lifecycle.
-    return payload;
+    // Attach sub to the Mongoose document so that req.user.sub works
+    (entity as any).sub = payload.sub;
+
+    return entity;
   }
 }

@@ -60,13 +60,18 @@ import { Project, ProjectSchema } from '../project/schemas/project.schema';
     SystemLogsService,
     {
       provide: JwtStrategy,
-      useFactory: (configService: ConfigService, userService: UserService) => {
+      useFactory: (
+        configService: ConfigService,
+        userService: UserService,
+        organizationService: OrganizationService,
+      ) => {
         return new JwtStrategy(
           userService,
+          organizationService,
           configService.get<string>('JWT_SECRET'),
         );
       },
-      inject: [ConfigService, UserService],
+      inject: [ConfigService, UserService, OrganizationService],
     },
     {
       provide: 'APP_GUARD',

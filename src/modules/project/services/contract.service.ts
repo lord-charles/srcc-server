@@ -279,8 +279,35 @@ export class ContractService {
   async findMyContracts(userId: string): Promise<Contract[]> {
     console.log(userId);
     try {
+      let email: string | null = null;
+      const associatedIds: Types.ObjectId[] = [new Types.ObjectId(userId)];
+
+      // Check User collection first
+      const user: any = await this.userModel.findById(userId).select('email').lean();
+      if (user) {
+        email = user.email;
+        // Find corresponding organization
+        const org: any = await this.organizationModel.findOne({ businessEmail: email }).select('_id').lean();
+        if (org) {
+          associatedIds.push(org._id);
+        }
+      } else {
+        // Check Organization collection
+        const org: any = await this.organizationModel.findById(userId).select('businessEmail').lean();
+        if (org) {
+          email = org.businessEmail;
+          // Find corresponding user
+          const usr: any = await this.userModel.findOne({ email }).select('_id').lean();
+          if (usr) {
+            associatedIds.push(usr._id);
+          }
+        }
+      }
+
+      console.log('Associated IDs for contracts query:', associatedIds);
+
       const contracts = await this.contractModel
-        .find({ contractedUserId: new Types.ObjectId(userId) })
+        .find({ contractedUserId: { $in: associatedIds } })
         .populate('projectId', 'name milestones')
         .populate('milestoneId', 'title description budget dueDate')
         .populate('amendments.approvedBy', 'firstName lastName email')
@@ -298,7 +325,7 @@ export class ContractService {
       return this.transformContracts(contracts);
     } catch (error) {
       this.logger.error(
-        `Error finding contracts by project ID: ${error.message}`,
+        `Error finding contracts by user/org ID: ${error.message}`,
         error.stack,
       );
       throw error;
@@ -587,7 +614,7 @@ export class ContractService {
       });
 
       this.logger.log(
-        `Generated OTP for contract ${contractId}, expires at ${expiryTime.toISOString()}`,
+        `Generated OTP for contract ${contractId}, otp ${otp} expires at ${expiryTime.toISOString()}`,
       );
 
       // Send OTP via SMS and email
