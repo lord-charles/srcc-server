@@ -152,7 +152,7 @@ export class Claim {
         uploadedBy: {
           type: MongooseSchema.ObjectId,
           ref: 'User',
-          required: true,
+          required: false,
         },
       },
     ],
@@ -163,7 +163,7 @@ export class Claim {
     name: string;
     type: string;
     uploadedAt: Date;
-    uploadedBy: Types.ObjectId;
+    uploadedBy?: Types.ObjectId;
   }[];
 
   @ApiProperty({ description: 'Approval details' })
