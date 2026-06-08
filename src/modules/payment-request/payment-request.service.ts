@@ -188,6 +188,7 @@ export class PaymentRequestService {
 
     request.amount = updateDto.amount;
     request.grnUrl = updateDto.grnUrl;
+    request.attachments = updateDto.attachments;
     if (updateDto.currency) request.currency = updateDto.currency;
     request.status = PaymentRequestStatus.PENDING_HOD_APPROVAL; // reset to pending HOD approval
     request.auditTrail.push({

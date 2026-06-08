@@ -8,8 +8,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Lpo, LpoDocument, LpoStatus } from './schemas/lpo.schema';
 import { CreateLpoDto, SendLpoEmailDto } from './dto/lpo.dto';
-import { NotificationService } from '../notifications/services/notification.service';
 import { User, UserDocument } from '../auth/schemas/user.schema';
+import { Project } from '../project/schemas/project.schema';
+import { NotificationService } from '../notifications/services/notification.service';
 
 @Injectable()
 export class LpoService {
@@ -18,6 +19,7 @@ export class LpoService {
   constructor(
     @InjectModel(Lpo.name) private lpoModel: Model<LpoDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Project.name) private projectModel: Model<Project>,
     private readonly notificationService: NotificationService,
   ) {}
 
@@ -30,16 +32,38 @@ export class LpoService {
 
     const savedLpo = await newLpo.save();
 
-    // Notify HODs
-    const hods = await this.userModel.find({ roles: 'hod' }).exec();
-    for (const hod of hods) {
-      if (hod.email) {
-        await this.notificationService.sendEmail(
-          hod.email,
-          `New LPO Submitted for Approval`,
-          `A new LPO (${savedLpo.lpoNo}) has been submitted and requires your approval as HOD.`,
-        );
+    // Notify HODs of the project's department
+    const project = await this.projectModel.findById(savedLpo.projectId).exec();
+    if (project) {
+      const hods = await this.userModel
+        .find({
+          roles: { $in: ['hod'] },
+          status: 'active',
+          department: project.department,
+        })
+        .exec();
+
+      for (const hod of hods) {
+        try {
+          if (hod.email) {
+            await this.notificationService.sendEmail(
+              hod.email,
+              `New LPO Submitted for Approval`,
+              `A new LPO (${savedLpo.lpoNo}) has been submitted for project "${project.name}" and requires your approval as HOD of department ${project.department}.`,
+            );
+          }
+          if (hod.phoneNumber) {
+            await this.notificationService.sendSMS(
+              hod.phoneNumber,
+              `SRCC: A new LPO ${savedLpo.lpoNo} for project "${project.name}" has been submitted and requires your approval.`,
+            );
+          }
+        } catch (err) {
+          this.logger.error(`Failed to send notification to HOD ${hod.email}: ${err.message}`);
+        }
       }
+    } else {
+      this.logger.warn(`Project not found for LPO ${savedLpo.lpoNo}`);
     }
 
     return savedLpo;

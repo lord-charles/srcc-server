@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsPositive,
   IsUrl,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -33,6 +34,12 @@ export class CreatePaymentRequestDto {
   @IsString()
   @IsOptional()
   grnUrl?: string;
+
+  @ApiProperty({ type: [String], required: false })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  attachments?: string[];
 
   @ApiProperty()
   @IsString()

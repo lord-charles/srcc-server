@@ -133,6 +133,10 @@ SRCC Finance Team`,
           path: 'disputeResolution.resolvedBy',
           select: 'firstName lastName email',
         },
+        {
+          path: 'projectId',
+          select: 'name',
+        },
       ])
       .sort({ createdAt: -1 })
       .exec();
@@ -142,6 +146,7 @@ SRCC Finance Team`,
     status?: string;
     department?: string;
     requestedBy?: string;
+    projectId?: string;
   }): Promise<ImprestDocument[]> {
     const query = { ...filters };
     if (filters.requestedBy) {
@@ -179,6 +184,10 @@ SRCC Finance Team`,
           path: 'disputeResolution.resolvedBy',
           select: 'firstName lastName email',
         },
+        {
+          path: 'projectId',
+          select: 'name',
+        },
       ])
       .sort({ createdAt: -1 })
       .exec();
@@ -215,6 +224,10 @@ SRCC Finance Team`,
         {
           path: 'disputeResolution.resolvedBy',
           select: 'firstName lastName email',
+        },
+        {
+          path: 'projectId',
+          select: 'name',
         },
       ])
       .exec();

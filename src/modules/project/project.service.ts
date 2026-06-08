@@ -37,6 +37,27 @@ export class ProjectService {
     }
   }
 
+  async search(q: string): Promise<Project[]> {
+    if (!q) {
+      return this.projectModel
+        .find()
+        .select('_id name code')
+        .limit(10)
+        .exec();
+    }
+
+    return this.projectModel
+      .find({
+        $or: [
+          { name: { $regex: q, $options: 'i' } },
+          { code: { $regex: q, $options: 'i' } },
+        ],
+      })
+      .select('_id name code')
+      .limit(15)
+      .exec();
+  }
+
   async findAll(query: any = {}, userId?: string): Promise<Project[]> {
     // Determine if the requester has admin access (can be a User or Organization)
     let hasAdminAccess = false;

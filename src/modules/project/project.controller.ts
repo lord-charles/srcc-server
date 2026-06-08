@@ -92,6 +92,13 @@ export class ProjectController {
     return this.projectService.findAll(query, req.user.sub);
   }
 
+  @Get('search/autocomplete')
+  @ApiOperation({ summary: 'Search projects with autocomplete suggestions across all projects' })
+  @ApiResponse({ status: 200, description: 'Return list of matching projects.' })
+  async search(@Query('q') q: string) {
+    return this.projectService.search(q);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a project by id' })
   @ApiResponse({ status: 200, description: 'Return the project.' })

@@ -8,6 +8,7 @@ import {
   UseGuards,
   BadRequestException,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -102,8 +103,9 @@ export class ImprestController {
   // @Roles('admin', 'hod', 'accountant')
   @ApiOperation({ summary: 'Get all imprest requests with optional filters' })
   @ApiResponse({ status: 200, description: 'Returns all imprest requests.' })
-  async findAll() {
-    const filters = {};
+  async findAll(@Query('projectId') projectId?: string) {
+    const filters: any = {};
+    if (projectId) filters.projectId = projectId;
     // if (status) filters['status'] = status;
     // if (department) filters['department'] = department;
     // if (requestedBy) filters['requestedBy'] = requestedBy;

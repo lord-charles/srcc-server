@@ -75,6 +75,12 @@ export class CreateLpoDto {
   @IsOptional()
   @IsNumber()
   validityDays?: number;
+
+  @ApiProperty({ type: [String], required: false })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  attachments?: string[];
 }
 
 export class SendLpoEmailDto {

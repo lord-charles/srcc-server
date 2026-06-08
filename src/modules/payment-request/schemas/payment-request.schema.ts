@@ -53,6 +53,10 @@ export class PaymentRequest {
   @Prop()
   grnUrl?: string; // Goods Received Note URL
 
+  @ApiProperty({ type: [String], required: false })
+  @Prop({ type: [String], default: [] })
+  attachments?: string[];
+
   @ApiProperty()
   @Prop({
     required: true,

@@ -63,4 +63,13 @@ export class CreateImprestDto {
   @IsOptional()
   @IsString({ each: true })
   attachmentUrls?: string[];
+
+  @ApiProperty({
+    description: 'Optional Project ID to link this imprest to',
+    required: false,
+    example: '65f1234567890abcdef12345',
+  })
+  @IsOptional()
+  @IsString()
+  projectId?: string;
 }

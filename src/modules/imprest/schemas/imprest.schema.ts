@@ -271,6 +271,13 @@ export class Imprest {
   };
 
   @ApiProperty({
+    description: 'Optional Project ID to link this imprest to',
+    required: false,
+  })
+  @Prop({ type: Types.ObjectId, ref: 'Project', required: false })
+  projectId?: Types.ObjectId;
+
+  @ApiProperty({
     description: 'Optional file attachments for the imprest request',
     type: [Object],
   })

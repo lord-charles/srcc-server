@@ -105,6 +105,10 @@ export class Lpo {
   @ApiProperty()
   @Prop({ type: [LpoDispatchLogSchema], default: [] })
   dispatchHistory: LpoDispatchLog[];
+
+  @ApiProperty({ type: [String], required: false })
+  @Prop({ type: [String], default: [] })
+  attachments?: string[];
 }
 
 export const LpoSchema = SchemaFactory.createForClass(Lpo);
