@@ -24,10 +24,12 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Suppliers')
 @Controller('supplier')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class SupplierController {
   constructor(private readonly supplierService: SupplierService) {}
@@ -90,6 +92,7 @@ export class SupplierController {
   }
 
   @Delete(':id')
+  @Roles('super_admin')
   @ApiOperation({ summary: 'Delete a supplier' })
   remove(@Param('id') id: string) {
     return this.supplierService.remove(id);

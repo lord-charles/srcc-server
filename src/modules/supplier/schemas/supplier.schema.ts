@@ -89,6 +89,19 @@ export class Supplier {
   @Prop({ required: false })
   otherComplianceDocumentUrl?: string;
 
+  @ApiPropertyOptional({
+    description: 'Cloudinary URL for bank attachment',
+  })
+  @Prop({ required: false })
+  bankAttachmentUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Cloudinary URLs for other attachments',
+    type: [String],
+  })
+  @Prop({ type: [String], default: [] })
+  otherAttachments?: string[];
+
   // Financial Details
   @ApiProperty({ example: 'Equity Bank', description: 'Bank Name' })
   @Prop({ required: true, trim: true })

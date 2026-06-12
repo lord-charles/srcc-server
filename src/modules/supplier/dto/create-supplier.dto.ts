@@ -91,6 +91,17 @@ export class CreateSupplierDto {
   @IsString()
   otherComplianceDocumentUrl?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  bankAttachmentUrl?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  otherAttachments?: string[];
+
   @ApiProperty({ example: 'Equity Bank' })
   @IsNotEmpty()
   @IsString()
