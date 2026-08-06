@@ -10,6 +10,7 @@ import { ClaimDocument } from './schemas/claim.schema';
 import { ContractDocument } from '../project/schemas/contract.schema';
 import { ProjectDocument } from '../project/schemas/project.schema';
 import { UserDocument } from '../auth/schemas/user.schema';
+import { OrganizationDocument } from '../auth/schemas/organization.schema';
 import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimDto } from './dto/update-claim.dto';
 import { ClaimsNotificationService } from './claims-notification.service';
@@ -177,8 +178,8 @@ export class ClaimsService {
     const [project, contract, claimant, updatedBy] = await Promise.all([
       this.projectModel.findById(claim.projectId),
       this.contractModel.findById(claim.contractId),
-      this.userModel.findById(claim.claimantId),
-      this.userModel.findById(userId),
+      this.findUserOrOrganization(claim.claimantId),
+      this.findUserOrOrganization(userId),
     ]);
 
     if (!project || !contract || !claimant || !updatedBy) {
@@ -370,9 +371,80 @@ export class ClaimsService {
     @InjectModel('Contract') private contractModel: Model<ContractDocument>,
     @InjectModel('Project') private projectModel: Model<ProjectDocument>,
     @InjectModel('User') private userModel: Model<UserDocument>,
+    @InjectModel('Organization') private organizationModel: Model<OrganizationDocument>,
     private readonly claimsNotificationService: ClaimsNotificationService,
     private readonly approvalFlowService: ApprovalFlowService,
   ) {}
+
+  private async findUserOrOrganization(id: string | Types.ObjectId): Promise<any | null> {
+    if (!id) return null;
+    let entity = await this.userModel.findById(id);
+    if (!entity && this.organizationModel) {
+      entity = await this.organizationModel.findById(id);
+    }
+    return entity;
+  }
+
+  private async resolveUserOrOrg(id: any): Promise<any> {
+    if (!id) return null;
+    // If it's already an object with email (already populated), return it
+    if (typeof id === 'object' && id.email) {
+      return id;
+    }
+    const rawId = id._id || id;
+    if (!Types.ObjectId.isValid(rawId)) return id;
+
+    let entity = await this.userModel.findById(rawId, 'firstName lastName email').lean();
+    if (!entity && this.organizationModel) {
+      const org = await this.organizationModel.findById(rawId).lean() as any;
+      if (org) {
+        entity = {
+          _id: org._id,
+          firstName: org.companyName,
+          lastName: org.contactPerson?.name || '',
+          email: org.contactPerson?.email || org.businessEmail || '',
+        } as any;
+      }
+    }
+    return entity || { _id: rawId, firstName: 'Unknown', lastName: '', email: '' };
+  }
+
+  private async transformClaim(claim: any): Promise<any> {
+    if (!claim) return null;
+    const claimObj = typeof claim.toObject === 'function' ? claim.toObject() : claim;
+
+    // 1. Resolve claimantId (User or Organization)
+    claimObj.claimantId = await this.resolveUserOrOrg(claimObj.claimantId);
+
+    // 2. Resolve createdBy (User or Organization)
+    claimObj.createdBy = await this.resolveUserOrOrg(claimObj.createdBy);
+
+    // 3. Resolve updatedBy (User or Organization)
+    claimObj.updatedBy = await this.resolveUserOrOrg(claimObj.updatedBy);
+
+    // 4. Resolve contractedUserId inside contractId
+    if (claimObj.contractId) {
+      if (typeof claimObj.contractId === 'object') {
+        claimObj.contractId.contractedUserId = await this.resolveUserOrOrg(
+          claimObj.contractId.contractedUserId,
+        );
+      }
+    }
+
+    // 5. Resolve auditTrail performedBy
+    if (claimObj.auditTrail && Array.isArray(claimObj.auditTrail)) {
+      for (const trail of claimObj.auditTrail) {
+        trail.performedBy = await this.resolveUserOrOrg(trail.performedBy);
+      }
+    }
+
+    return claimObj;
+  }
+
+  private async transformClaims(claims: any[]): Promise<any[]> {
+    if (!claims) return [];
+    return Promise.all(claims.map((c) => this.transformClaim(c)));
+  }
 
   async create(
     createClaimDto: CreateClaimDto,
@@ -381,7 +453,7 @@ export class ClaimsService {
     const [contract, project, currentUser] = await Promise.all([
       this.contractModel.findById(createClaimDto.contractId),
       this.projectModel.findById(createClaimDto.projectId),
-      this.userModel.findById(userId),
+      this.findUserOrOrganization(userId),
     ]);
 
     if (!contract) {
@@ -424,7 +496,7 @@ export class ClaimsService {
       }
 
       // Verify the claimant exists
-      const claimant = await this.userModel.findById(createClaimDto.claimantId);
+      const claimant = await this.findUserOrOrganization(createClaimDto.claimantId);
       if (!claimant) {
         throw new NotFoundException(
           `Claimant with ID ${createClaimDto.claimantId} not found`,
@@ -434,8 +506,10 @@ export class ClaimsService {
       claimantId = new Types.ObjectId(createClaimDto.claimantId);
       isCreatingOnBehalf = true;
 
+      const currentUserEmail = currentUser.email || currentUser.businessEmail || '';
+      const claimantEmail = claimant.email || claimant.businessEmail || '';
       this.logger.log(
-        `User ${currentUser.email} is creating claim on behalf of claimant ${claimant.email}`,
+        `User ${currentUserEmail} is creating claim on behalf of claimant ${claimantEmail}`,
       );
     }
 
@@ -534,25 +608,26 @@ export class ClaimsService {
 
     // Log if claim was created on behalf
     if (isCreatingOnBehalf) {
+      const currentUserEmail = currentUser.email || currentUser.businessEmail || '';
       this.logger.log(
-        `Claim ${savedClaim._id} created by ${currentUser.email} on behalf of claimant ID ${claimantId}`,
+        `Claim ${savedClaim._id} created by ${currentUserEmail} on behalf of claimant ID ${claimantId}`,
       );
     }
 
     // Notify stakeholders
     await this.notifyStakeholders(savedClaim, userId);
 
-    return savedClaim;
+    return this.transformClaim(savedClaim);
   }
 
   async findAll(userId: Types.ObjectId) {
-    return this.claimModel
+    const claims = await this.claimModel
       .find({ claimantId: userId })
       .populate('projectId', 'name description')
       .populate({
         path: 'contractId',
         select:
-          'contractNumber contractValue currency status startDate endDate description',
+          'contractNumber contractValue currency status startDate endDate description contractedUserId isOrganization',
         populate: [
           {
             path: 'projectId',
@@ -562,21 +637,11 @@ export class ClaimsService {
             path: 'createdBy',
             select: 'firstName lastName email',
           },
-          {
-            path: 'contractedUserId',
-            select: 'firstName lastName email',
-          },
         ],
       })
-      .populate('claimantId', 'firstName lastName email')
-      .populate('createdBy', 'firstName lastName email')
-      .populate('updatedBy', 'firstName lastName email')
       .populate('payment.paidBy', 'firstName lastName email')
-      .populate({
-        path: 'auditTrail.performedBy',
-        select: 'firstName lastName email',
-      })
       .exec();
+    return this.transformClaims(claims);
   }
   async findAllClaims(
     filters: any = {},
@@ -623,7 +688,7 @@ export class ClaimsService {
         .populate({
           path: 'contractId',
           select:
-            'contractNumber contractValue currency status startDate endDate description',
+            'contractNumber contractValue currency status startDate endDate description contractedUserId isOrganization',
           populate: [
             {
               path: 'projectId',
@@ -633,20 +698,9 @@ export class ClaimsService {
               path: 'createdBy',
               select: 'firstName lastName email',
             },
-            {
-              path: 'contractedUserId',
-              select: 'firstName lastName email',
-            },
           ],
         })
-        .populate('claimantId', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName email')
-        .populate('updatedBy', 'firstName lastName email')
         .populate('payment.paidBy', 'firstName lastName email')
-        .populate({
-          path: 'auditTrail.performedBy',
-          select: 'firstName lastName email',
-        })
         .sort({ createdAt: -1 })
         .lean()
         .exec();
@@ -666,8 +720,9 @@ export class ClaimsService {
       }
 
       // Add approval flow to each claim
+      const transformedClaims = await this.transformClaims(claims);
       const enhancedClaims = await Promise.all(
-        claims.map(async (claim: PopulatedClaim) => {
+        transformedClaims.map(async (claim: any) => {
           if (!claim.projectId?.department) {
             return claim;
           }
@@ -699,7 +754,7 @@ export class ClaimsService {
     claimantId: string,
   ): Promise<any[]> {
     try {
-      return await this.claimModel
+      const claims = await this.claimModel
         .find({
           contractId: new Types.ObjectId(contractId),
           claimantId: new Types.ObjectId(claimantId),
@@ -708,7 +763,7 @@ export class ClaimsService {
         .populate({
           path: 'contractId',
           select:
-            'contractNumber contractValue currency status startDate endDate description milestoneId',
+            'contractNumber contractValue currency status startDate endDate description milestoneId contractedUserId isOrganization',
           populate: [
             {
               path: 'projectId',
@@ -719,26 +774,16 @@ export class ClaimsService {
               select: 'firstName lastName email',
             },
             {
-              path: 'contractedUserId',
-              select: 'firstName lastName email',
-            },
-            {
               path: 'milestoneId',
               select: 'title description budget dueDate',
             },
           ],
         })
-        .populate('claimantId', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName email')
-        .populate('updatedBy', 'firstName lastName email')
         .populate('payment.paidBy', 'firstName lastName email')
         .populate('milestones.milestoneId', 'title description')
-        .populate({
-          path: 'auditTrail.performedBy',
-          select: 'firstName lastName email',
-        })
         .sort({ createdAt: -1 })
         .exec();
+      return this.transformClaims(claims);
     } catch (error) {
       this.logger.error(
         `Error finding claims for contract ${contractId}: ${error.message}`,
@@ -751,7 +796,7 @@ export class ClaimsService {
   async findClaimsByProject(projectId: string, userId: string): Promise<any[]> {
     try {
       // Get user to check authorization
-      const user = await this.userModel.findById(userId);
+      const user = await this.findUserOrOrganization(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -781,7 +826,7 @@ export class ClaimsService {
         );
       }
 
-      return await this.claimModel
+      const claims = await this.claimModel
         .find({
           projectId: new Types.ObjectId(projectId),
         })
@@ -789,7 +834,7 @@ export class ClaimsService {
         .populate({
           path: 'contractId',
           select:
-            'contractNumber contractValue currency status startDate endDate description milestoneId',
+            'contractNumber contractValue currency status startDate endDate description milestoneId contractedUserId isOrganization',
           populate: [
             {
               path: 'projectId',
@@ -800,25 +845,15 @@ export class ClaimsService {
               select: 'firstName lastName email',
             },
             {
-              path: 'contractedUserId',
-              select: 'firstName lastName email',
-            },
-            {
               path: 'milestoneId',
               select: 'title description budget dueDate',
             },
           ],
         })
-        .populate('claimantId', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName email')
-        .populate('updatedBy', 'firstName lastName email')
         .populate('payment.paidBy', 'firstName lastName email')
-        .populate({
-          path: 'auditTrail.performedBy',
-          select: 'firstName lastName email',
-        })
         .sort({ createdAt: -1 })
         .exec();
+      return this.transformClaims(claims);
     } catch (error) {
       this.logger.error(
         `Error finding claims for project ${projectId}: ${error.message}`,
@@ -835,7 +870,7 @@ export class ClaimsService {
       .populate({
         path: 'contractId',
         select:
-          'contractNumber contractValue currency status startDate endDate description',
+          'contractNumber contractValue currency status startDate endDate description contractedUserId isOrganization',
         populate: [
           {
             path: 'projectId',
@@ -845,27 +880,16 @@ export class ClaimsService {
             path: 'createdBy',
             select: 'firstName lastName email',
           },
-          {
-            path: 'contractedUserId',
-            select: 'firstName lastName email',
-          },
         ],
       })
-      .populate('claimantId', 'firstName lastName email')
-      .populate('createdBy', 'firstName lastName email')
-      .populate('updatedBy', 'firstName lastName email')
       .populate('payment.paidBy', 'firstName lastName email')
-      .populate({
-        path: 'auditTrail.performedBy',
-        select: 'firstName lastName email',
-      })
       .exec();
 
     if (!claim) {
       throw new NotFoundException('Claim not found');
     }
 
-    return claim;
+    return this.transformClaim(claim);
   }
 
   async update(
@@ -913,7 +937,7 @@ export class ClaimsService {
       );
     }
 
-    return this.claimModel.findByIdAndUpdate(
+    const updatedClaim = await this.claimModel.findByIdAndUpdate(
       id,
       {
         ...updateClaimDto,
@@ -922,6 +946,7 @@ export class ClaimsService {
       },
       { new: true },
     );
+    return this.transformClaim(updatedClaim);
   }
 
   private async getApprovers(
@@ -1004,7 +1029,7 @@ export class ClaimsService {
     const savedClaim = await claim.save();
 
     await this.notifyStakeholders(savedClaim, userId);
-    return savedClaim;
+    return this.transformClaim(savedClaim);
   }
 
   async approve(
@@ -1109,7 +1134,7 @@ export class ClaimsService {
     // Notify stakeholders
     await this.notifyStakeholders(updatedClaim, userId);
 
-    return updatedClaim;
+    return this.transformClaim(updatedClaim);
   }
 
   async reject(
@@ -1180,7 +1205,6 @@ export class ClaimsService {
     const updatedClaim = await this.claimModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .populate('projectId')
-      .populate('claimantId')
       .exec();
 
     if (!updatedClaim) {
@@ -1190,7 +1214,7 @@ export class ClaimsService {
     // Notify stakeholders
     await this.notifyStakeholders(updatedClaim, userId);
 
-    return updatedClaim;
+    return this.transformClaim(updatedClaim);
   }
 
   async requestRevision(
@@ -1270,7 +1294,6 @@ export class ClaimsService {
     const updatedClaim = await this.claimModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .populate('projectId')
-      .populate('claimantId')
       .exec();
 
     if (!updatedClaim) {
@@ -1280,7 +1303,7 @@ export class ClaimsService {
     // Notify stakeholders
     await this.notifyStakeholders(updatedClaim, userId);
 
-    return updatedClaim;
+    return this.transformClaim(updatedClaim);
   }
 
   async markAsPaid(
@@ -1344,7 +1367,6 @@ export class ClaimsService {
         { new: true },
       )
       .populate('projectId', 'name description')
-      .populate('claimantId', 'firstName lastName email')
       .populate('payment.paidBy', 'firstName lastName email');
 
     if (!updatedClaim) {
@@ -1356,7 +1378,7 @@ export class ClaimsService {
 
     this.logger.log(`Claim ${id} successfully marked as paid`);
 
-    return updatedClaim;
+    return this.transformClaim(updatedClaim);
   }
 
   async deleteClaim(id: string, userId: Types.ObjectId): Promise<void> {
@@ -1395,7 +1417,7 @@ export class ClaimsService {
     }
 
     // Check authorization - only claimant, admin, project creator, PM, or assistant PM can cancel
-    const user = await this.userModel.findById(userId);
+    const user = await this.findUserOrOrganization(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -1447,9 +1469,12 @@ export class ClaimsService {
       );
     }
 
+    const userEmail = user.email || user.businessEmail || '';
     this.logger.log(
-      `User ${user.email} is cancelling claim ${id} (status: ${claim.status})`,
+      `User ${userEmail} is cancelling claim ${id} (status: ${claim.status})`,
     );
+
+    const cancelledByName = user.companyName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
 
     const updatedClaim = await this.claimModel.findByIdAndUpdate(
       id,
@@ -1463,7 +1488,7 @@ export class ClaimsService {
             performedAt: new Date(),
             details: {
               previousStatus: claim.status,
-              cancelledBy: `${user.firstName} ${user.lastName}`,
+              cancelledBy: cancelledByName,
             },
           },
         },
@@ -1478,8 +1503,8 @@ export class ClaimsService {
     // Notify stakeholders
     await this.notifyStakeholders(updatedClaim, userId);
 
-    this.logger.log(`Claim ${id} successfully cancelled by user ${user.email}`);
+    this.logger.log(`Claim ${id} successfully cancelled by user ${userEmail}`);
 
-    return updatedClaim;
+    return this.transformClaim(updatedClaim);
   }
 }

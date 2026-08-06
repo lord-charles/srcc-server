@@ -6,6 +6,10 @@ import { ClaimsNotificationService } from './claims-notification.service';
 import { Claim, ClaimSchema } from './schemas/claim.schema';
 import { Project, ProjectSchema } from '../project/schemas/project.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
+import {
+  Organization,
+  OrganizationSchema,
+} from '../auth/schemas/organization.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Contract, ContractSchema } from '../project/schemas/contract.schema';
 import {
@@ -21,6 +25,7 @@ import { ApprovalFlowService } from './approval-flow.service';
       { name: Contract.name, schema: ContractSchema },
       { name: Project.name, schema: ProjectSchema },
       { name: User.name, schema: UserSchema },
+      { name: Organization.name, schema: OrganizationSchema },
       { name: ApprovalFlow.name, schema: ApprovalFlowSchema },
     ]),
     NotificationsModule,
