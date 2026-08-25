@@ -158,15 +158,6 @@ export class ClaimsService {
     }
   }
 
-  private getApprovalLevel(status: ClaimStatus): string | null {
-    const level = status.split('_')[1];
-    if (level && Object.keys(ClaimsService.roleMap).includes(level)) {
-      return level;
-    }
-    // throw new BadRequestException(`Invalid approval level in status: ${status}`);
-    return null;
-  }
-
   private async notifyStakeholders(
     claim: ClaimDocument,
     userId: Types.ObjectId,

@@ -290,6 +290,47 @@ export class ApprovalFlowService {
           },
         ],
       },
+      {
+        department: 'SLS',
+        description: 'SLS Claims Approval Flow',
+        steps: [
+          {
+            stepNumber: 1,
+            role: 'claim_checker',
+            department: 'SLS',
+            description: 'Initial check by SLS staff',
+            nextStatus: 'pending_reviewer_approval',
+          },
+          {
+            stepNumber: 2,
+            role: 'reviewer',
+            department: 'SLS',
+            description: 'Review by SLS staff',
+            nextStatus: 'pending_approver_approval',
+          },
+          {
+            stepNumber: 3,
+            role: 'approver',
+            department: 'SLS',
+            description: 'Approval by SLS staff',
+            nextStatus: 'pending_srcc_checker_approval',
+          },
+          {
+            stepNumber: 4,
+            role: 'srcc_checker',
+            department: 'SRCC',
+            description: 'Check by SRCC staff',
+            nextStatus: 'pending_srcc_finance_approval',
+          },
+          {
+            stepNumber: 5,
+            role: 'srcc_finance',
+            department: 'SRCC',
+            description: 'Final finance approval by SRCC',
+            nextStatus: 'approved',
+          },
+        ],
+      },
     ];
 
     for (const flow of defaultFlows) {

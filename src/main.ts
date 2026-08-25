@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import {  Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as express from 'express';
 
@@ -62,7 +62,7 @@ async function bootstrap() {
     customCss: '.swagger-ui .topbar { display: none }', // Hide the top bar
   });
 
-  const port = configService.get<number>('PORT', 6001);
+  const port = configService.get<number>('PORT', 5001);
   await app.listen(port, '0.0.0.0');
 
   // Log the URLs

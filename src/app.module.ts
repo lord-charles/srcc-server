@@ -14,6 +14,8 @@ import { ImprestModule } from './modules/imprest/imprest.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { LpoModule } from './modules/lpo/lpo.module';
 import { PaymentRequestModule } from './modules/payment-request/payment-request.module';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -51,6 +53,15 @@ import { PaymentRequestModule } from './modules/payment-request/payment-request.
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    // Apply authentication and authorization globally
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })
