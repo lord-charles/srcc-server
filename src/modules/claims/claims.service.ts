@@ -69,7 +69,10 @@ export class ClaimsService {
   private isCoachContract(
     contract: ContractDocument | null | undefined,
   ): boolean {
-    return (contract?.type || '').toLowerCase() === 'coach';
+    return (
+      (contract?.type || '').toLowerCase() === 'coach' ||
+      (contract?.description || '').toLowerCase().includes('coach')
+    );
   }
 
   private getCoachManagersForRole(
@@ -534,22 +537,24 @@ export class ClaimsService {
 
     const finalAmount = coachClaim?.totalAmount ?? createClaimDto.amount;
 
-    // Check if the new claim exceeds the remaining contract value
-    const existingClaims = await this.claimModel.find({
-      contractId: contract._id,
-      status: { $nin: ['rejected', 'cancelled'] },
-    });
+    // Check if the new claim exceeds the remaining contract value (only for non-coach contracts)
+    if (!this.isCoachContract(contract)) {
+      const existingClaims = await this.claimModel.find({
+        contractId: contract._id,
+        status: { $nin: ['rejected', 'cancelled'] },
+      });
 
-    const totalClaimedAmount = existingClaims.reduce(
-      (sum, c) => sum + (c.amount || 0),
-      0,
-    );
-
-    if (totalClaimedAmount + finalAmount > contract.contractValue) {
-      const remainingAmount = contract.contractValue - totalClaimedAmount;
-      throw new BadRequestException(
-        `Claim amount (${finalAmount}) exceeds the remaining contract value (${remainingAmount}). Contract total: ${contract.contractValue}.`,
+      const totalClaimedAmount = existingClaims.reduce(
+        (sum, c) => sum + (c.amount || 0),
+        0,
       );
+
+      if (totalClaimedAmount + finalAmount > contract.contractValue) {
+        const remainingAmount = contract.contractValue - totalClaimedAmount;
+        throw new BadRequestException(
+          `Claim amount (${finalAmount}) exceeds the remaining contract value (${remainingAmount}). Contract total: ${contract.contractValue}.`,
+        );
+      }
     }
 
     // Create the claim
@@ -909,23 +914,25 @@ export class ClaimsService {
     const finalAmount =
       coachClaim?.totalAmount ?? updateClaimDto.amount ?? claim.amount;
 
-    // Check if the updated claim exceeds the remaining contract value
-    const existingClaims = await this.claimModel.find({
-      contractId: contract._id,
-      _id: { $ne: claim._id },
-      status: { $nin: ['rejected', 'cancelled'] },
-    });
+    // Check if the updated claim exceeds the remaining contract value (only for non-coach contracts)
+    if (!this.isCoachContract(contract)) {
+      const existingClaims = await this.claimModel.find({
+        contractId: contract._id,
+        _id: { $ne: claim._id },
+        status: { $nin: ['rejected', 'cancelled'] },
+      });
 
-    const totalClaimedAmount = existingClaims.reduce(
-      (sum, c) => sum + (c.amount || 0),
-      0,
-    );
-
-    if (totalClaimedAmount + finalAmount > contract.contractValue) {
-      const remainingAmount = contract.contractValue - totalClaimedAmount;
-      throw new BadRequestException(
-        `Updated claim amount (${finalAmount}) exceeds the remaining contract value (${remainingAmount}). Contract total: ${contract.contractValue}.`,
+      const totalClaimedAmount = existingClaims.reduce(
+        (sum, c) => sum + (c.amount || 0),
+        0,
       );
+
+      if (totalClaimedAmount + finalAmount > contract.contractValue) {
+        const remainingAmount = contract.contractValue - totalClaimedAmount;
+        throw new BadRequestException(
+          `Updated claim amount (${finalAmount}) exceeds the remaining contract value (${remainingAmount}). Contract total: ${contract.contractValue}.`,
+        );
+      }
     }
 
     const updatedClaim = await this.claimModel.findByIdAndUpdate(
