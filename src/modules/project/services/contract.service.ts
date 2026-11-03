@@ -16,6 +16,7 @@ import * as crypto from 'crypto';
 import { User } from 'src/modules/auth/schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { Project } from '../schemas/project.schema';
+import { Budget, BudgetDocument } from '../schemas/budget.schema';
 import {
   ContractApprovalDto,
   ContractRejectionDto,
@@ -65,6 +66,7 @@ export class ContractService {
     @InjectModel(Contract.name) private contractModel: Model<ContractDocument>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
+    @InjectModel(Budget.name) private budgetModel: Model<BudgetDocument>,
     @InjectModel(Claim.name) private claimModel: Model<ClaimDocument>,
     @InjectModel(ContractTemplate.name)
     private templateModel: Model<ContractTemplateDocument>,
@@ -155,6 +157,65 @@ export class ContractService {
         }
       }
 
+      const isCoachContract = (createContractDto.type || '').toLowerCase() === 'coach';
+      if (isCoachContract) {
+        const assignedCoach = await this.projectModel.exists({
+          _id: createContractDto.projectId,
+          coaches: {
+            $elemMatch: {
+              userId: new Types.ObjectId(createContractDto.contractedUserId),
+              milestoneId: createContractDto.milestoneId
+                ? new Types.ObjectId(createContractDto.milestoneId)
+                : null,
+            },
+          },
+        });
+        if (!assignedCoach) {
+          throw new BadRequestException('Coach contracts can only be created for a coach assigned to this project milestone');
+        }
+      }
+      if (!isCoachContract) {
+        await this.validateInternalBudgetAllocation({
+          projectId: createContractDto.projectId,
+          contractedEntity,
+          milestoneId: createContractDto.milestoneId,
+          contractValue: createContractDto.contractValue,
+          currency: createContractDto.currency,
+        });
+      }
+
+      // A person may have one contract for each milestone in a project, but
+      // cannot have duplicate contracts for the same milestone. Legacy
+      // project-wide contracts without a milestone remain unique per person.
+      const contractScope: any = {
+        projectId: new Types.ObjectId(createContractDto.projectId),
+        contractedUserId: new Types.ObjectId(createContractDto.contractedUserId),
+        isOrganization: !!createContractDto.isOrganization,
+      };
+      if (createContractDto.type) {
+        contractScope.type = createContractDto.type;
+      } else {
+        contractScope.$or = [
+          { type: { $exists: false } },
+          { type: null },
+          { type: '' },
+        ];
+      }
+      if (createContractDto.milestoneId) {
+        contractScope.milestoneId = new Types.ObjectId(createContractDto.milestoneId);
+      } else {
+        contractScope.$and = [{ $or: [
+          { milestoneId: { $exists: false } },
+          { milestoneId: null },
+        ] }];
+      }
+      const existingContract = await this.contractModel.findOne(contractScope).lean();
+      if (existingContract) {
+        throw new ConflictException(
+          'A contract already exists for this person and milestone',
+        );
+      }
+
       const contractNumber = await this.generateContractNumber();
 
       // Optionally embed template snapshot if templateId provided
@@ -227,6 +288,51 @@ export class ContractService {
         error.stack,
       );
       throw error;
+    }
+  }
+
+  private async validateInternalBudgetAllocation(input: {
+    projectId: string;
+    contractedEntity: any;
+    milestoneId?: string;
+    contractValue: number;
+    currency: string;
+  }): Promise<void> {
+    const budget = await this.budgetModel.findOne({ projectId: input.projectId }).lean();
+    if (!budget) {
+      throw new BadRequestException('An internal budget is required for this contract');
+    }
+
+    const email = String(
+      input.contractedEntity.email ||
+      input.contractedEntity.businessEmail ||
+      input.contractedEntity.contactPerson?.email ||
+      '',
+    ).toLowerCase();
+    const milestoneId = input.milestoneId?.toString();
+    const allocations = (budget.internalCategories || [])
+      .filter((category: any) => category.name === '2237')
+      .flatMap((category: any) => category.items || [])
+      .filter((item: any) => {
+        const matchesPerson = email && String(item.name || '').toLowerCase().includes(email);
+        return matchesPerson && (item.milestoneId?.toString() || undefined) === milestoneId;
+      });
+
+    if (!allocations.length) {
+      throw new BadRequestException('No matching internal budget allocation exists for this person and milestone');
+    }
+    if (input.currency !== budget.currency) {
+      throw new BadRequestException(`Contract currency must match the internal budget currency (${budget.currency})`);
+    }
+
+    const allocation = allocations.reduce(
+      (total: number, item: any) => total + Number(item.estimatedAmount || 0),
+      0,
+    );
+    if (input.contractValue > allocation) {
+      throw new BadRequestException(
+        `Contract value (${input.contractValue}) cannot exceed the internal budget allocation (${allocation})`,
+      );
     }
   }
 
@@ -414,6 +520,38 @@ export class ContractService {
 
       // Get current contract to track changes
       const currentContract = await this.findOne(id);
+
+      const requestedType = (updateContractDto.type || currentContract.type || '').toLowerCase();
+      if (requestedType === 'coach') {
+        const contractedUserId = (updateContractDto.contractedUserId as any)?._id || updateContractDto.contractedUserId || (currentContract.contractedUserId as any)?._id || currentContract.contractedUserId;
+        const projectId = (updateContractDto.projectId as any)?._id || updateContractDto.projectId || (currentContract.projectId as any)?._id || currentContract.projectId;
+        const milestoneId = (updateContractDto.milestoneId as any)?._id || updateContractDto.milestoneId || (currentContract.milestoneId as any)?._id || currentContract.milestoneId;
+        const assignedCoach = await this.projectModel.exists({
+          _id: projectId,
+          coaches: {
+            $elemMatch: {
+              userId: new Types.ObjectId(String(contractedUserId)),
+              milestoneId: milestoneId ? new Types.ObjectId(String(milestoneId)) : null,
+            },
+          },
+        });
+        if (!assignedCoach) {
+          throw new BadRequestException('Coach contracts can only be associated with an assigned coach');
+        }
+      } else {
+        const contractedUserId = (updateContractDto.contractedUserId as any)?._id || updateContractDto.contractedUserId || (currentContract.contractedUserId as any)?._id || currentContract.contractedUserId;
+        const contractedEntity = currentContract.isOrganization
+          ? await this.organizationModel.findById(contractedUserId)
+          : await this.userModel.findById(contractedUserId);
+        if (!contractedEntity) throw new NotFoundException('Contracted person not found');
+        await this.validateInternalBudgetAllocation({
+          projectId: String((updateContractDto.projectId as any)?._id || updateContractDto.projectId || (currentContract.projectId as any)?._id || currentContract.projectId),
+          contractedEntity,
+          milestoneId: (updateContractDto.milestoneId as any)?._id || updateContractDto.milestoneId || (currentContract.milestoneId as any)?._id || currentContract.milestoneId,
+          contractValue: updateContractDto.contractValue ?? currentContract.contractValue,
+          currency: updateContractDto.currency ?? currentContract.currency,
+        });
+      }
 
       // Prepare amendment record if needed
       const changedFields = [];

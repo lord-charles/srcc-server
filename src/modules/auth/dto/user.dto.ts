@@ -27,6 +27,11 @@ class BankDetailsDto {
   @IsString()
   bankName?: string;
 
+  @ApiProperty({ description: 'Bank account holder name', required: false })
+  @IsOptional()
+  @IsString()
+  accountName?: string;
+
   @ApiProperty({
     description: 'Bank account number',
     example: '1234567890',
@@ -44,6 +49,21 @@ class BankDetailsDto {
   @IsOptional()
   @IsString()
   branchCode?: string;
+
+  @ApiProperty({ description: 'Bank country ISO 3166-1 alpha-3 code', required: false })
+  @IsOptional()
+  @IsString()
+  bankCountry?: string;
+
+  @ApiProperty({ description: 'SWIFT or BIC code', required: false })
+  @IsOptional()
+  @IsString()
+  swiftCode?: string;
+
+  @ApiProperty({ description: 'International Bank Account Number', required: false })
+  @IsOptional()
+  @IsString()
+  iban?: string;
 }
 
 class EmergencyContactDto {

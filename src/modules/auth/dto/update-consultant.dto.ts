@@ -162,6 +162,11 @@ export class BankDetailsDto {
   @IsString()
   bankName?: string;
 
+  @ApiPropertyOptional({ description: 'Bank account holder name' })
+  @IsOptional()
+  @IsString()
+  accountName?: string;
+
   @ApiPropertyOptional({
     description: 'Bank account number',
     example: '1234567890',
@@ -177,6 +182,21 @@ export class BankDetailsDto {
   @IsOptional()
   @IsString()
   branchCode?: string;
+
+  @ApiPropertyOptional({ description: 'Bank country ISO 3166-1 alpha-3 code', example: 'KEN' })
+  @IsOptional()
+  @IsString()
+  bankCountry?: string;
+
+  @ApiPropertyOptional({ description: 'SWIFT or BIC code' })
+  @IsOptional()
+  @IsString()
+  swiftCode?: string;
+
+  @ApiPropertyOptional({ description: 'International Bank Account Number' })
+  @IsOptional()
+  @IsString()
+  iban?: string;
 }
 
 // Mpesa Details DTO

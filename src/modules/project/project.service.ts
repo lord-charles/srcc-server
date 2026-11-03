@@ -519,6 +519,12 @@ export class ProjectService {
   }
 
   async addTeamMember(id: string, teamMember: TeamMemberDto) {
+    const project = await this.projectModel.findById(id).select('coaches').lean();
+    if (!project) throw new NotFoundException(`Project with ID ${id} not found`);
+    const memberId = teamMember.organizationId || teamMember.userId;
+    if (project.coaches?.some((coach: any) => coach.userId?.toString() === memberId?.toString())) {
+      throw new BadRequestException('A coach assigned to this project cannot also be added as a team member');
+    }
     const memberData = {
       ...teamMember,
       isOrganization: !!teamMember.organizationId,
@@ -584,6 +590,12 @@ export class ProjectService {
     milestoneId: string,
     teamMember: TeamMemberDto,
   ) {
+    const project = await this.projectModel.findById(projectId).select('coaches').lean();
+    if (!project) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    const memberId = teamMember.organizationId || teamMember.userId;
+    if (project.coaches?.some((coach: any) => coach.userId?.toString() === memberId?.toString())) {
+      throw new BadRequestException('A coach assigned to this project cannot also be added as a team member');
+    }
     const memberData = {
       ...teamMember,
       isOrganization: !!teamMember.organizationId,
@@ -800,6 +812,14 @@ export class ProjectService {
       };
     },
   ): Promise<Project> {
+    const projectData = await this.projectModel.findById(projectId).select('teamMembers coaches').lean();
+    if (!projectData) throw new NotFoundException(`Project with ID ${projectId} not found`);
+    if (projectData.teamMembers?.some((member: any) => member.userId?.toString() === coach.userId.toString())) {
+      throw new BadRequestException('A team member assigned to this project cannot also be added as a coach');
+    }
+    if (projectData.coaches?.some((existing: any) => existing.userId?.toString() === coach.userId.toString() && existing.milestoneId?.toString() === coach.milestoneId.toString())) {
+      throw new BadRequestException('This coach is already assigned to the milestone');
+    }
     return this.projectModel
       .findByIdAndUpdate(
         projectId,

@@ -109,6 +109,10 @@ class BankDetails {
   @Prop()
   bankName?: string;
 
+  @ApiProperty({ description: 'Bank account holder name' })
+  @Prop()
+  accountName?: string;
+
   @ApiProperty({ description: 'Bank account number', example: '1234567890' })
   @Prop()
   accountNumber?: string;
@@ -116,6 +120,18 @@ class BankDetails {
   @ApiProperty({ description: 'Branch code of the bank', example: '123' })
   @Prop()
   branchCode?: string;
+
+  @ApiProperty({ description: 'Bank country ISO 3166-1 alpha-3 code', example: 'KEN' })
+  @Prop()
+  bankCountry?: string;
+
+  @ApiProperty({ description: 'SWIFT or BIC code' })
+  @Prop()
+  swiftCode?: string;
+
+  @ApiProperty({ description: 'International Bank Account Number' })
+  @Prop()
+  iban?: string;
 }
 
 // Mpesa Payment Details Schema
