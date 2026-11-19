@@ -617,8 +617,13 @@ export class ClaimsService {
       );
     }
 
-    // Notify stakeholders
-    await this.notifyStakeholders(savedClaim, userId);
+    // The claim is already saved. A notification failure must not report the
+    // creation as failed and encourage a duplicate submission.
+    try {
+      await this.notifyStakeholders(savedClaim, userId);
+    } catch (error) {
+      this.logger.error(`Claim ${savedClaim._id} saved but notification failed`, error instanceof Error ? error.stack : String(error));
+    }
 
     return this.transformClaim(savedClaim);
   }
@@ -630,7 +635,7 @@ export class ClaimsService {
       .populate({
         path: 'contractId',
         select:
-          'contractNumber contractValue currency status startDate endDate description contractedUserId isOrganization',
+          'contractNumber contractValue currency status startDate endDate description type contractedUserId isOrganization',
         populate: [
           {
             path: 'projectId',
@@ -691,7 +696,7 @@ export class ClaimsService {
         .populate({
           path: 'contractId',
           select:
-            'contractNumber contractValue currency status startDate endDate description contractedUserId isOrganization',
+            'contractNumber contractValue currency status startDate endDate description type contractedUserId isOrganization',
           populate: [
             {
               path: 'projectId',
@@ -766,7 +771,7 @@ export class ClaimsService {
         .populate({
           path: 'contractId',
           select:
-            'contractNumber contractValue currency status startDate endDate description milestoneId contractedUserId isOrganization',
+            'contractNumber contractValue currency status startDate endDate description type milestoneId contractedUserId isOrganization',
           populate: [
             {
               path: 'projectId',
@@ -837,7 +842,7 @@ export class ClaimsService {
         .populate({
           path: 'contractId',
           select:
-            'contractNumber contractValue currency status startDate endDate description milestoneId contractedUserId isOrganization',
+            'contractNumber contractValue currency status startDate endDate description type milestoneId contractedUserId isOrganization',
           populate: [
             {
               path: 'projectId',
@@ -873,7 +878,7 @@ export class ClaimsService {
       .populate({
         path: 'contractId',
         select:
-          'contractNumber contractValue currency status startDate endDate description contractedUserId isOrganization',
+          'contractNumber contractValue currency status startDate endDate description type contractedUserId isOrganization',
         populate: [
           {
             path: 'projectId',
@@ -1028,9 +1033,15 @@ export class ClaimsService {
     }
 
     // Update claim status to first approval step
-    claim.status = this.isCoachContract(contract)
-      ? 'pending_reviewer_approval'
-      : CLAIM_STATUSES[1]; // 'pending_checker_approval'
+    if (this.isCoachContract(contract)) {
+      claim.status = 'pending_reviewer_approval';
+    } else {
+      const project = await this.projectModel.findById(claim.projectId);
+      if (!project) throw new NotFoundException('Project not found');
+      const flow = await this.approvalFlowService.getApprovalFlow(project.department);
+      if (!flow.steps.length) throw new BadRequestException('No approval steps configured');
+      claim.status = `pending_${flow.steps[0].role}_approval`;
+    }
     const savedClaim = await claim.save();
 
     await this.notifyStakeholders(savedClaim, userId);
