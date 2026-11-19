@@ -69,10 +69,17 @@ export class ClaimsService {
   private isCoachContract(
     contract: ContractDocument | null | undefined,
   ): boolean {
-    return (
-      (contract?.type || '').toLowerCase() === 'coach' ||
-      (contract?.description || '').toLowerCase().includes('coach')
-    );
+    const type = (contract?.type || '').trim().toLowerCase();
+    const description = (contract?.description || '').trim().toLowerCase();
+
+    // Some older consultant contracts have project titles containing
+    // "coaching". Classify by the contract type (or canonical description),
+    // never by an incidental word anywhere in the description.
+    if (/^(consultant|team member|team)\s+contract\b/.test(description)) {
+      return false;
+    }
+    if (type) return type === 'coach';
+    return /^coach\s+contract\b/.test(description);
   }
 
   private getCoachManagersForRole(
