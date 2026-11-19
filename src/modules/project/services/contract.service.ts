@@ -192,15 +192,9 @@ export class ContractService {
         contractedUserId: new Types.ObjectId(createContractDto.contractedUserId),
         isOrganization: !!createContractDto.isOrganization,
       };
-      if (createContractDto.type) {
-        contractScope.type = createContractDto.type;
-      } else {
-        contractScope.$or = [
-          { type: { $exists: false } },
-          { type: null },
-          { type: '' },
-        ];
-      }
+      // Coach contracts have their own scope. Consultant contracts must also
+      // conflict with legacy contracts whose type was not stored.
+      contractScope.type = isCoachContract ? 'coach' : { $ne: 'coach' };
       if (createContractDto.milestoneId) {
         contractScope.milestoneId = new Types.ObjectId(createContractDto.milestoneId);
       } else {
